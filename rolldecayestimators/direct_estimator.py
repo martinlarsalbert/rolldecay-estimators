@@ -4,8 +4,8 @@ This is a module to be used as a reference for building other modules
 import numpy as np
 from sklearn.base import BaseEstimator, ClassifierMixin, TransformerMixin
 from sklearn.utils.validation import check_X_y, check_array, check_is_fitted
-from sklearn.utils.multiclass import unique_labels
-from sklearn.metrics import euclidean_distances
+import inspect
+from scipy.optimize import curve_fit
 
 
 class TemplateEstimator(BaseEstimator):
@@ -19,8 +19,9 @@ class TemplateEstimator(BaseEstimator):
     demo_param : str, default='demo_param'
         A parameter used for demonstation of how to pass and store paramters.
     """
-    def __init__(self, demo_param='demo_param'):
-        self.demo_param = demo_param
+    def __init__(self, calculate_acceleration,p0=None):
+        self.calculate_acceleration = calculate_acceleration
+        self.p0 = p0
 
     def fit(self, X, y):
         """A reference implementation of a fitting function.
@@ -41,6 +42,27 @@ class TemplateEstimator(BaseEstimator):
         X, y = check_X_y(X, y, accept_sparse=True)
         self.is_fitted_ = True
         # `fit` should always return `self`
+
+        def f_direct(df, **kwargs):
+            phi_old = df['phi']
+            p_old = df['phi1d']
+
+            phi2d = self.calculate_acceleration(p_old=p_old, phi_old=phi_old,**kwargs)
+
+            return phi2d
+
+
+        popt, pcov = curve_fit(f=f_direct, xdata=X, ydata=X['phi2d'], p0=self.p0)
+
+        signature = inspect.signature(f_direct)
+        parameter_names = list(signature.parameters.keys())[1:]
+
+        parameter_values = list(popt)
+        parameters = dict(zip(parameter_names, parameter_values))
+
+        self.parameters =parameters
+        self.pcov = pcov
+
         return self
 
     def predict(self, X):
@@ -61,27 +83,29 @@ class TemplateEstimator(BaseEstimator):
         return np.ones(X.shape[0], dtype=np.int64)
 
 
-class TemplateTransformer(BaseEstimator, TransformerMixin):
-    """ An example transformer that returns the element-wise square root.
-
-    For more information regarding how to build your own transformer, read more
-    in the :ref:`User Guide <user_guide>`.
+class RollDecayCutTransformer(BaseEstimator, TransformerMixin):
+    """ Rolldecay transformer that cut time series from roll decay test for estimator.
 
     Parameters
     ----------
-    demo_param : str, default='demo'
-        A parameter used for demonstation of how to pass and store paramters.
+    start : float, default=0
+        Start of the cut expressed as a portion of max(abs(phi)) [0..1]
+
+    stop : float, default=1
+        Stop of the cut expressed as a portion of max(abs(phi)) [0..1]
+
 
     Attributes
     ----------
     n_features_ : int
         The number of features of the data passed to :meth:`fit`.
     """
-    def __init__(self, demo_param='demo'):
-        self.demo_param = demo_param
+    def __init__(self, start=0, stop=1):
+        self.start = start
+        self.stop = stop
 
-    def fit(self, X, y=None):
-        """A reference implementation of a fitting function for a transformer.
+    def fit(self, X, y):
+        """Do the cut
 
         Parameters
         ----------
@@ -128,4 +152,14 @@ class TemplateTransformer(BaseEstimator, TransformerMixin):
         if X.shape[1] != self.n_features_:
             raise ValueError('Shape of input is different from what was seen'
                              'in `fit`')
-        return np.sqrt(X)
+
+        if (self.start < 0) or (self.start > 1):
+            raise ValueError('"start" should be in the intervall 0..1')
+
+        if (self.stop < 0) or (self.stop > 1):
+            raise ValueError('"stop" should be in the intervall 0..1')
+
+        if (self.start >= self.stop):
+            raise ValueError('"start" cannot be larger or equal to "stop"')
+
+        return X
