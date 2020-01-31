@@ -7,7 +7,6 @@ from sklearn.utils.testing import assert_allclose
 
 from rolldecayestimators import TemplateEstimator
 from rolldecayestimators import TemplateTransformer
-from rolldecayestimators import TemplateClassifier
 
 
 @pytest.fixture
@@ -48,17 +47,3 @@ def test_template_transformer(data):
 
     X_trans = trans.fit_transform(X)
     assert_allclose(X_trans, np.sqrt(X))
-
-
-def test_template_classifier(data):
-    X, y = data
-    clf = TemplateClassifier()
-    assert clf.demo_param == 'demo'
-
-    clf.fit(X, y)
-    assert hasattr(clf, 'classes_')
-    assert hasattr(clf, 'X_')
-    assert hasattr(clf, 'y_')
-
-    y_pred = clf.predict(X)
-    assert y_pred.shape == (X.shape[0],)
