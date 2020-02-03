@@ -5,7 +5,7 @@ from sklearn.datasets import load_iris
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_allclose
 
-from rolldecayestimators import TemplateEstimator
+from rolldecayestimators import DirectEstimator
 from rolldecayestimators import RollDecayCutTransformer
 
 
@@ -14,7 +14,7 @@ def data():
     return load_iris(return_X_y=True)
 
 def test_template_estimator(data):
-    est = TemplateEstimator()
+    est = DirectEstimator()
     assert est.demo_param == 'demo_param'
 
     est.fit(*data)
