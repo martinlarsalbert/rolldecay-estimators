@@ -9,7 +9,7 @@ import inspect
 from scipy.optimize import curve_fit
 import matplotlib.pyplot as plt
 from sklearn.linear_model import LinearRegression
-
+from rolldecayestimators.filters import lowpass_filter
 
 class DirectEstimator(BaseEstimator):
     """ A template estimator to be used as a reference implementation.
@@ -165,7 +165,7 @@ class NorwegianEstimator(DirectEstimator):
         self.phi_key = 'phi'  # Roll angle [rad]
         self.phi1d_key = 'phi1d'  # Roll velocity [rad/s]
         self.phi2d_key = 'phi2d'  # Roll acceleration [rad/s2]
-
+        
     def fit(self, X, y=None):
         """A reference implementation of a fitting function.
 
@@ -223,6 +223,11 @@ class NorwegianEstimator(DirectEstimator):
     def get_zerocrossings(X):
 
         phi1d = np.array(X['phi1d'])
+        #ts = np.mean(np.diff(X.index))
+        #fs = 1/ts
+        #cutoff = fs/1000  # ToDo: Verify this assumption
+        #phi1d = lowpass_filter(data = phi1d, fs=fs, cutoff=cutoff, order=1)  # Run lowpass filter to remove noice
+
         index = np.arange(0, len(X.index))
         index_later = np.roll(index, shift=-1)
         mask = (
@@ -284,7 +289,19 @@ class NorwegianEstimator(DirectEstimator):
 
         self.X.plot(y='phi', ax=ax)
         self.X_zerocrossings.plot(y='phi', ax=ax, style='r.')
+        ax.plot([np.min(self.X.index),np.max(self.X.index)],[0,0],'m-')
         ax.set_title('Peaks')
+
+    def plot_velocity(self, ax=None):
+        check_is_fitted(self, 'is_fitted_')
+
+        if ax is None:
+            fig,ax = plt.subplots()
+
+        self.X.plot(y='phi1d', ax=ax)
+        self.X_zerocrossings.plot(y='phi1d', ax=ax, style='r.')
+        ax.plot([np.min(self.X.index), np.max(self.X.index)], [0, 0], 'm-')
+        ax.set_title('Velocities')
 
     def plot_damping(self, ax=None):
         check_is_fitted(self, 'is_fitted_')
