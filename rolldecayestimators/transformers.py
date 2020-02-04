@@ -1,7 +1,11 @@
 import numpy as np
+import matplotlib.pyplot as plt
 from sklearn.base import BaseEstimator, TransformerMixin
 from sklearn.utils.validation import check_is_fitted
+from sklearn.linear_model import LinearRegression
+
 import rolldecayestimators.filters
+import rolldecayestimators.measure as measure
 
 class CutTransformer(BaseEstimator, TransformerMixin):
     """ Rolldecay transformer that cut time series from roll decay test for estimator.
@@ -23,6 +27,7 @@ class CutTransformer(BaseEstimator, TransformerMixin):
         self.phi_max = phi_max  # Maximum Roll angle [rad]
         self.phi_min = phi_min  # Minimum Roll angle [rad]
         self.phi_key = 'phi'  # Roll angle [rad]
+        self.remove_end_samples = 200  # Remove this many samples from end (funky stuff may happen during end of tests)
 
     def fit(self, X, y=None):
         """Do the cut
@@ -50,6 +55,12 @@ class CutTransformer(BaseEstimator, TransformerMixin):
 
         if (self.phi_min > phi.abs().max()):
             raise ValueError('"phi_min" is too large')
+
+        if not isinstance(self.remove_end_samples,int):
+            raise ValueError('"remove_end_samples" should be integer')
+
+        if self.remove_end_samples<1:
+            raise ValueError('"remove_end_samples" > 1')
 
         # Return the transformer
         return self
@@ -84,6 +95,9 @@ class CutTransformer(BaseEstimator, TransformerMixin):
         phi = X[self.phi_key]
         index = phi.abs().idxmax()
         X_cut = X.loc[index:].copy()
+
+        if (len(X_cut) > 10*self.remove_end_samples):
+            X_cut = X_cut.iloc[0:-self.remove_end_samples]
 
         phi = X_cut[self.phi_key]
         phi_max_sign = np.sign(phi.loc[index])
@@ -325,3 +339,117 @@ class ScaleFactorTransformer(BaseEstimator, TransformerMixin):
 
 
         return X_scaled
+
+class OffsetTransformer(BaseEstimator, TransformerMixin):
+    """ Rolldecay remove offset in signal
+
+    Parameters
+    ----------
+    phi_max : float, default=np.deg2rad(90)
+        Start cutting value is below this value [rad]
+
+    phi_min : float, default=0
+        Stop cutting value is when below this value [rad]
+
+    Attributes
+    ----------
+    n_features_ : int
+        The number of features of the data passed to :meth:`fit`.
+    """
+    def __init__(self):
+        self.phi1d_key = 'phi1d'  # Roll velocity [rad/s]
+        self.phi2d_key = 'phi2d'  # Roll acceleration [rad/s2]
+
+    def fit(self, X, y=None):
+        """Do the cut
+
+        Parameters
+        ----------
+        X : {array-like, sparse matrix}, shape (n_samples, n_features)
+            The training input samples.
+        y : None
+            There is no need of a target in a transformer, yet the pipeline API
+            requires this parameter.
+
+        Returns
+        -------
+        self : object
+            Returns self.
+        """
+        #X = check_array(X, accept_sparse=True)
+
+        self.n_features_ = X.shape[1]
+
+        # Return the transformer
+        return self
+
+    def transform(self, X):
+        """ A reference implementation of a transform function.
+
+        Parameters
+        ----------
+        X : {array-like, sparse-matrix}, shape (n_samples, n_features)
+            The input samples.
+
+        Returns
+        -------
+        X_transformed : array, shape (n_samples, n_features)
+            The array containing the element-wise square roots of the values
+            in ``X``.
+        """
+        # Check is fit had been called
+        check_is_fitted(self, 'n_features_')
+
+        # Input validation
+        #X = check_array(X, accept_sparse=True)
+
+        # Check that the input is of the same shape as the one passed
+        # during fit.
+        #if X.shape[1] != self.n_features_:
+        #    raise ValueError('Shape of input is different from what was seen'
+        #                     'in `fit`')
+
+
+        X_offset = X.copy()
+
+        X_interpolated = measure.sample_increase(X=X)
+        self.X_zerocrossings = measure.get_zerocrossings(X=X_interpolated)
+
+        linear_regression = LinearRegression(fit_intercept=False)
+        X_ = np.array([self.X_zerocrossings.index.values]).transpose()
+        linear_regression.fit(X=X_, y=self.X_zerocrossings['phi'])
+        self.X_zerocrossings['phi0'] = linear_regression.predict(X=X_)
+        self.X_zerocrossings['phi_'] = self.X_zerocrossings['phi'] - self.X_zerocrossings['phi0']
+
+        X_2 = np.array([X_offset.index.values]).transpose()
+        X_offset['phi0'] = linear_regression.predict(X=X_2)
+        X_offset['phi_offset'] = X_offset['phi'].copy()
+        X_offset['phi'] = X_offset['phi'] - X_offset['phi0']
+
+        self.X = X_offset
+
+        return X_offset
+
+    def plot_correction_line(self, ax=None):
+
+        check_is_fitted(self, 'n_features_')
+
+        if ax is None:
+            fig,ax=plt.subplots()
+
+        self.X_zerocrossings.plot(y='phi', style='ro', ax=ax, label='phi')
+        self.X_zerocrossings.plot(y='phi0', style='b-', ax=ax, label='correction line')
+        ax.plot([np.min(self.X_zerocrossings.index), np.max(self.X_zerocrossings.index)], [0, 0], 'g-')
+        ax.legend()
+
+    def plot(self, ax=None):
+
+        check_is_fitted(self, 'n_features_')
+
+        if ax is None:
+            fig,ax=plt.subplots()
+
+        self.X.plot(y='phi_offset', ax=ax, label='old')
+        self.X.plot(y='phi', ax=ax, label='corrected')
+        ax.plot([np.min(self.X.index), np.max(self.X.index)], [0, 0], 'g-')
+        ax.legend()

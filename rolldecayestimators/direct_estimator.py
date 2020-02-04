@@ -9,7 +9,7 @@ import inspect
 from scipy.optimize import curve_fit
 import matplotlib.pyplot as plt
 from sklearn.linear_model import LinearRegression
-from rolldecayestimators.filters import lowpass_filter
+import rolldecayestimators.measure as measure
 
 class DirectEstimator(BaseEstimator):
     """ A template estimator to be used as a reference implementation.
@@ -157,6 +157,20 @@ class DirectEstimator(BaseEstimator):
 
         return zeta + 4/(3*np.pi)*d*phi_a
 
+    def plot_fit(self, ax=None):
+
+        check_is_fitted(self, 'is_fitted_')
+
+        if ax is None:
+            fig,ax = plt.subplots()
+
+        df = self.predict(X=self.X)
+        self.X.plot(y=self.phi_key, ax=ax, label='Model test')
+        df.plot(y='phi', ax=ax, label='Prediction')
+        ax.legend()
+        ax.set_xlabel('Time [s]')
+        ax.set_ylabel(self.phi_key)
+
 class NorwegianEstimator(DirectEstimator):
 
     def __init__(self, calculate_acceleration,simulate):
@@ -185,9 +199,9 @@ class NorwegianEstimator(DirectEstimator):
         self.is_fitted_ = True
         # `fit` should always return `self`
 
-        X_interpolated = self.sample_increase(X=X)
-        self.X_zerocrossings = self.get_zerocrossings(X=X_interpolated)
-        X_amplitudes = self.calculate_amplitudes(X_zerocrossings=self.X_zerocrossings)
+        X_interpolated = measure.sample_increase(X=X)
+        self.X_zerocrossings = measure.get_zerocrossings(X=X_interpolated)
+        X_amplitudes = measure.calculate_amplitudes(X_zerocrossings=self.X_zerocrossings)
         self.X_amplitudes = self.calculate_damping(X_amplitudes=X_amplitudes)
 
         # Fitting part:
@@ -197,7 +211,7 @@ class NorwegianEstimator(DirectEstimator):
 
         self.linear_regression.fit(X=self.X_amplitudes[['x']], y=self.X_amplitudes['zeta_n'])
 
-        T0=2*np.mean(np.diff(self.X_amplitudes.index))
+        T0=2*np.mean(self.X_amplitudes.index)
         omega0=2*np.pi/T0
 
         self.parameters = {
@@ -207,55 +221,6 @@ class NorwegianEstimator(DirectEstimator):
         }
 
         return self
-
-    @staticmethod
-    def sample_increase(X):
-        N = len(X) * 10
-        t_interpolated = np.linspace(X.index[0], X.index[-1], N)
-        X_interpolated = pd.DataFrame(index=t_interpolated)
-
-        for key, values in X.items():
-            X_interpolated[key] = np.interp(t_interpolated, values.index, values)
-
-        return X_interpolated
-
-    @staticmethod
-    def get_zerocrossings(X):
-
-        phi1d = np.array(X['phi1d'])
-        #ts = np.mean(np.diff(X.index))
-        #fs = 1/ts
-        #cutoff = fs/1000  # ToDo: Verify this assumption
-        #phi1d = lowpass_filter(data = phi1d, fs=fs, cutoff=cutoff, order=1)  # Run lowpass filter to remove noice
-
-        index = np.arange(0, len(X.index))
-        index_later = np.roll(index, shift=-1)
-        mask = (
-                ((phi1d[index] > 0) &
-                 (phi1d[index_later] < 0)) |
-                ((phi1d[index] < 0) &
-                 (phi1d[index_later] > 0))
-        )
-
-        X_zerocrossings = X.loc[mask].copy()
-        return X_zerocrossings
-
-    @staticmethod
-    def calculate_amplitudes(X_zerocrossings):
-
-        #X_amplitudes = pd.DataFrame()
-        #for i in range(len(X_zerocrossings) - 1):
-        #    s1 = X_zerocrossings.iloc[i]
-        #    s2 = X_zerocrossings.iloc[i + 1]
-        #
-        #    amplitude = (s2 - s1).abs()
-        #    amplitude.name = s2.name - s1.name
-        #    X_amplitudes = X_amplitudes.append(amplitude)
-
-        X_amplitudes = X_zerocrossings.copy()
-        X_amplitudes['phi']=2*X_zerocrossings['phi'].abs()  # Double amplitude!
-
-        return X_amplitudes
 
     @staticmethod
     def calculate_damping(X_amplitudes):
@@ -317,19 +282,7 @@ class NorwegianEstimator(DirectEstimator):
         ax.set_ylabel(r'$\zeta_n$', usetex=True)
         ax.get_yaxis().get_major_formatter().set_useOffset(False)
 
-    def plot_fit(self, ax=None):
 
-        check_is_fitted(self, 'is_fitted_')
-
-        if ax is None:
-            fig,ax = plt.subplots()
-
-        df = self.predict(X=self.X)
-        self.X.plot(y=self.phi_key, ax=ax, label='Model test')
-        df.plot(y='phi', ax=ax, label='Prediction')
-        ax.legend()
-        ax.set_xlabel('Time [s]')
-        ax.set_ylabel(self.phi_key)
 
 
 
