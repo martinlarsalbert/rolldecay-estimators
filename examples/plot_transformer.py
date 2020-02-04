@@ -7,11 +7,11 @@ An example plot of :class:`rolldecayestimators.template.TemplateTransformer`
 """
 import numpy as np
 from matplotlib import pyplot as plt
-from rolldecayestimators import RollDecayCutTransformer
+from rolldecayestimators import CutTransformer
 
 X = np.arange(50, dtype=np.float).reshape(-1, 1)
 X /= 50
-estimator = RollDecayCutTransformer()
+estimator = CutTransformer()
 X_transformed = estimator.fit_transform(X)
 
 plt.plot(X.flatten(), label='Original Data')

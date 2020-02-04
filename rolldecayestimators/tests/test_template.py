@@ -5,8 +5,7 @@ from sklearn.datasets import load_iris
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_allclose
 
-from rolldecayestimators import DirectEstimator
-from rolldecayestimators import RollDecayCutTransformer
+from rolldecayestimators import DirectEstimator, CutTransformer
 
 
 @pytest.fixture
@@ -27,7 +26,7 @@ def test_template_estimator(data):
 
 def test_cut_transformer_error(data):
     X, y = data
-    trans = RollDecayCutTransformer()
+    trans = CutTransformer()
     trans.fit(X,y)
     with pytest.raises(ValueError, match="Shape of input is different"):
         X_diff_size = np.ones((10, X.shape[1] + 1))
@@ -36,7 +35,7 @@ def test_cut_transformer_error(data):
 
 def test_cut_transformer(data):
     X, y = data
-    trans = RollDecayCutTransformer()
+    trans = CutTransformer()
     assert trans.start == 0
     assert trans.stop == 1
 
