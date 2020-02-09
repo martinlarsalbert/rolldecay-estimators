@@ -66,3 +66,11 @@ doc/generated/
 # PyBuilder
 target/
 /venv
+.tra
+.idea/.gitignore
+.idea/misc.xml
+.idea/modules.xml
+.idea/other.xml
+.idea/rolldecay_estimators.iml
+.idea/vcs.xml
+.idea/inspectionProfiles/profiles_settings.xml
