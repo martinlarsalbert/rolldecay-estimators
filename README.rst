@@ -2,7 +2,7 @@
 
 |Travis|_ |AppVeyor|_ |Codecov|_ |CircleCI|_ |ReadTheDocs|_
 
-.. |Travis| image:: https://travis-ci.org/scikit-learn-contrib/project-template.svg?branch=master
+.. |Travis| image:: https://travis-ci.com/martinlarsalbert/rolldecay-estimators.svg?branch=master
 .. _Travis: https://travis-ci.org/scikit-learn-contrib/project-template
 
 .. |AppVeyor| image:: https://ci.appveyor.com/api/projects/status/coy2qqaqr1rnnt5y/branch/master?svg=true
