@@ -6,8 +6,8 @@
 Welcome to rolldecay-estimators's documentation!
 ============================================
 
-This project is a reference implementation to anyone who wishes to develop
-scikit-learn compatible classes.
+This project contains some implementations of roll-decay scikit-learn estimators and transformers.
+GitHub: https://github.com/martinlarsalbert/rolldecay-estimators
 
 .. toctree::
    :maxdepth: 2

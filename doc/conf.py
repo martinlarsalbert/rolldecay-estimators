@@ -75,7 +75,7 @@ master_doc = 'index'
 
 # General information about the project.
 project = u'rolldecay-estimators'
-copyright = u'2016, Vighnesh Birodkar'
+copyright = u'2020, Martin Alexandersson'
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
