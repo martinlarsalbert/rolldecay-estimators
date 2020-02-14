@@ -155,7 +155,7 @@ class DirectEstimator(BaseEstimator):
         check_is_fitted(self, 'is_fitted_')
 
         zeta = self.parameters['zeta']
-        d = self.parameters['d']
+        d = self.parameters.get('d',0)
 
         if phi_a is None:
             phi_a = self.X[self.phi_key].abs().mean()
