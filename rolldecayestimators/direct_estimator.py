@@ -2,14 +2,13 @@
 This is a module to be used as a reference for building other modules
 """
 import numpy as np
-import pandas as pd
 from sklearn.base import BaseEstimator
 from sklearn.utils.validation import check_is_fitted
 import inspect
 from scipy.optimize import curve_fit
 import matplotlib.pyplot as plt
-from sklearn.linear_model import LinearRegression
-import rolldecayestimators.measure as measure
+from rolldecayestimators.equations_lambdify import calculate_acceleration
+from rolldecayestimators.simulation import simulate
 
 class DirectEstimator(BaseEstimator):
     """ A template estimator to be used as a reference implementation.
@@ -22,15 +21,14 @@ class DirectEstimator(BaseEstimator):
     demo_param : str, default='demo_param'
         A parameter used for demonstation of how to pass and store paramters.
     """
-    def __init__(self, calculate_acceleration,simulate,p0=[0.01,0.22,0.01]):
-        self.calculate_acceleration = calculate_acceleration
-        self.simulate = simulate
-        self.p0 = p0
+
+    def __init__(self):
         self.phi_key = 'phi'  # Roll angle [rad]
         self.phi1d_key = 'phi1d'  # Roll velocity [rad/s]
         self.phi2d_key = 'phi2d'  # Roll acceleration [rad/s2]
         self.maxfev = 4000
         self.bounds = (0,np.inf,)
+
 
     def fit(self, X, y=None):
         """A reference implementation of a fitting function.
@@ -50,18 +48,10 @@ class DirectEstimator(BaseEstimator):
         self.is_fitted_ = True
         # `fit` should always return `self`
 
-        def f_direct(df, d, omega0, zeta):
-            phi_old = df[self.phi_key]
-            p_old = df[self.phi1d_key]
-
-            phi2d = self.calculate_acceleration(d=d, omega0=omega0, p_old=p_old, phi_old=phi_old, zeta=zeta)
-            return phi2d
-
-        popt, pcov = curve_fit(f=f_direct, xdata=X, ydata=X[self.phi2d_key], p0=self.p0, maxfev=self.maxfev,
-                               bounds=self.bounds)
+        popt, pcov = curve_fit(f=self.equation, xdata=X, ydata=X[self.phi2d_key],  maxfev=self.maxfev)
         self.X = X.copy()
 
-        signature = inspect.signature(f_direct)
+        signature = inspect.signature(self.equation)
         parameter_names = list(signature.parameters.keys())[1:]
 
         parameter_values = list(popt)
@@ -72,6 +62,13 @@ class DirectEstimator(BaseEstimator):
 
         return self
 
+    @staticmethod
+    def equation(df, d, omega0, zeta):
+        phi_old = df['phi']
+        p_old = df['phi1d']
+
+        phi2d = calculate_acceleration(d=d, omega0=omega0, p_old=p_old, phi_old=phi_old, zeta=zeta)
+        return phi2d
 
     def score(self, X, y=None, sample_weight=None):
         """
@@ -127,10 +124,18 @@ class DirectEstimator(BaseEstimator):
         phi0 = X[self.phi_key].iloc[0]
         phi1d0 = X[self.phi1d_key].iloc[0]
 
-        df_sim = self.simulate(t=X.index, **self.parameters, phi0=phi0, phi1d0=phi1d0)
+        X.columns
+
+        signature = inspect.signature(simulate)
+        parameters = list(signature.parameters.keys())[1:]
+
+        df_sim = self.do_simulation(t=X.index, phi0=phi0, phi1d0=phi1d0)
 
         #return np.ones(X.shape[0], dtype=np.int64)
         return df_sim
+
+    def do_simulation(self, t, phi0, phi1d0):
+        return simulate(t=t, **self.parameters, phi0=phi0, phi1d0=phi1d0)
 
     def calculate_average_linear_damping(self,phi_a=None):
         """
@@ -171,117 +176,48 @@ class DirectEstimator(BaseEstimator):
         ax.set_xlabel('Time [s]')
         ax.set_ylabel(self.phi_key)
 
-class NorwegianEstimator(DirectEstimator):
 
-    def __init__(self, calculate_acceleration,simulate):
-        self.calculate_acceleration = calculate_acceleration
-        self.simulate = simulate
-        self.phi_key = 'phi'  # Roll angle [rad]
-        self.phi1d_key = 'phi1d'  # Roll velocity [rad/s]
-        self.phi2d_key = 'phi2d'  # Roll acceleration [rad/s2]
-        
-    def fit(self, X, y=None):
-        """A reference implementation of a fitting function.
+class DirectEstimatorZeta(DirectEstimator):
 
-        Parameters
-        ----------
-        X : {array-like, sparse matrix}, shape (n_samples, n_features)
-            The training input samples.
-        y : Dummy not used.
-
-        Returns
-        -------
-        self : object
-            Returns self.
-        """
-        #X, y = check_X_y(X, y, accept_sparse=True)
-        self.X = X.copy()
-        self.is_fitted_ = True
-        # `fit` should always return `self`
-
-        X_interpolated = measure.sample_increase(X=X)
-        self.X_zerocrossings = measure.get_zerocrossings(X=X_interpolated)
-        X_amplitudes = measure.calculate_amplitudes(X_zerocrossings=self.X_zerocrossings)
-        self.X_amplitudes = self.calculate_damping(X_amplitudes=X_amplitudes)
-
-        # Fitting part:
-
-        self.linear_regression = LinearRegression()
-        self.X_amplitudes['x'] = 2 / (3 * np.pi) * self.X_amplitudes['phi']
-
-        self.linear_regression.fit(X=self.X_amplitudes[['x']], y=self.X_amplitudes['zeta_n'])
-
-        T0=2*np.mean(self.X_amplitudes.index)
-        omega0=2*np.pi/T0
-
-        self.parameters = {
-            'd' : self.linear_regression.coef_[0],
-            'zeta' : self.linear_regression.intercept_,
-            'omega0' : omega0,
-        }
-
-        return self
+    def __init__(self, d:float):
+        super().__init__()
+        self.d = d
 
     @staticmethod
-    def calculate_damping(X_amplitudes):
+    def equation(df, omega0, zeta):
+        phi_old = df['phi']
+        p_old = df['phi1d']
+        d = df['d']
 
-        df_decrements = pd.DataFrame()
+        phi2d = calculate_acceleration(d=d, omega0=omega0, p_old=p_old, phi_old=phi_old, zeta=zeta)
+        return phi2d
 
-        for i in range(len(X_amplitudes) - 1):
-            s1 = X_amplitudes.iloc[i]
-            s2 = X_amplitudes.iloc[i + 1]
+    def fit(self, X, y=None):
+        X=X.copy()
+        X['d'] = self.d
+        super().fit(X=X, y=y)
+        self.parameters['d'] = self.d
 
-            decrement = s1 / s2
-            decrement.name = s1.name
-            df_decrements = df_decrements.append(decrement)
+class DirectEstimatorD(DirectEstimator):
 
-        df_decrements['zeta_n'] = 1 / (2 * np.pi) * np.log(df_decrements['phi'])
+    def __init__(self, zeta:float):
+        super().__init__()
+        self.zeta = zeta
 
-        df_decrements['zeta_n']*=2  #!!! # Todo: Where did this one come from?
+    @staticmethod
+    def equation(df, omega0, d):
+        phi_old = df['phi']
+        p_old = df['phi1d']
+        zeta = df['zeta']
 
-        X_amplitudes_new = X_amplitudes.copy()
-        X_amplitudes_new = X_amplitudes_new.iloc[0:-1].copy()
-        X_amplitudes_new['zeta_n'] = df_decrements['zeta_n'].copy()
-        
-        return X_amplitudes_new
+        phi2d = calculate_acceleration(d=d, omega0=omega0, p_old=p_old, phi_old=phi_old, zeta=zeta)
+        return phi2d
 
-
-    def plot_peaks(self, ax=None):
-        check_is_fitted(self, 'is_fitted_')
-
-        if ax is None:
-            fig,ax = plt.subplots()
-
-        self.X.plot(y='phi', ax=ax)
-        self.X_zerocrossings.plot(y='phi', ax=ax, style='r.')
-        ax.plot([np.min(self.X.index),np.max(self.X.index)],[0,0],'m-')
-        ax.set_title('Peaks')
-
-    def plot_velocity(self, ax=None):
-        check_is_fitted(self, 'is_fitted_')
-
-        if ax is None:
-            fig,ax = plt.subplots()
-
-        self.X.plot(y='phi1d', ax=ax)
-        self.X_zerocrossings.plot(y='phi1d', ax=ax, style='r.')
-        ax.plot([np.min(self.X.index), np.max(self.X.index)], [0, 0], 'm-')
-        ax.set_title('Velocities')
-
-    def plot_damping(self, ax=None):
-        check_is_fitted(self, 'is_fitted_')
-
-        if ax is None:
-            fig,ax = plt.subplots()
-
-        df_amplitudes = self.X_amplitudes.copy()
-        df_amplitudes['zeta_n_pred'] = self.linear_regression.predict(X=df_amplitudes[['x']])
-        df_amplitudes.plot(x='x', y='zeta_n_pred', ax=ax, style='-')
-        df_amplitudes.plot(x='x', y='zeta_n', ax=ax, style='.')
-        ax.set_xlabel(r'$2/(3\pi)\Phi_n$', usetex=True)
-        ax.set_ylabel(r'$\zeta_n$', usetex=True)
-        ax.get_yaxis().get_major_formatter().set_useOffset(False)
-
+    def fit(self, X, y=None):
+        X=X.copy()
+        X['zeta'] = self.zeta
+        super().fit(X=X, y=y)
+        self.parameters['zeta'] = self.zeta
 
 
 

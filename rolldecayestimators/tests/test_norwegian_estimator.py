@@ -5,8 +5,7 @@ import numpy as np
 from numpy.testing import assert_almost_equal
 
 from rolldecayestimators.simulation import simulate
-from rolldecayestimators.equations_lambdify import calculate_acceleration, calculate_velocity
-from rolldecayestimators.direct_estimator import NorwegianEstimator
+from rolldecayestimators.norwegian_estimator import NorwegianEstimator
 import matplotlib.pyplot as plt
 
 @pytest.fixture
@@ -24,7 +23,7 @@ def df_roll_decay():
 
 def test_fit_simualtion(df_roll_decay):
 
-    direct_estimator = NorwegianEstimator(calculate_acceleration=calculate_acceleration, simulate=simulate)
+    direct_estimator = NorwegianEstimator()
 
     X = df_roll_decay
     X['phi2d'] = np.gradient(X['phi1d'].values, X.index.values)
