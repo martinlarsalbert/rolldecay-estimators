@@ -34,5 +34,5 @@ def test_fit_simualtion(df_roll_decay):
     X_pred.plot(y='phi', ax=ax, label='prediction')
     plt.show()
 
-    assert_almost_equal(X['phi'].values, X_pred['phi'].values, decimal=4)
-    assert direct_estimator.score(X) > 0.99999
+    assert_almost_equal(X['phi'].values, X_pred['phi'].values, decimal=3)
+    assert direct_estimator.score(X) > 0.999
