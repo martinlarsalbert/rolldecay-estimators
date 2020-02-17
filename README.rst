@@ -18,7 +18,7 @@
 .. _ReadTheDocs: https://rolldecay-estimators.readthedocs.io/en/latest/?badge=latest
 
 Rolldecay-estimators - Transformers and estimators for scikit-learn
-============================================================
+===================================================================
 
 .. _scikit-learn: https://scikit-learn.org
 
