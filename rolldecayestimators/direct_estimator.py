@@ -100,8 +100,8 @@ class DirectEstimator(BaseEstimator):
         y_true = X[self.phi_key]
         df_sim = self.predict(X)
         y_pred = df_sim[self.phi_key]
-        u = ((y_true - y_pred) ** 2).mean()
-        v = ((y_true - y_true.mean()) ** 2).mean()
+        u = ((y_true - y_pred) ** 2).sum()
+        v = ((y_true - y_true.mean()) ** 2).sum()
         return (1 - u/v)
 
 
