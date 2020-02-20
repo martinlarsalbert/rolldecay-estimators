@@ -6,6 +6,7 @@ from sklearn.linear_model import LinearRegression
 
 import rolldecayestimators.filters
 import rolldecayestimators.measure as measure
+from sklearn.metrics import r2_score
 
 class CutTransformer(BaseEstimator, TransformerMixin):
     """ Rolldecay transformer that cut time series from roll decay test for estimator.
@@ -143,13 +144,14 @@ class LowpassFilterDerivatorTransformer(BaseEstimator, TransformerMixin):
     n_features_ : int
         The number of features of the data passed to :meth:`fit`.
     """
-    def __init__(self, cutoff=0.5, order=5):
+    def __init__(self, cutoff=0.5, order=5, minimum_score=0.999):
         self.cutoff = cutoff
         self.order = order
         self.phi_key = 'phi'  # Roll angle [rad]
         self.phi_filtered_key = 'phi_filtered'  # Filtered roll angle [rad]
         self.phi1d_key = 'phi1d'  # Roll velocity [rad/s]
         self.phi2d_key = 'phi2d'  # Roll acceleration [rad/s2]
+        self.minimum_score = minimum_score
 
     def fit(self, X, y=None):
         """Do the cut
@@ -170,6 +172,8 @@ class LowpassFilterDerivatorTransformer(BaseEstimator, TransformerMixin):
         #X = check_array(X, accept_sparse=True)
 
         self.n_features_ = X.shape[1]
+
+        assert self.score(X=X) > self.minimum_score
 
         # Return the transformer
         return self
@@ -201,19 +205,34 @@ class LowpassFilterDerivatorTransformer(BaseEstimator, TransformerMixin):
         #                     'in `fit`')
 
         # Lowpass filter the signal:
-        X_filter = X.copy()
-
-        phi = X[self.phi_key]
-
-        ts = np.mean(np.diff(X_filter.index))
+        self.X = X.copy()
+        self.X_filter = X.copy()
+        ts = np.mean(np.diff(self.X_filter.index))
         fs = 1 / ts
-        X_filter[self.phi_filtered_key] = rolldecayestimators.filters.lowpass_filter(data=X_filter['phi'],
+        self.X_filter[self.phi_filtered_key] = rolldecayestimators.filters.lowpass_filter(data=self.X_filter['phi'],
                                                                                      cutoff=self.cutoff, fs=fs,
                                                                                      order=self.order)
 
-        X_filter = self.add_derivatives(X=X_filter)
+        self.X_filter = self.add_derivatives(X=self.X_filter)
 
-        return X_filter
+        return self.X_filter
+
+    def plot_filtering(self):
+
+        fig, axes = plt.subplots(nrows=3)
+
+        ax = axes[0]
+        self.X.plot(y='phi', ax=ax)
+        self.X_filter.plot(y='phi_filtered', ax=ax, style='--')
+        ax.legend();
+
+        ax = axes[1]
+        self.X_filter.plot(y='phi1d', ax=ax, style='--')
+        ax.legend();
+
+        ax = axes[2]
+        self.X_filter.plot(y='phi2d', ax=ax, style='--')
+        ax.legend();
 
     def add_derivatives(self, X):
         # Add accelerations:
@@ -251,12 +270,10 @@ class LowpassFilterDerivatorTransformer(BaseEstimator, TransformerMixin):
 
         """
         X_filter = self.transform(X)
-        y_true = X_filter[self.phi_key]
+        y_true = X[self.phi_key]
         y_pred = X_filter[self.phi_filtered_key]
 
-        u = ((y_true - y_pred) ** 2).sum()
-        v = ((y_true - y_true.mean()) ** 2).sum()
-        return (1 - u/v)
+        return r2_score(y_true=y_true, y_pred=y_pred)
 
 class ScaleFactorTransformer(BaseEstimator, TransformerMixin):
     """ Rolldecay to full scale using scale factor

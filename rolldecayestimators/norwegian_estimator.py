@@ -9,7 +9,8 @@ from rolldecayestimators import DirectEstimator, measure as measure
 
 class NorwegianEstimator(DirectEstimator):
 
-    def __init__(self):
+    def __init__(self, maxfev = 4000, bounds=None, ftol=10**-10):
+        super().__init__(maxfev=maxfev,bounds=bounds, ftol=ftol)
         self.phi_key = 'phi'  # Roll angle [rad]
         self.phi1d_key = 'phi1d'  # Roll velocity [rad/s]
         self.phi2d_key = 'phi2d'  # Roll acceleration [rad/s2]

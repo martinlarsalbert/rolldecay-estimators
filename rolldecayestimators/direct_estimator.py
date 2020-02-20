@@ -11,6 +11,7 @@ import matplotlib.pyplot as plt
 from rolldecayestimators.equations_lambdify import calculate_acceleration
 from rolldecayestimators.simulation import simulate
 from rolldecayestimators import measure as measure
+from sklearn.metrics import r2_score
 
 class DirectEstimator(BaseEstimator):
     """ A template estimator to be used as a reference implementation.
@@ -172,7 +173,7 @@ class DirectEstimator(BaseEstimator):
         Return the coefficient of determination R^2 of the prediction.
 
         The coefficient R^2 is defined as (1 - u/v), where u is the residual sum of squares
-        ((y_true - y_pred) ** 2).mean() and v is the total sum of squares ((y_true - y_true.mean()) ** 2).mean().
+        ((y_true - y_pred) ** 2).sum() and v is the total sum of squares ((y_true - y_true.mean()) ** 2).sum().
         The best possible score is 1.0 and it can be negative (because the model can be arbitrarily worse).
         A constant model that always predicts the expected value of y, disregarding the input features,
         would get a R^2 score of 0.0.
@@ -196,10 +197,10 @@ class DirectEstimator(BaseEstimator):
         """
 
         y_true, y_pred = self.true_and_prediction(X=X)
-        u = ((y_true - y_pred) ** 2).sum()
-        v = ((y_true - y_true.mean()) ** 2).sum()
-        return (1 - u/v)
 
+        #sample_weight = np.abs(y_true)
+        #return r2_score(y_true=y_true, y_pred=y_pred,sample_weight=sample_weight)
+        return r2_score(y_true=y_true, y_pred=y_pred)
 
     def predict(self, X):
         """ A reference implementation of a predicting function.
@@ -287,7 +288,7 @@ class DirectEstimator(BaseEstimator):
         ax.plot(self.X.index, error, label=self.__repr__(), **kwargs)
         ax.legend()
         ax.set_xlabel('Time [s]')
-        ax.set_ylabel(self.phi_key)
+        ax.set_ylabel('error: phi_pred - phi_true [rad]')
 
     def plot_peaks(self, ax=None):
         check_is_fitted(self, 'is_fitted_')
