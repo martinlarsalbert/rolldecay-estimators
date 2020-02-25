@@ -3,7 +3,6 @@ import pytest
 import pandas as pd
 import numpy as np
 from numpy.testing import assert_almost_equal
-
 from rolldecayestimators.simulation import simulate
 from rolldecayestimators.direct_estimator import DirectEstimator
 import matplotlib.pyplot as plt

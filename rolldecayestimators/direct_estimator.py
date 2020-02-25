@@ -3,15 +3,24 @@ This is a module to be used as a reference for building other modules
 """
 import numpy as np
 import pandas as pd
+from scipy.integrate import odeint
 from sklearn.base import BaseEstimator
 from sklearn.utils.validation import check_is_fitted
 import inspect
 from scipy.optimize import curve_fit
 import matplotlib.pyplot as plt
-from rolldecayestimators.equations_lambdify import calculate_acceleration
-from rolldecayestimators.simulation import simulate
+#from rolldecayestimators.simulation import simulate
 from rolldecayestimators import measure as measure
 from sklearn.metrics import r2_score
+
+from rolldecayestimators.substitute_dynamic_symbols import lambdify
+from rolldecayestimators.symbols import *
+
+rhs = -phi_dot_dot/(omega0**2) - 2*zeta/omega0*phi_dot - d*sp.Abs(phi_dot)*phi_dot/(omega0**2)
+roll_diff_equation = sp.Eq(lhs=phi,rhs=rhs)
+acceleration = sp.Eq(lhs=phi, rhs=sp.solve(roll_diff_equation, phi.diff().diff())[0])
+calculate_acceleration = lambdify(acceleration.rhs)
+
 
 class DirectEstimator(BaseEstimator):
     """ A template estimator to be used as a reference implementation.
@@ -69,6 +78,59 @@ class DirectEstimator(BaseEstimator):
         else:
             return '%s' % (self.__class__.__name__)
 
+    @staticmethod
+    def equation(df, d, zeta):
+        phi_old = df['phi']
+        p_old = df['phi1d']
+        omega0 = df['omega0']
+
+        phi2d = calculate_acceleration(d=d, omega0=omega0, phi1d=p_old, phi=phi_old, zeta=zeta)
+        return phi2d
+
+    def roll_decay_time_step(self, states, t, d, omega0, zeta):
+        # states:
+        # [phi,phi1d]
+
+        phi_old = states[0]
+        p_old = states[1]
+
+        phi1d = p_old
+        phi2d = calculate_acceleration(d=d, omega0=omega0, phi1d=p_old, phi=phi_old, zeta=zeta)
+
+        d_states_dt = np.array([phi1d, phi2d])
+
+        return d_states_dt
+
+    def simulate(self, t: np.ndarray, phi0: float, phi1d0: float, omega0: float, d: float, zeta: float) -> pd.DataFrame:
+        """
+        Simulate a roll decay test using the quadratic method.
+        :param t: time vector to be simulated [s]
+        :param phi0: initial roll angle [rad]
+        :param phi1d0: initial roll speed [rad/s]
+        :param omega0: roll natural frequency[rad/s]
+        :param d: quadratic roll damping [-]
+        :param zeta:linear roll damping [-]
+        :return: pandas data frame with time series of 'phi' and 'phi1d'
+        """
+
+        states0 = [phi0, phi1d0]
+        args = (
+            d,
+            omega0,
+            zeta,
+        )
+        states = odeint(func=self.roll_decay_time_step, y0=states0, t=t, args=args)
+
+        df = pd.DataFrame(index=t)
+
+        df['phi'] = states[:, 0]
+        df['phi1d'] = states[:, 1]
+
+        return df
+
+    def do_simulation(self, t, phi0, phi1d0):
+        return self.simulate(t=t, **self.parameters, phi0=phi0, phi1d0=phi1d0)
+
     def fit(self, X, y=None):
         """A reference implementation of a fitting function.
 
@@ -125,14 +187,7 @@ class DirectEstimator(BaseEstimator):
         """
         return self.X_amplitudes['omega0'].mean()
 
-    @staticmethod
-    def equation(df, d, zeta):
-        phi_old = df['phi']
-        p_old = df['phi1d']
-        omega0 = df['omega0']
 
-        phi2d = calculate_acceleration(d=d, omega0=omega0, p_old=p_old, phi_old=phi_old, zeta=zeta)
-        return phi2d
 
     @staticmethod
     def calculate_damping(X_amplitudes):
@@ -226,7 +281,7 @@ class DirectEstimator(BaseEstimator):
 
         X.columns
 
-        signature = inspect.signature(simulate)
+        signature = inspect.signature(self.simulate)
         parameters = list(signature.parameters.keys())[1:]
 
         df_sim = self.do_simulation(t=X.index, phi0=phi0, phi1d0=phi1d0)
@@ -234,8 +289,7 @@ class DirectEstimator(BaseEstimator):
         #return np.ones(X.shape[0], dtype=np.int64)
         return df_sim
 
-    def do_simulation(self, t, phi0, phi1d0):
-        return simulate(t=t, **self.parameters, phi0=phi0, phi1d0=phi1d0)
+
 
     def calculate_average_linear_damping(self,phi_a=None):
         """
