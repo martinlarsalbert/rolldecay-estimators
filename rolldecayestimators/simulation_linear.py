@@ -1,4 +1,4 @@
-from rolldecayestimators.equations_lambdify import calculate_acceleration_linear, calculate_velocity_linear
+from rolldecayestimators.direct_linear_estimator import calculate_acceleration
 import numpy as np
 import pandas as pd
 from scipy.integrate import odeint
@@ -10,8 +10,8 @@ def roll_decay_time_step(states, t,omega0, zeta):
     phi_old = states[0]
     p_old = states[1]
 
-    phi1d = calculate_velocity_linear(p_old)
-    phi2d = calculate_acceleration_linear(omega0=omega0, p_old=p_old, phi_old=phi_old, zeta=zeta)
+    phi1d = p_old
+    phi2d = calculate_acceleration(omega0=omega0, phi1d=p_old, phi=phi_old, zeta=zeta)
 
     d_states_dt = np.array([phi1d, phi2d])
 

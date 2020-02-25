@@ -2,15 +2,18 @@
 This is a module to be used as a reference for building other modules
 """
 import numpy as np
-from sklearn.base import BaseEstimator
-from sklearn.utils.validation import check_is_fitted
-import inspect
-from scipy.optimize import curve_fit
-import matplotlib.pyplot as plt
-from rolldecayestimators.equations_lambdify import calculate_acceleration_linear
-from rolldecayestimators.simulation_linear import simulate
+import pandas as pd
+from scipy.integrate import odeint
+from rolldecayestimators.substitute_dynamic_symbols import lambdify
+from rolldecayestimators.symbols import *
 
 from rolldecayestimators.direct_estimator import DirectEstimator
+
+
+lhs = phi_dot_dot + 2*zeta*omega0*phi_dot + omega0**2*phi
+roll_diff_equation = sp.Eq(lhs=lhs,rhs=0)
+acceleration = sp.Eq(lhs=phi, rhs=sp.solve(roll_diff_equation, phi.diff().diff())[0])
+calculate_acceleration = lambdify(acceleration.rhs)
 
 
 class DirectLinearEstimator(DirectEstimator):
@@ -30,8 +33,44 @@ class DirectLinearEstimator(DirectEstimator):
         phi_old = df['phi']
         p_old = df['phi1d']
 
-        phi2d = calculate_acceleration_linear(omega0=omega0, p_old=p_old, phi_old=phi_old, zeta=zeta)
+        phi2d = calculate_acceleration(omega0=omega0, phi1d=p_old, phi=phi_old, zeta=zeta)
         return phi2d
 
-    def do_simulation(self, t, phi0, phi1d0):
-        return simulate(t=t, **self.parameters, phi0=phi0, phi1d0=phi1d0)
+    def roll_decay_time_step(self, states, t, omega0, zeta):
+        # states:
+        # [phi,phi1d]
+
+        phi_old = states[0]
+        p_old = states[1]
+
+        phi1d = p_old
+        phi2d = calculate_acceleration(omega0=omega0, phi1d=p_old, phi=phi_old, zeta=zeta)
+
+        d_states_dt = np.array([phi1d, phi2d])
+
+        return d_states_dt
+
+    def simulate(self, t: np.ndarray, phi0: float, phi1d0: float, omega0: float, zeta: float) -> pd.DataFrame:
+        """
+        Simulate a roll decay test using the quadratic method.
+        :param t: time vector to be simulated [s]
+        :param phi0: initial roll angle [rad]
+        :param phi1d0: initial roll speed [rad/s]
+        :param omega0: roll natural frequency[rad/s]
+        :param zeta:linear roll damping [-]
+        :return: pandas data frame with time series of 'phi' and 'phi1d'
+        """
+
+        states0 = [phi0, phi1d0]
+        args = (
+            omega0,
+            zeta,
+        )
+        states = odeint(func=self.roll_decay_time_step, y0=states0, t=t, args=args)
+
+        df = pd.DataFrame(index=t)
+
+        df['phi'] = states[:, 0]
+        df['phi1d'] = states[:, 1]
+
+        return df

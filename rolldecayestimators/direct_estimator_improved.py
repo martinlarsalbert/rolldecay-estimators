@@ -77,6 +77,3 @@ class DirectEstimatorImproved(DirectEstimator):
         df['phi1d'] = states[:, 1]
 
         return df
-
-    def do_simulation(self, t, phi0, phi1d0):
-        return self.simulate(t=t, **self.parameters, phi0=phi0, phi1d0=phi1d0)

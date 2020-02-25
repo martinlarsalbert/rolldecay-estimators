@@ -2,8 +2,7 @@ import sympy as sp
 from rolldecayestimators.symbols import *
 
 ##### Linear
-lhs = phi_dot_dot + 2*zeta*omega0*phi_dot + omega0**2*phi
-roll_diff_equation_linear = sp.Eq(lhs=lhs,rhs=0)
+
 
 # Solve the diff equation by introducing helper variables:
 phi_old,p_old = me.dynamicsymbols('phi_old p_old')
