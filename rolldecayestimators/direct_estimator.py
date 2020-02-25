@@ -16,6 +16,7 @@ from sklearn.metrics import r2_score
 from rolldecayestimators.substitute_dynamic_symbols import lambdify
 from rolldecayestimators.symbols import *
 
+# Defining the diff equation for this estimator:
 rhs = -phi_dot_dot/(omega0**2) - 2*zeta/omega0*phi_dot - d*sp.Abs(phi_dot)*phi_dot/(omega0**2)
 roll_diff_equation = sp.Eq(lhs=phi,rhs=rhs)
 acceleration = sp.Eq(lhs=phi, rhs=sp.solve(roll_diff_equation, phi.diff().diff())[0])

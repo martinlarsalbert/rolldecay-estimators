@@ -4,4 +4,3 @@ scipy
 scikit-learn
 matplotlib
 sympy
-matplotlib

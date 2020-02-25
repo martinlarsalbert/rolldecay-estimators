@@ -11,6 +11,8 @@ roll_diff_equation = sp.Eq(lhs=lhs, rhs=0)
 acceleration = sp.Eq(lhs=phi, rhs=sp.solve(roll_diff_equation, phi.diff().diff())[0])
 calculate_acceleration = lambdify(acceleration.rhs)
 
+# Defining the diff equation for this estimator:
+
 class DirectEstimatorImproved(DirectEstimator):
     """ A template estimator to be used as a reference implementation.
 
