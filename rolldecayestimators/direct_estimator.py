@@ -98,8 +98,11 @@ class DirectEstimator(BaseEstimator):
         parameter_values = list(popt)
         parameters = dict(zip(self.parameter_names, parameter_values))
 
-        self.parameters =parameters
-        self.parameters['omega0'] = self.omega0
+        self.parameters=parameters
+
+        if not 'omega0' in self.parameters:
+            self.parameters['omega0'] = self.omega0
+
         self.pcov = pcov
 
         return self
@@ -368,8 +371,6 @@ class DirectEstimatorD(DirectEstimator):
         X['zeta'] = self.zeta
         super().fit(X=X, y=y)
         self.parameters['zeta'] = self.zeta
-
-
 
 
 
