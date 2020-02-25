@@ -41,6 +41,8 @@ class DirectEstimator(BaseEstimator):
     """
 
     def __init__(self, maxfev = 4000, bounds=None, ftol=10**-10):
+        self.is_fitted_ = False
+
         self.phi_key = 'phi'  # Roll angle [rad]
         self.phi1d_key = 'phi1d'  # Roll velocity [rad/s]
         self.phi2d_key = 'phi2d'  # Roll acceleration [rad/s2]
@@ -325,15 +327,18 @@ class DirectEstimator(BaseEstimator):
             fig,ax = plt.subplots()
 
         df = self.predict(X=self.X)
+        df['phi_deg'] = np.rad2deg(df['phi'])
 
         if model_test:
-            self.X.plot(y=self.phi_key, ax=ax, label='Model test')
+            X = self.X.copy()
+            X['phi_deg'] = np.rad2deg(X['phi'])
+            X.plot(y='phi_deg', ax=ax, label='Model test')
 
-        df.plot(y='phi', ax=ax, label=self.__repr__(),**kwargs)
+        df.plot(y='phi_deg', ax=ax, label=self.__repr__(),**kwargs)
 
         ax.legend()
         ax.set_xlabel('Time [s]')
-        ax.set_ylabel(self.phi_key)
+        ax.set_ylabel('$\Phi$ [deg]')
 
     def plot_error(self,X=None, ax=None, **kwargs):
         check_is_fitted(self, 'is_fitted_')

@@ -1,13 +1,13 @@
 import sympy as sp
 from rolldecayestimators.symbols import *
+import rolldecayestimators.direct_linear_estimator as direct_linear_estimator
 
 ##### Linear
-
 
 # Solve the diff equation by introducing helper variables:
 phi_old,p_old = me.dynamicsymbols('phi_old p_old')
 velocity_equation_linear = sp.Eq(lhs=phi.diff(),rhs=p_old)
-roll_diff_equation_linear_subs = roll_diff_equation_linear.subs(
+roll_diff_equation_linear_subs = direct_linear_estimator.roll_diff_equation.subs(
     [
         (phi.diff(), p_old),
         (phi, phi_old),
