@@ -6,7 +6,7 @@ from rolldecayestimators.symbols import *
 from rolldecayestimators.substitute_dynamic_symbols import lambdify
 
 dGM = sp.symbols('dGM')
-lhs = phi_dot_dot + 2*zeta*omega0*phi_dot + omega0**2*(phi+dGM*phi*sp.Abs(phi)) + d*sp.Abs(phi_dot)*phi_dot
+lhs = phi_dot_dot + 2*zeta*omega0*phi_dot + omega0**2*phi+(dGM*phi*sp.Abs(phi)) + d*sp.Abs(phi_dot)*phi_dot
 roll_diff_equation = sp.Eq(lhs=lhs, rhs=0)
 acceleration = sp.Eq(lhs=phi, rhs=sp.solve(roll_diff_equation, phi.diff().diff())[0])
 calculate_acceleration = lambdify(acceleration.rhs)

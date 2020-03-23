@@ -72,5 +72,6 @@ class DirectLinearEstimator(DirectEstimator):
 
         df['phi'] = states[:, 0]
         df['phi1d'] = states[:, 1]
+        df['phi2d'] = calculate_acceleration(omega0=omega0, phi1d=df['phi1d'], phi=df['phi'], zeta=zeta)
 
         return df

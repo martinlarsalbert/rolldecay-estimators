@@ -11,6 +11,8 @@ Disp = ss.Symbol(name='Disp',description='displacement',unit='m**3')
 M_x = ss.Symbol(name='M_x',description='External roll moment',unit='Nm')
 m = ss.Symbol(name='m',description='mass of ship',unit='kg')
 GM = ss.Symbol(name='GM', description='metacentric height', unit='m')
+dGM = ss.Symbol(name='dGM', description='metacentric height correction', unit='m/rad')
+omega = ss.Symbol(name='omega', description='Frequency of external moment', unit='Nm')
 
 phi = me.dynamicsymbols('phi')  # Roll angle
 phi_dot = phi.diff()
@@ -20,5 +22,12 @@ zeta = sp.Symbol('zeta') # Linear roll damping coefficeint
 omega0 = sp.Symbol('omega0')  # Natural roll frequency
 d = sp.Symbol('d')  # Nonlinear roll damping coefficient
 
+A_44 = ss.Symbol(name='A_44', description='General roll inertia', unit='kg*m**2')
+
+
 ## Functions:
 GZ = sp.Function('GZ')(phi)
+B_44 = sp.Function('B_{44}')(phi_dot)
+C_44 = sp.Function('C_{44}')(phi)
+M_44 = sp.Function('M_{44}')(omega*t)
+

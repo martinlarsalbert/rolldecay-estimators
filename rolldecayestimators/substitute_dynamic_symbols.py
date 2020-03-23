@@ -1,5 +1,6 @@
 import sympy as sp
 import sympy.physics.mechanics as me
+from inspect import signature
 
 def substitute_dynamic_symbols(expression):
     dynamic_symbols = me.find_dynamicsymbols(expression)
@@ -80,3 +81,8 @@ def lambdify(expression):
 
     lambda_function = sp.lambdify(symbols, new_expression, modules='numpy')
     return lambda_function
+
+def run(function,inputs):
+    s = signature(function)
+    input_names = set(s.parameters.keys())
+    return function(**inputs[input_names])
