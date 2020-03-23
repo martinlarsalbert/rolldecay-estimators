@@ -57,3 +57,24 @@ d_equation = sp.Eq(lhs=d, rhs=sp.solve(C_equation,d)[0])
 
 ##### Quadratic improved
 quadratic_stiffness_equation = sp.Eq(GZ,GM*phi+dGM*sp.Abs(phi)*phi)
+
+## Analytical
+diff_eq = sp.Eq(y.diff().diff() + 2*delta*omega0*y.diff() + omega0**2*y,0)
+equation_D = sp.Eq(D,sp.sqrt(1-delta**2))
+
+lhs = y
+rhs = sp.exp(-delta*omega0*t)*(y0*sp.cos(omega0*D*t) + (y0_dot/(omega0*D) + delta*y0/D)*sp.sin(omega0*D*t))
+analytical_solution_general = sp.Eq(lhs,rhs)
+
+subs = [
+    (y,phi),
+    (y0, phi_0),
+    (y0_dot, phi_0_dot),
+    (y0_dotdot, phi_0_dotdot),
+    (D,sp.solve(equation_D,D)[0]),
+    (delta, zeta),
+]
+
+analytical_solution = analytical_solution_general.subs(subs)
+analytical_phi1d = sp.Eq(phi_dot,sp.simplify(analytical_solution.rhs.diff(t)))
+analytical_phi2d = sp.Eq(phi_dot_dot,sp.simplify(analytical_phi1d.rhs.diff(t)))

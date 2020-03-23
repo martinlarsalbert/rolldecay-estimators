@@ -31,3 +31,15 @@ B_44 = sp.Function('B_{44}')(phi_dot)
 C_44 = sp.Function('C_{44}')(phi)
 M_44 = sp.Function('M_{44}')(omega*t)
 
+## Analytical
+delta = sp.symbols('delta')
+y = me.dynamicsymbols('y')
+y0 = me.dynamicsymbols('y0')
+y0_dot = y0.diff()
+y0_dotdot = y0_dot.diff()
+D = sp.symbols('D')
+
+phi_0 = me.dynamicsymbols('phi_0')
+phi_0_dot = phi_0.diff()
+phi_0_dotdot = phi_0_dot.diff()
+
