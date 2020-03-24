@@ -40,7 +40,7 @@ class DirectEstimator(BaseEstimator):
 
     """
 
-    def __init__(self, maxfev = 4000, bounds=None, ftol=10**-10):
+    def __init__(self, maxfev = 4000, bounds={}, ftol=10**-10, p0={}):
         self.is_fitted_ = False
 
         self.phi_key = 'phi'  # Roll angle [rad]
@@ -48,31 +48,33 @@ class DirectEstimator(BaseEstimator):
         self.phi2d_key = 'phi2d'  # Roll acceleration [rad/s2]
         self.maxfev = maxfev
         self.ftol = ftol
-
+        self.boundaries = bounds
+        self.p0 = p0
 
         signature = inspect.signature(self.equation)
         self.parameter_names = list(signature.parameters.keys())[1:]
 
-        self.define_bounds(bounds=bounds)
+    def get_inital_guess(self):
 
-    def define_bounds(self,bounds):
-        if bounds is None:
-            self.bounds = (-np.inf, np.inf)
-            return
+        p0 = []
+        for key in self.parameter_names:
+            p0.append(self.p0.get(key,0.5))
 
-        assert isinstance(bounds,dict)
+        return p0
+
+    def get_bounds(self):
 
         minimums = []
         maximums = []
 
         for key in self.parameter_names:
 
-            boundaries = bounds.get(key,(-np.inf, np.inf))
+            boundaries = self.boundaries.get(key,(-np.inf, np.inf))
             assert len(boundaries) == 2
             minimums.append(boundaries[0])
             maximums.append(boundaries[1])
 
-        self.bounds = [tuple(minimums), tuple(maximums)]
+        return [tuple(minimums), tuple(maximums)]
 
     def __repr__(self):
         if self.is_fitted_:
@@ -134,7 +136,7 @@ class DirectEstimator(BaseEstimator):
     def do_simulation(self, t, phi0, phi1d0):
         return self.simulate(t=t, **self.parameters, phi0=phi0, phi1d0=phi1d0)
 
-    def fit(self, X, y=None):
+    def fit(self, X, y=None, calculate_amplitudes_and_damping=True):
         """A reference implementation of a fitting function.
 
         Parameters
@@ -153,12 +155,15 @@ class DirectEstimator(BaseEstimator):
         # `fit` should always return `self`
 
         self.X = X.copy()
-        self.calculate_amplitudes_and_damping()
+        if calculate_amplitudes_and_damping:
+            self.calculate_amplitudes_and_damping()
 
-        self.X['omega0'] = self.omega0
+            self.X['omega0'] = self.omega0
 
 
-        popt, pcov = curve_fit(f=self.equation, xdata=self.X, ydata=self.X[self.phi2d_key],  maxfev=self.maxfev, ftol=self.ftol, bounds=self.bounds,)
+        popt, pcov = curve_fit(f=self.equation, xdata=self.X, ydata=self.X[self.phi2d_key],  maxfev=self.maxfev, ftol=self.ftol,
+                               bounds=self.get_bounds(),
+                               p0=self.get_inital_guess())
 
         parameter_values = list(popt)
         parameters = dict(zip(self.parameter_names, parameter_values))

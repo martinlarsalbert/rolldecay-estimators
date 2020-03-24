@@ -31,5 +31,8 @@ def test_fit_simualtion(df_roll_decay):
     X_pred = direct_estimator.predict(X=X)
     fig, ax = plt.subplots()
     X.plot(y='phi', ax=ax, label='actual')
-    X_pred.plot(y='phi', ax=ax, label='prediction')
+    X_pred.plot(y='phi', ax=ax, label='prediction', style='--')
     plt.show()
+
+    assert_almost_equal(X['phi'].values, X_pred['phi'].values, decimal=3)
+    assert direct_estimator.score(X) > 0.999

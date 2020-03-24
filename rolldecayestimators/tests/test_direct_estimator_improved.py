@@ -37,19 +37,4 @@ def test_fit_simualtion(df_roll_decay):
     assert_almost_equal(X['phi'].values, X_pred['phi'].values, decimal=3)
     assert direct_estimator.score(X) > 0.999
 
-def test_fit_simualtion_bounds(df_roll_decay):
-
-    bounds = {
-        'zeta':(-np.inf,0),
-        'd': (-np.inf,0),
-    }
-
-    direct_estimator = DirectEstimatorImproved(bounds=bounds)
-
-    X = df_roll_decay
-    X['phi2d'] = np.gradient(X['phi1d'].values, X.index.values)
-
-    direct_estimator.fit(X=X)
-    assert direct_estimator.parameters['zeta'] <= 0
-    assert direct_estimator.parameters['d'] <= 0
 

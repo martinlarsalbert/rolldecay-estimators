@@ -3,7 +3,8 @@ This is a module to be used as a reference for building other modules
 """
 import numpy as np
 import pandas as pd
-from scipy.integrate import odeint
+from scipy.optimize import curve_fit
+
 from rolldecayestimators.substitute_dynamic_symbols import lambdify
 from rolldecayestimators.symbols import *
 from rolldecayestimators import equations
@@ -32,7 +33,7 @@ class AnalyticalLinearEstimator(DirectEstimator):
 
         phi_01d=0  # Assuming zero here!
 
-        phi = analytical_solution_lambda(t=df.index,phi_0=phi_0, phi_01d=phi_01d, omega0=omega0, zeta=zeta)
+        phi = analytical_solution_lambda(t=np.array(df.index),phi_0=phi_0, phi_01d=phi_01d, omega0=omega0, zeta=zeta)
 
         return phi
 
@@ -55,3 +56,38 @@ class AnalyticalLinearEstimator(DirectEstimator):
         df['phi2d'] = analytical_solution_phi2s_lambda(t=df.index,phi_0=phi_0, phi_01d=phi_01d, omega0=omega0, zeta=zeta)
 
         return df
+
+    def fit(self, X, y=None, calculate_amplitudes_and_damping=True):
+        """A reference implementation of a fitting function.
+
+        Parameters
+        ----------
+        X : {array-like, sparse matrix}, shape (n_samples, n_features)
+            The training input samples.
+        y : Dummy not used.
+
+        Returns
+        -------
+        self : object
+            Returns self.
+        """
+        # X, y = check_X_y(X, y, accept_sparse=True)
+        self.is_fitted_ = True
+        # `fit` should always return `self`
+
+        self.X = X.copy()
+
+        self.boundaries['zeta'] = (0,0.999)  # The equation produce division by zero for zeta=0
+
+        popt, pcov = curve_fit(f=self.equation, xdata=self.X, ydata=self.X['phi'], maxfev=self.maxfev,
+                               ftol=self.ftol, bounds=self.get_bounds(),
+                               p0=self.get_inital_guess())
+
+        parameter_values = list(popt)
+        parameters = dict(zip(self.parameter_names, parameter_values))
+
+        self.parameters = parameters
+
+        self.pcov = pcov
+
+        return self

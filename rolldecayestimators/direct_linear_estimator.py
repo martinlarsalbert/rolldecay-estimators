@@ -7,6 +7,7 @@ from scipy.integrate import odeint
 from rolldecayestimators.substitute_dynamic_symbols import lambdify
 from rolldecayestimators.symbols import *
 
+
 from rolldecayestimators.direct_estimator import DirectEstimator
 
 
