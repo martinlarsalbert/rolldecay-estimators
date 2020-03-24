@@ -5,6 +5,9 @@ import numpy as np
 import pandas as pd
 from scipy.optimize import curve_fit
 
+from sklearn.utils.validation import check_is_fitted
+import inspect
+
 from rolldecayestimators.substitute_dynamic_symbols import lambdify
 from rolldecayestimators.symbols import *
 from rolldecayestimators import equations
@@ -29,31 +32,33 @@ class AnalyticalLinearEstimator(DirectEstimator):
     """
 
     @staticmethod
-    def equation(df,phi_0, omega0, zeta):
+    def equation(df, omega0, zeta):
 
-        phi_01d=0  # Assuming zero here!
+        phi_01d=0  # Assuming
+        phi_0=df.iloc[0]['phi_0']
 
         phi = analytical_solution_lambda(t=np.array(df.index),phi_0=phi_0, phi_01d=phi_01d, omega0=omega0, zeta=zeta)
 
         return phi
 
 
-    def simulate(self, t: np.ndarray, phi_0, omega0: float, zeta: float,**kwargs) -> pd.DataFrame:
+    def simulate(self, t: np.ndarray, phi0: float, phi1d0:float, omega0: float, zeta: float,**kwargs) -> pd.DataFrame:
         """
         Simulate a roll decay test using analytical solution
         :param t: time vector to be simulated [s]
-        :param phi_0: initial roll angle [rad]
+        :param phi0: initial roll angle [rad]
+        :param phi1d0: initial roll speed [rad/s]
         :param omega0: roll natural frequency[rad/s]
+        :param d: quadratic roll damping [-]
         :param zeta:linear roll damping [-]
-        :return: pandas data frame with time series of 'phi', 'phi1d', 'phi2d'
+        :return: pandas data frame with time series of 'phi' and 'phi1d'
         """
 
-
         df = pd.DataFrame(index=t)
-        df['phi'] = self.equation(df=df, phi_0=phi_0, omega0=omega0, zeta=zeta)
-        phi_01d=0
-        df['phi1d'] = analytical_solution_phi1d_lambda(t=df.index,phi_0=phi_0, phi_01d=phi_01d, omega0=omega0, zeta=zeta)
-        df['phi2d'] = analytical_solution_phi2s_lambda(t=df.index,phi_0=phi_0, phi_01d=phi_01d, omega0=omega0, zeta=zeta)
+        df['phi_0'] = phi0
+        df['phi'] = self.equation(df=df, omega0=omega0, zeta=zeta)
+        df['phi1d'] = analytical_solution_phi1d_lambda(t=df.index,phi_0=phi0, phi_01d=phi1d0, omega0=omega0, zeta=zeta)
+        df['phi2d'] = analytical_solution_phi2s_lambda(t=df.index,phi_0=phi0, phi_01d=phi1d0, omega0=omega0, zeta=zeta)
 
         return df
 
@@ -78,6 +83,7 @@ class AnalyticalLinearEstimator(DirectEstimator):
         self.X = X.copy()
 
         self.boundaries['zeta'] = (0,0.999)  # The equation produce division by zero for zeta=0
+        self.X['phi_0'] = X.iloc[0]['phi']
 
         popt, pcov = curve_fit(f=self.equation, xdata=self.X, ydata=self.X['phi'], maxfev=self.maxfev,
                                ftol=self.ftol, bounds=self.get_bounds(),

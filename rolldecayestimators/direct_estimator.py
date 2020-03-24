@@ -285,9 +285,7 @@ class DirectEstimator(BaseEstimator):
         check_is_fitted(self, 'is_fitted_')
 
         phi0 = X[self.phi_key].iloc[0]
-        phi1d0 = X[self.phi1d_key].iloc[0]
-
-        X.columns
+        phi1d0 = 0
 
         signature = inspect.signature(self.simulate)
         parameters = list(signature.parameters.keys())[1:]
