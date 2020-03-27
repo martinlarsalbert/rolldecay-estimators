@@ -40,7 +40,7 @@ class DirectEstimator(BaseEstimator):
 
     """
 
-    def __init__(self, maxfev = 4000, bounds={}, ftol=10**-10, p0={}):
+    def __init__(self, maxfev = 4000, bounds={}, ftol=10**-10, p0={}, omega_regression=False):
         self.is_fitted_ = False
 
         self.phi_key = 'phi'  # Roll angle [rad]
@@ -50,6 +50,7 @@ class DirectEstimator(BaseEstimator):
         self.ftol = ftol
         self.boundaries = bounds
         self.p0 = p0
+        self.omega_regression=omega_regression
 
         signature = inspect.signature(self.equation)
         self.parameter_names = list(signature.parameters.keys())[1:]
@@ -84,13 +85,17 @@ class DirectEstimator(BaseEstimator):
             return '%s' % (self.__class__.__name__)
 
     @staticmethod
-    def equation(df, d, zeta):
+    def _equation(df, d, zeta):
         phi_old = df['phi']
         p_old = df['phi1d']
         omega0 = df['omega0']
 
         phi2d = calculate_acceleration(d=d, omega0=omega0, phi1d=p_old, phi=phi_old, zeta=zeta)
         return phi2d
+
+    @property
+    def equation(self):
+        return self._equation
 
     def roll_decay_time_step(self, states, t, d, omega0, zeta):
         # states:
@@ -193,9 +198,46 @@ class DirectEstimator(BaseEstimator):
         -------
 
         """
-        return self.X_amplitudes['omega0'].mean()
 
+        #self.X_amplitudes['omega0'].mean()
+        frequencies, dft = self.fft(self.X['phi'])
+        omega0 = self.fft_omega0(frequencies=frequencies, dft=dft)
+        return omega0
 
+    @staticmethod
+    def fft_omega0(frequencies, dft):
+
+        index = np.argmax(dft)
+        natural_frequency = frequencies[index]
+        omega0 = 2*np.pi*natural_frequency
+        return omega0
+
+    @staticmethod
+    def fft(series):
+        """
+        FFT of a series
+        Parameters
+        ----------
+        series
+
+        Returns
+        -------
+
+        """
+
+        signal = series.values
+        time = series.index
+
+        number_of_samples = len(signal)  # Compute number of samples
+        nondimensional_frequencies = np.fft.rfftfreq(number_of_samples)
+
+        dt = np.mean(np.diff(time))  # Time step size in [s]
+        fs = 1 / dt  # Sampling frequency in [Hz]
+
+        frequencies = nondimensional_frequencies*fs
+        dft = np.abs(np.fft.rfft(signal))
+
+        return frequencies, dft
 
     @staticmethod
     def calculate_damping(X_amplitudes):
@@ -391,6 +433,20 @@ class DirectEstimator(BaseEstimator):
         ax.set_xlabel(r'$2/(3\pi)\Phi_n$', usetex=True)
         ax.set_ylabel(r'$\zeta_n$', usetex=True)
         ax.get_yaxis().get_major_formatter().set_useOffset(False)
+
+    def plot_fft(self, ax=None):
+        check_is_fitted(self, 'is_fitted_')
+
+        if ax is None:
+            fig,ax = plt.subplots()
+
+        frequencies, dft = self.fft(self.X['phi'])
+        omega=2*np.pi*frequencies
+
+        omega0 = self.fft_omega0(frequencies=frequencies, dft=dft)
+        index = np.argmax(np.abs(dft))
+        ax.plot(omega, dft)
+        ax.plot(omega0,dft[index],'ro')
 
 
 class DirectEstimatorZeta(DirectEstimator):

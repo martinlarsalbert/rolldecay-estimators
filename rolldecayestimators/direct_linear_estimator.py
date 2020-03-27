@@ -30,7 +30,16 @@ class DirectLinearEstimator(DirectEstimator):
     """
 
     @staticmethod
-    def equation(df, omega0, zeta):
+    def _equation(df, zeta):
+        phi_old = df['phi']
+        p_old = df['phi1d']
+        omega0 = df.iloc[0]['omega0']
+
+        phi2d = calculate_acceleration(omega0=omega0, phi1d=p_old, phi=phi_old, zeta=zeta)
+        return phi2d
+
+    @staticmethod
+    def _equation_omega(df, omega0, zeta):
         phi_old = df['phi']
         p_old = df['phi1d']
 

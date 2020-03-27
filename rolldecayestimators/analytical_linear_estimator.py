@@ -32,17 +32,36 @@ class AnalyticalLinearEstimator(DirectEstimator):
     """
 
     @staticmethod
-    def equation(df, omega0, zeta):
+    def _equation(df, zeta):
 
         phi_01d=0  # Assuming
         phi_0=df.iloc[0]['phi_0']
+        omega0=df.iloc[0]['omega0']
 
-        phi = analytical_solution_lambda(t=np.array(df.index),phi_0=phi_0, phi_01d=phi_01d, omega0=omega0, zeta=zeta)
+        t = np.array(df.index - df.index[0])
+        phi = analytical_solution_lambda(t=t,phi_0=phi_0, phi_01d=phi_01d, omega0=omega0, zeta=zeta)
 
         return phi
 
+    @staticmethod
+    def _equation_omega(df, omega0, zeta):
+        phi_01d = 0  # Assuming
+        phi_0 = df.iloc[0]['phi_0']
 
-    def simulate(self, t: np.ndarray, phi0: float, phi1d0:float, omega0: float, zeta: float,**kwargs) -> pd.DataFrame:
+        t = np.array(df.index - df.index[0])
+        phi = analytical_solution_lambda(t=t, phi_0=phi_0, phi_01d=phi_01d, omega0=omega0, zeta=zeta)
+
+        return phi
+
+    @property
+    def equation(self):
+        if self.omega_regression:
+            return self._equation_omega
+        else:
+            return self._equation
+
+    def simulate(self, t: np.ndarray, phi0: float, phi1d0:float, omega0: float, zeta: float,
+                 **kwargs) -> pd.DataFrame:
         """
         Simulate a roll decay test using analytical solution
         :param t: time vector to be simulated [s]
@@ -56,9 +75,13 @@ class AnalyticalLinearEstimator(DirectEstimator):
 
         df = pd.DataFrame(index=t)
         df['phi_0'] = phi0
-        df['phi'] = self.equation(df=df, omega0=omega0, zeta=zeta)
-        df['phi1d'] = analytical_solution_phi1d_lambda(t=df.index,phi_0=phi0, phi_01d=phi1d0, omega0=omega0, zeta=zeta)
-        df['phi2d'] = analytical_solution_phi2s_lambda(t=df.index,phi_0=phi0, phi_01d=phi1d0, omega0=omega0, zeta=zeta)
+
+        df['phi'] = self._equation_omega(df=df, omega0=omega0, zeta=zeta)
+
+
+        t0=t-t[0]
+        df['phi1d'] = analytical_solution_phi1d_lambda(t=t0,phi_0=phi0, phi_01d=phi1d0, omega0=omega0, zeta=zeta)
+        df['phi2d'] = analytical_solution_phi2s_lambda(t=t0,phi_0=phi0, phi_01d=phi1d0, omega0=omega0, zeta=zeta)
 
         return df
 
@@ -85,6 +108,9 @@ class AnalyticalLinearEstimator(DirectEstimator):
         self.boundaries['zeta'] = (0,0.999)  # The equation produce division by zero for zeta=0
         self.X['phi_0'] = X.iloc[0]['phi']
 
+        self.calculate_amplitudes_and_damping()
+        self.X['omega0'] = self.omega0
+
         popt, pcov = curve_fit(f=self.equation, xdata=self.X, ydata=self.X['phi'], maxfev=self.maxfev,
                                ftol=self.ftol, bounds=self.get_bounds(),
                                p0=self.get_inital_guess())
@@ -93,6 +119,8 @@ class AnalyticalLinearEstimator(DirectEstimator):
         parameters = dict(zip(self.parameter_names, parameter_values))
 
         self.parameters = parameters
+        if not 'omega0' in self.parameters:
+            self.parameters['omega0'] = self.omega0
 
         self.pcov = pcov
 
