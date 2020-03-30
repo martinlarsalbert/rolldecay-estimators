@@ -32,7 +32,11 @@ class AnalyticalLinearEstimator(DirectEstimator):
     """
 
     @staticmethod
-    def _equation(df, zeta):
+    def fit_derivation(df, zeta):
+        raise ValueError('Not yet implemented')
+
+    @staticmethod
+    def fit_integration(df, d, zeta):
 
         phi_01d=0  # Assuming
         phi_0=df.iloc[0]['phi_0']
@@ -52,13 +56,6 @@ class AnalyticalLinearEstimator(DirectEstimator):
         phi = analytical_solution_lambda(t=t, phi_0=phi_0, phi_01d=phi_01d, omega0=omega0, zeta=zeta)
 
         return phi
-
-    @property
-    def equation(self):
-        if self.omega_regression:
-            return self._equation_omega
-        else:
-            return self._equation
 
     def simulate(self, t: np.ndarray, phi0: float, phi1d0:float, omega0: float, zeta: float,
                  **kwargs) -> pd.DataFrame:

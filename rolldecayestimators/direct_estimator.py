@@ -38,9 +38,18 @@ class DirectEstimator(BaseEstimator):
             'd':(0,42),
             }
 
+    fit_method : str, default='integration'
+        The fitting method could be either 'integration' or 'derivation'
+        'integration' means that the diff equation is solved with ODE integration.
+        The curve_fit runs an integration for each set of parameters to get the best fit.
+
+        'derivation' means that the diff equation os solved by first calculating the 1st and 2nd derivatives numerically.
+        The derivatives are then inserted into the diff equation and the best fit is found.
+
+
     """
 
-    def __init__(self, maxfev = 4000, bounds={}, ftol=10**-10, p0={}, omega_regression=False):
+    def __init__(self, maxfev = 4000, bounds={}, ftol=10**-10, p0={}, omega_regression=False,fit_method='derivation'):
         self.is_fitted_ = False
 
         self.phi_key = 'phi'  # Roll angle [rad]
@@ -52,8 +61,85 @@ class DirectEstimator(BaseEstimator):
         self.p0 = p0
         self.omega_regression=omega_regression
 
+        self.fit_method=fit_method
+
         signature = inspect.signature(self.equation)
         self.parameter_names = list(signature.parameters.keys())[1:]
+
+    def __repr__(self):
+        if self.is_fitted_:
+            parameters = ''.join('%s:%0.3f, '%(key,value) for key,value in self.parameters.items())[0:-1]
+            return '%s(%s)' % (self.__class__.__name__,parameters)
+        else:
+            return '%s' % (self.__class__.__name__)
+
+    @staticmethod
+    def fit_derivation_omega(df, zeta, d, omega0):
+        phi_old = df['phi']
+        p_old = df['phi1d']
+
+        phi2d = calculate_acceleration(d=d, omega0=omega0, phi1d=p_old, phi=phi_old, zeta=zeta)
+        return phi2d
+
+    @staticmethod
+    def fit_integration_omega(df, zeta, d, omega0):
+
+        phi_old = df['phi']
+        p_old = df['phi1d']
+
+        def roll_decay_time_step(states, t, zeta, d, omega0):
+            # states:
+            # [phi,phi1d]
+
+            phi_old = states[0]
+            p_old = states[1]
+
+            phi1d = p_old
+            phi2d = calculate_acceleration(omega0=omega0, phi1d=p_old, phi=phi_old, zeta=zeta, d=d)
+
+            d_states_dt = np.array([phi1d, phi2d])
+
+            return d_states_dt
+
+        phi0 = df.iloc[0]['phi']
+        phi1d0 = 0
+        states0 = [phi0, phi1d0]
+        args = (
+            zeta,
+            d,
+            omega0,
+        )
+        t = np.array(df.index)
+        states = odeint(func=roll_decay_time_step, y0=states0, t=t, args=args)
+
+        df = pd.DataFrame(index=t)
+
+        phi = states[:, 0]
+        return phi
+
+    @property
+    def equation(self):
+
+        if self.fit_method == 'integration':
+            fitter = self.fit_integration_omega
+            self.fit_y_key = 'phi'
+        elif self.fit_method == 'derivation':
+            fitter = self.fit_derivation_omega
+            self.fit_y_key = 'phi2d'
+        else:
+            raise ValueError('Fit method:%s does not exist' % self.fit_method)
+
+        def equation_no_omega(df, zeta, d):
+            omega0 = float(df.iloc[0]['omega0'])
+            return fitter(df=df, zeta=zeta, d=d, omega0=omega0)
+
+        def equation_omega(df, zeta, d, omega0):
+            return fitter(df=df, zeta=zeta, d=d, omega0=omega0)
+
+        if self.omega_regression:
+            return equation_omega
+        else:
+            return equation_no_omega
 
     def get_inital_guess(self):
 
@@ -76,26 +162,6 @@ class DirectEstimator(BaseEstimator):
             maximums.append(boundaries[1])
 
         return [tuple(minimums), tuple(maximums)]
-
-    def __repr__(self):
-        if self.is_fitted_:
-            parameters = ''.join('%s:%0.3f, '%(key,value) for key,value in self.parameters.items())[0:-1]
-            return '%s(%s)' % (self.__class__.__name__,parameters)
-        else:
-            return '%s' % (self.__class__.__name__)
-
-    @staticmethod
-    def _equation(df, d, zeta):
-        phi_old = df['phi']
-        p_old = df['phi1d']
-        omega0 = df['omega0']
-
-        phi2d = calculate_acceleration(d=d, omega0=omega0, phi1d=p_old, phi=phi_old, zeta=zeta)
-        return phi2d
-
-    @property
-    def equation(self):
-        return self._equation
 
     def roll_decay_time_step(self, states, t, d, omega0, zeta):
         # states:
@@ -166,7 +232,7 @@ class DirectEstimator(BaseEstimator):
             self.X['omega0'] = self.omega0
 
 
-        popt, pcov = curve_fit(f=self.equation, xdata=self.X, ydata=self.X[self.phi2d_key],  maxfev=self.maxfev, ftol=self.ftol,
+        popt, pcov = curve_fit(f=self.equation, xdata=self.X, ydata=self.X[self.fit_y_key],  maxfev=self.maxfev, ftol=self.ftol,
                                bounds=self.get_bounds(),
                                p0=self.get_inital_guess())
 
