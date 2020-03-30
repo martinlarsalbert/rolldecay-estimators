@@ -8,6 +8,7 @@ from rolldecayestimators.simulation_linear import simulate
 from rolldecayestimators.direct_linear_estimator import DirectLinearEstimator
 import matplotlib.pyplot as plt
 
+
 @pytest.fixture
 def df_roll_decay():
 
