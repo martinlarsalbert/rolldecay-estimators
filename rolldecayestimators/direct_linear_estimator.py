@@ -30,33 +30,21 @@ class DirectLinearEstimator(DirectEstimator):
         A parameter used for demonstation of how to pass and store paramters.
     """
 
-    @property
-    def equation(self):
-        return self._equation_omega
-
     @staticmethod
-    def _equation(df, zeta):
+    def fit_derivation_omega(df, zeta, omega0):
         phi_old = df['phi']
         p_old = df['phi1d']
-        omega0 = df.iloc[0]['omega0']
 
         phi2d = calculate_acceleration(omega0=omega0, phi1d=p_old, phi=phi_old, zeta=zeta)
         return phi2d
 
-    #@staticmethod
-    #def _equation_omega(df, omega0, zeta):
-    #    phi_old = df['phi']
-    #    p_old = df['phi1d']
-    #
-    #    phi2d = calculate_acceleration(omega0=omega0, phi1d=p_old, phi=phi_old, zeta=zeta)
-    #    return phi2d
-
     @staticmethod
-    def _equation_omega(df, omega0, zeta):
+    def fit_integration_omega(df, zeta, omega0):
+
         phi_old = df['phi']
         p_old = df['phi1d']
 
-        def roll_decay_time_step(states, t, omega0, zeta):
+        def roll_decay_time_step(states, t, zeta, omega0):
             # states:
             # [phi,phi1d]
 
@@ -74,8 +62,9 @@ class DirectLinearEstimator(DirectEstimator):
         phi1d0 = 0
         states0 = [phi0, phi1d0]
         args = (
-            omega0,
             zeta,
+            d,
+            omega0,
         )
         t = np.array(df.index)
         states = odeint(func=roll_decay_time_step, y0=states0, t=t, args=args)
@@ -85,46 +74,22 @@ class DirectLinearEstimator(DirectEstimator):
         phi = states[:, 0]
         return phi
 
-    def fit(self, X, y=None, calculate_amplitudes_and_damping=True):
-        """A reference implementation of a fitting function.
+    @property
+    def equation(self):
 
-        Parameters
-        ----------
-        X : {array-like, sparse matrix}, shape (n_samples, n_features)
-            The training input samples.
-        y : Dummy not used.
+        fitter = self.get_fitter()
 
-        Returns
-        -------
-        self : object
-            Returns self.
-        """
-        #X, y = check_X_y(X, y, accept_sparse=True)
-        self.is_fitted_ = True
-        # `fit` should always return `self`
+        def equation_no_omega(df, zeta):
+            omega0 = float(df.iloc[0]['omega0'])
+            return fitter(df=df, zeta=zeta, omega0=omega0)
 
-        self.X = X.copy()
-        if calculate_amplitudes_and_damping:
-            self.calculate_amplitudes_and_damping()
+        def equation_omega(df, zeta, omega0):
+            return fitter(df=df, zeta=zeta, omega0=omega0)
 
-            self.X['omega0'] = self.omega0
-
-
-        popt, pcov = curve_fit(f=self.equation, xdata=self.X, ydata=self.X[self.phi_key],  maxfev=self.maxfev, ftol=self.ftol,
-                               bounds=self.get_bounds(),
-                               p0=self.get_inital_guess())
-
-        parameter_values = list(popt)
-        parameters = dict(zip(self.parameter_names, parameter_values))
-
-        self.parameters=parameters
-
-        if not 'omega0' in self.parameters:
-            self.parameters['omega0'] = self.omega0
-
-        self.pcov = pcov
-
-        return self
+        if self.omega_regression:
+            return equation_omega
+        else:
+            return equation_no_omega
 
 
     def roll_decay_time_step(self, states, t, omega0, zeta):

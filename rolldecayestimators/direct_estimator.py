@@ -117,17 +117,22 @@ class DirectEstimator(BaseEstimator):
         phi = states[:, 0]
         return phi
 
+    def get_fitter(self):
+        if self.fit_method == 'integration':
+            self.fit_y_key = 'phi'
+            return self.fit_integration_omega
+
+        elif self.fit_method == 'derivation':
+            self.fit_y_key = 'phi2d'
+            return self.fit_derivation_omega
+
+        else:
+            raise ValueError('Fit method:%s does not exist' % self.fit_method)
+
     @property
     def equation(self):
 
-        if self.fit_method == 'integration':
-            fitter = self.fit_integration_omega
-            self.fit_y_key = 'phi'
-        elif self.fit_method == 'derivation':
-            fitter = self.fit_derivation_omega
-            self.fit_y_key = 'phi2d'
-        else:
-            raise ValueError('Fit method:%s does not exist' % self.fit_method)
+        fitter = self.get_fitter()
 
         def equation_no_omega(df, zeta, d):
             omega0 = float(df.iloc[0]['omega0'])

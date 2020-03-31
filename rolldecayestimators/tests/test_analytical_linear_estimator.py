@@ -51,7 +51,7 @@ def test_fit_simualtion(df_roll_decay):
 
 def test_fit_simualtion2(df_roll_decay_minus):
 
-    direct_estimator = AnalyticalLinearEstimator()
+    direct_estimator = AnalyticalLinearEstimator(fit_method='integration')
 
     X = df_roll_decay_minus
     X['phi2d'] = np.gradient(X['phi1d'].values, X.index.values)
