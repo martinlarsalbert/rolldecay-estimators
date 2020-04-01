@@ -26,6 +26,8 @@ class RollDecay(BaseEstimator):
         self.phi_key = 'phi'  # Roll angle [rad]
         self.phi1d_key = 'phi1d'  # Roll velocity [rad/s]
         self.phi2d_key = 'phi2d'  # Roll acceleration [rad/s2]
+        self.boundaries = bounds
+        self.p0 = p0
 
     def __repr__(self):
         if self.is_fitted_:
@@ -61,7 +63,7 @@ class RollDecay(BaseEstimator):
                   'xs': X,
                   'ys': X[self.phi2d_key]}
 
-        self.result = least_squares(fun=self.error, x0=[0.5, 0.5, 0.5], kwargs=kwargs)
+        self.result = least_squares(fun=self.error, x0=self.initial_guess, kwargs=kwargs, bounds=self.bounds)
         self.parameters = {key: x for key, x in zip(self.parameter_names, self.result.x)}
 
         self.is_fitted_ = True
@@ -161,3 +163,27 @@ class RollDecay(BaseEstimator):
         df_sim = self.predict(X)
         y_pred = df_sim[self.phi_key]
         return y_true, y_pred
+
+    @property
+    def bounds(self):
+
+        minimums = []
+        maximums = []
+
+        for key in self.parameter_names:
+
+            boundaries = self.boundaries.get(key,(-np.inf, np.inf))
+            assert len(boundaries) == 2
+            minimums.append(boundaries[0])
+            maximums.append(boundaries[1])
+
+        return [tuple(minimums), tuple(maximums)]
+
+    @property
+    def initial_guess(self):
+
+        p0 = []
+        for key in self.parameter_names:
+            p0.append(self.p0.get(key,0.5))
+
+        return p0
