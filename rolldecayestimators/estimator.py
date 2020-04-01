@@ -27,6 +27,13 @@ class RollDecay(BaseEstimator):
         self.phi1d_key = 'phi1d'  # Roll velocity [rad/s]
         self.phi2d_key = 'phi2d'  # Roll acceleration [rad/s2]
 
+    def __repr__(self):
+        if self.is_fitted_:
+            parameters = ''.join('%s:%0.3f, '%(key,value) for key,value in self.parameters.items())[0:-1]
+            return '%s(%s)' % (self.__class__.__name__,parameters)
+        else:
+            return '%s' % (self.__class__.__name__)
+
     @property
     def calculate_acceleration(self):
         return self.functions[0]
@@ -59,8 +66,36 @@ class RollDecay(BaseEstimator):
 
         self.is_fitted_ = True
 
+    def simulate(self, t :np.ndarray, phi0 :float, phi1d0 :float,omega0:float, d:float, zeta:float)->pd.DataFrame:
+        """
+        Simulate a roll decay test using the quadratic method.
+        :param t: time vector to be simulated [s]
+        :param phi0: initial roll angle [rad]
+        :param phi1d0: initial roll speed [rad/s]
+        :param omega0: roll natural frequency[rad/s]
+        :param d: quadratic roll damping [-]
+        :param zeta:linear roll damping [-]
+        :return: pandas data frame with time series of 'phi' and 'phi1d'
+        """
+        parameters={
+            'omega0':omega0,
+            'zeta':zeta,
+            'd':d,
+        }
+        return self._simulate(t=t, phi0=phi0, phi1d0=phi1d0, parameters=parameters)
+
+    def _simulate(self,t,phi0, phi1d0, parameters:dict)->pd.DataFrame:
+
+        states0 = [phi0, phi1d0]
+        states = odeint(self.roll_decay_time_step, y0=states0, t=t, args=(self,parameters))
+        df = pd.DataFrame(index=t)
+        df[self.phi_key] = states[:, 0]
+        df[self.phi1d_key] = states[:, 1]
+
+        return df
+
     @staticmethod
-    def roll_decay_time_step(states, t, self):
+    def roll_decay_time_step(states, t, self, parameters):
         # states:
         # [phi,phi1d]
 
@@ -69,7 +104,7 @@ class RollDecay(BaseEstimator):
 
         phi1d = p_old
         calculate_acceleration = self.calculate_acceleration
-        phi2d = calculate_acceleration(phi1d=p_old, phi=phi_old, **self.parameters)
+        phi2d = calculate_acceleration(phi1d=p_old, phi=phi_old, **parameters)
 
         d_states_dt = np.array([phi1d, phi2d])
 
@@ -81,16 +116,9 @@ class RollDecay(BaseEstimator):
 
         phi0 = X[self.phi_key].iloc[0]
         phi1d0 = X[self.phi1d_key].iloc[0]
-        states0 = [phi0, phi1d0]
-
         t = np.array(X.index)
-        states = odeint(self.roll_decay_time_step, y0=states0, t=t, args=(self,))
-        df = pd.DataFrame(index=t)
+        return self._simulate(t=t, phi0=phi0, phi1d0=phi1d0, parameters=self.parameters)
 
-        df[self.phi_key] = states[:, 0]
-        df[self.phi1d_key] = states[:, 1]
-
-        return df
 
     def score(self, X=None, y=None, sample_weight=None):
         """

@@ -4,7 +4,6 @@ from numpy.testing import assert_almost_equal
 import matplotlib.pyplot as plt
 
 from rolldecayestimators.estimator import RollDecay
-from rolldecayestimators.direct_estimator import DirectEstimator
 
 @pytest.fixture
 def df_roll_decay():
@@ -17,7 +16,7 @@ def df_roll_decay():
     zeta = 0.044
     N = 1000
     t = np.linspace(0, 120, N)
-    estimator = DirectEstimator()
+    estimator = RollDecay()
     yield estimator.simulate(t=t, phi0=phi0, phi1d0=phi1d0, omega0=omega0, d=d, zeta=zeta)
 
 def test_roll_decay(df_roll_decay):

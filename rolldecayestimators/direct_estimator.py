@@ -67,13 +67,6 @@ class DirectEstimator(BaseEstimator):
         self.parameter_names = list(signature.parameters.keys())[1:]
 
 
-    def __repr__(self):
-        if self.is_fitted_:
-            parameters = ''.join('%s:%0.3f, '%(key,value) for key,value in self.parameters.items())[0:-1]
-            return '%s(%s)' % (self.__class__.__name__,parameters)
-        else:
-            return '%s' % (self.__class__.__name__)
-
     @property
     def calculate_acceleration(self):
         return self.functions[0]
