@@ -26,7 +26,7 @@ class DirectEstimatorImproved(DirectEstimator):
     """
 
     @staticmethod
-    def equation(df, omega0, zeta, dGM, d):
+    def estimator(df, omega0, zeta, dGM, d):
         phi = df['phi']
         phi1d = df['phi1d']
 

@@ -31,7 +31,7 @@ class DirectLinearEstimator(DirectEstimator):
     """
 
     def run_after_init(self):
-        signature = inspect.signature(self.equation)
+        signature = inspect.signature(self.estimator)
         self.parameter_names = list(signature.parameters.keys())[1:]
 
     @staticmethod
@@ -79,7 +79,7 @@ class DirectLinearEstimator(DirectEstimator):
         return phi
 
     @property
-    def equation(self):
+    def estimator(self):
 
         fitter = self.get_fitter()
 

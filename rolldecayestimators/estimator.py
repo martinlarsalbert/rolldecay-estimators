@@ -15,19 +15,33 @@ from rolldecayestimators.symbols import *
 class RollDecay(BaseEstimator):
 
     # Defining the diff equation for this estimator:
-    rhs = -phi_dot_dot / (omega0 ** 2) - 2 * zeta / omega0 * phi_dot - d * sp.Abs(phi_dot) * phi_dot / (omega0 ** 2)
+    rhs = -phi_dot_dot/(omega0**2) - 2*zeta/omega0*phi_dot
     roll_diff_equation = sp.Eq(lhs=phi, rhs=rhs)
     acceleration = sp.Eq(lhs=phi, rhs=sp.solve(roll_diff_equation, phi.diff().diff())[0])
     functions = (lambdify(acceleration.rhs),)
 
-    def __init__(self, maxfev = 4000, bounds={}, ftol=10**-10, p0={}, omega_regression=False,fit_method='derivation'):
+    def __init__(self, maxfev = 4000, bounds={}, ftol=10**-10, p0={}, fit_method='derivation'):
         self.is_fitted_ = False
 
         self.phi_key = 'phi'  # Roll angle [rad]
         self.phi1d_key = 'phi1d'  # Roll velocity [rad/s]
         self.phi2d_key = 'phi2d'  # Roll acceleration [rad/s2]
+        self.y_key = self.phi2d_key
         self.boundaries = bounds
         self.p0 = p0
+        self.maxfev=maxfev
+        self.ftol=ftol
+        self.set_fit_method(fit_method=fit_method)
+
+    def set_fit_method(self,fit_method):
+        self.fit_method = fit_method
+
+        if self.fit_method == 'derivation':
+            self.y_key=self.phi2d_key
+        elif self.fit_method == 'integration':
+            self.y_key=self.phi_key
+        else:
+            raise ValueError('Unknown fit_mehod:%s' % self.fit_method)
 
     def __repr__(self):
         if self.is_fitted_:
@@ -47,42 +61,58 @@ class RollDecay(BaseEstimator):
 
     @staticmethod
     def error(x, self, xs, ys):
-        return ys - self.equation(x, xs)
+        return ys - self.estimator(x, xs)
 
-    def equation(self, x, xs):
+    def estimator(self, x, xs):
         parameters = {key: x for key, x in zip(self.parameter_names, x)}
 
-        phi = xs[self.phi_key]
-        phi1d = xs[self.phi1d_key]
+        if self.fit_method=='derivation':
+            parameters['phi'] = xs[self.phi_key]
+            parameters['phi1d'] = xs[self.phi1d_key]
+            return self.estimator_acceleration(parameters=parameters)
+        elif self.fit_method=='integration':
+            t = xs.index
+            phi0=xs.iloc[0][self.phi_key]
+            phi1d0=xs.iloc[0][self.phi1d_key]
 
-        acceleration = self.calculate_acceleration(phi=phi, phi1d=phi1d, **parameters)
+            return self.estimator_integration(t=t, phi0=phi0, phi1d0=phi1d0, parameters=parameters)
+        else:
+            raise ValueError('Unknown fit_mehod:%s' % self.fit_method)
+
+    def estimator_acceleration(self,parameters):
+        acceleration = self.calculate_acceleration(**parameters)
         return acceleration
+
+    def estimator_integration(self, t, phi0, phi1d0, parameters):
+        parameters=dict(parameters)
+
+        df = self._simulate(t=t,phi0=phi0, phi1d0=phi1d0,parameters=parameters )
+        return df[self.y_key]
 
     def fit(self, X):
         kwargs = {'self': self,
                   'xs': X,
-                  'ys': X[self.phi2d_key]}
+                  'ys': X[self.y_key]}
 
-        self.result = least_squares(fun=self.error, x0=self.initial_guess, kwargs=kwargs, bounds=self.bounds)
+        self.result = least_squares(fun=self.error, x0=self.initial_guess, kwargs=kwargs, bounds=self.bounds,
+                                    ftol=self.ftol, max_nfev=self.maxfev)
         self.parameters = {key: x for key, x in zip(self.parameter_names, self.result.x)}
 
         self.is_fitted_ = True
 
-    def simulate(self, t :np.ndarray, phi0 :float, phi1d0 :float,omega0:float, d:float, zeta:float)->pd.DataFrame:
+    def simulate(self, t :np.ndarray, phi0 :float, phi1d0 :float,omega0:float, zeta:float)->pd.DataFrame:
         """
         Simulate a roll decay test using the quadratic method.
         :param t: time vector to be simulated [s]
         :param phi0: initial roll angle [rad]
         :param phi1d0: initial roll speed [rad/s]
         :param omega0: roll natural frequency[rad/s]
-        :param d: quadratic roll damping [-]
         :param zeta:linear roll damping [-]
         :return: pandas data frame with time series of 'phi' and 'phi1d'
         """
         parameters={
             'omega0':omega0,
             'zeta':zeta,
-            'd':d,
         }
         return self._simulate(t=t, phi0=phi0, phi1d0=phi1d0, parameters=parameters)
 

@@ -4,7 +4,6 @@ This is a module to be used as a reference for building other modules
 import numpy as np
 import pandas as pd
 from scipy.integrate import odeint
-from sklearn.base import BaseEstimator
 from sklearn.utils.validation import check_is_fitted
 import inspect
 from scipy.optimize import least_squares
@@ -14,9 +13,10 @@ from sklearn.metrics import r2_score
 
 from rolldecayestimators.substitute_dynamic_symbols import lambdify
 from rolldecayestimators.symbols import *
+from rolldecayestimators.estimator import RollDecay
 
 
-class DirectEstimator(BaseEstimator):
+class DirectEstimator(RollDecay):
     """ A template estimator to be used as a reference implementation.
 
     For more information regarding how to build your own estimator, read more
@@ -48,69 +48,22 @@ class DirectEstimator(BaseEstimator):
     acceleration = sp.Eq(lhs=phi, rhs=sp.solve(roll_diff_equation, phi.diff().diff())[0])
     functions = (lambdify(acceleration.rhs),)
 
-
-
     def __init__(self, maxfev = 4000, bounds={}, ftol=10**-10, p0={}, omega_regression=False,fit_method='derivation'):
-        self.is_fitted_ = False
+        super().__init__(maxfev=maxfev, bounds=bounds, ftol=ftol, p0=p0)
 
-        self.phi_key = 'phi'  # Roll angle [rad]
-        self.phi1d_key = 'phi1d'  # Roll velocity [rad/s]
-        self.phi2d_key = 'phi2d'  # Roll acceleration [rad/s2]
-        self.maxfev = maxfev
-        self.ftol = ftol
-        self.boundaries = bounds
-        self.p0 = p0
         self.omega_regression=omega_regression
 
-        self.fit_method = fit_method
-        signature = inspect.signature(self.equation)
-        self.parameter_names = list(signature.parameters.keys())[1:]
-
-
-    @property
-    def calculate_acceleration(self):
-        return self.functions[0]
-
-    #@property
-    #def parameter_names(self):
-    #    signature = inspect.signature(self.calculate_acceleration)
-    #    return set(signature.parameters.keys()) - set(['phi', 'phi1d'])
-
-    @staticmethod
-    def error(x, self, xs, ys):
-        return ys - self.equation(x, xs)
-
-    def equation(self, x, xs):
-
-        parameters = {key: x for key, x in zip(self.parameter_names, x)}
-
-        phi = xs['phi']
-        phi1d = xs['phi1d']
-
-        acceleration = self.calculate_acceleration(phi=phi, phi1d=phi1d, **parameters)
-        return acceleration
-
-    def fit(self, X):
-
-        kwargs = {'self': self,
-                  'xs': X,
-                  'ys': X['phi2d']}
-
-        self.result = least_squares(fun=self.error, x0=[0.5, 0.5, 0.5], kwargs=kwargs)
-        self.parameters = {key: x for key, x in zip(self.parameter_names, self.result.x)}
-
-    def simulate(self, t :np.ndarray, phi0 :float, phi1d0 :float,omega0:float, d:float, zeta:float)->pd.DataFrame:
+    def simulate(self, t :np.ndarray, phi0 :float, phi1d0 :float,omega0:float, zeta:float, d:float)->pd.DataFrame:
         """
         Simulate a roll decay test using the quadratic method.
         :param t: time vector to be simulated [s]
         :param phi0: initial roll angle [rad]
         :param phi1d0: initial roll speed [rad/s]
         :param omega0: roll natural frequency[rad/s]
-        :param d: quadratic roll damping [-]
         :param zeta:linear roll damping [-]
+        :param d:quadratic roll damping [-]
         :return: pandas data frame with time series of 'phi' and 'phi1d'
         """
-
         parameters={
             'omega0':omega0,
             'zeta':zeta,
@@ -118,216 +71,17 @@ class DirectEstimator(BaseEstimator):
         }
         return self._simulate(t=t, phi0=phi0, phi1d0=phi1d0, parameters=parameters)
 
-    def _simulate(self, t :np.ndarray, phi0 :float, phi1d0 :float, parameters:dict):
+    def estimator(self, x, xs):
+
+        phi = xs[self.phi_key]
+        phi1d = xs[self.phi1d_key]
+
+        parameters = {key: x for key, x in zip(self.parameter_names, x)}
+
+        acceleration = self.calculate_acceleration(phi=phi, phi1d=phi1d, **parameters)
+        return acceleration
 
 
-        states0 = [phi0, phi1d0]
-        args = (
-            self,
-            parameters,
-        )
-        states = odeint(func=self.roll_decay_time_step, y0=states0, t=t, args=args)
-
-        df = pd.DataFrame(index=t)
-
-        df['phi'] = states[:, 0]
-        df['phi1d'] = states[:,1]
-
-        return df
-
-    @staticmethod
-    def roll_decay_time_step(states, t, self, parameters):
-        # states:
-        # [phi,phi1d]
-
-        phi_old = states[0]
-        p_old = states[1]
-
-        phi1d = p_old
-        calculate_acceleration = self.calculate_acceleration
-        phi2d = calculate_acceleration(phi1d=p_old, phi=phi_old, **parameters)
-
-        d_states_dt = np.array([phi1d, phi2d])
-
-        return d_states_dt
-
-    #def fit(self, X, y=None, calculate_amplitudes_and_damping=True):
-    #    """A reference implementation of a fitting function.
-    #
-    #    Parameters
-    #    ----------
-    #    X : {array-like, sparse matrix}, shape (n_samples, n_features)
-    #        The training input samples.
-    #    y : Dummy not used.
-    #
-    #    Returns
-    #    -------
-    #    self : object
-    #        Returns self.
-    #    """
-    #    #X, y = check_X_y(X, y, accept_sparse=True)
-    #    self.is_fitted_ = True
-    #    # `fit` should always return `self`
-    #
-    #    self.X = X.copy()
-    #    if calculate_amplitudes_and_damping:
-    #        self.calculate_amplitudes_and_damping()
-    #
-    #        self.X['omega0'] = self.omega0
-    #
-    #
-    #    popt, pcov = curve_fit(f=self.equation, xdata=self.X, ydata=self.X[self.fit_y_key],  maxfev=self.maxfev, ftol=self.ftol,
-    #                           bounds=self.get_bounds(),
-    #                           p0=self.get_inital_guess(),
-    #                           calculate_acceleration=self.calculate_acceleration)
-    #
-    #    parameter_values = list(popt)
-    #    parameters = dict(zip(self.parameter_names, parameter_values))
-    #
-    #    self.parameters=parameters
-    #
-    #    if not 'omega0' in self.parameters:
-    #        self.parameters['omega0'] = self.omega0
-    #
-    #    self.pcov = pcov
-    #
-    #    return self
-
-    def predict(self, X):
-        """ A reference implementation of a predicting function.
-
-        Parameters
-        ----------
-        X : {array-like, sparse matrix}, shape (n_samples, n_features)
-            The training input samples.
-
-        Returns
-        -------
-        y : ndarray, shape (n_samples,)
-            Returns an array of ones.
-        """
-        #X = check_array(X, accept_sparse=True)
-        check_is_fitted(self, 'is_fitted_')
-
-        phi0 = X[self.phi_key].iloc[0]
-        phi1d0 = 0
-
-        states0 = [phi0, phi1d0]
-
-        def roll_decay_time_step(states, t):
-            # states:
-            # [phi,phi1d]
-
-            phi_old = states[0]
-            p_old = states[1]
-
-            phi1d = p_old
-            phi2d = self.calculate_acceleration(phi1d=p_old, phi=phi_old, **self.parameters)
-
-            d_states_dt = np.array([phi1d, phi2d])
-
-            return d_states_dt
-
-        t = np.array(X.index)
-        states = odeint(roll_decay_time_step, y0=states0, t=t)
-        df = pd.DataFrame(index=t)
-
-        df['phi'] = states[:, 0]
-        df['phi1d'] = states[:, 1]
-
-        return df
-
-    @staticmethod
-    def fit_derivation_omega(df, zeta, d, omega0, calculate_acceleration):
-        phi_old = df['phi']
-        p_old = df['phi1d']
-
-        phi2d = calculate_acceleration(d=d, omega0=omega0, phi1d=p_old, phi=phi_old, zeta=zeta)
-        return phi2d
-
-    @staticmethod
-    def fit_integration_omega(df, zeta, d, omega0, calculate_acceleration):
-
-        parameters =  {
-            'zeta':zeta,
-            'd':d,
-            'omega0':omega0,
-        }
-
-        def roll_decay_time_step(states, t):
-            # states:
-            # [phi,phi1d]
-
-            phi_old = states[0]
-            p_old = states[1]
-
-            phi1d = p_old
-            phi2d = calculate_acceleration(phi1d=p_old, phi=phi_old, **parameters)
-
-            d_states_dt = np.array([phi1d, phi2d])
-
-            return d_states_dt
-
-        phi0 = df['phi'].iloc[0]
-        phi1d0 = 0
-        states0 = [phi0, phi1d0]
-        t = np.array(df.index)
-        states = odeint(roll_decay_time_step, y0=states0, t=t)
-
-        phi = states[:, 0]
-
-        return phi
-
-    def get_fitter(self):
-        if self.fit_method == 'integration':
-            self.fit_y_key = 'phi'
-            return self.fit_integration_omega
-
-        elif self.fit_method == 'derivation':
-            self.fit_y_key = 'phi2d'
-            return self.fit_derivation_omega
-
-        else:
-            raise ValueError('Fit method:%s does not exist' % self.fit_method)
-
-    @property
-    def equation(self):
-
-        fitter = self.get_fitter()
-
-        def equation_no_omega(df, zeta, d, calculate_acceleration):
-            omega0 = float(df.iloc[0]['omega0'])
-            return fitter(df=df, zeta=zeta, d=d, omega0=omega0, calculate_acceleration=calculate_acceleration)
-
-        def equation_omega(df, zeta, d, omega0, calculate_acceleration):
-            return fitter(df=df, zeta=zeta, d=d, omega0=omega0, calculate_acceleration=calculate_acceleration)
-
-        if self.omega_regression:
-            return equation_omega
-        else:
-            return equation_no_omega
-
-    def get_inital_guess(self):
-
-        p0 = []
-        for key in self.parameter_names:
-            p0.append(self.p0.get(key,0.5))
-
-        return p0
-
-    def get_bounds(self):
-
-        minimums = []
-        maximums = []
-
-        for key in self.parameter_names:
-
-            boundaries = self.boundaries.get(key,(-np.inf, np.inf))
-            assert len(boundaries) == 2
-            minimums.append(boundaries[0])
-            maximums.append(boundaries[1])
-
-        return [tuple(minimums), tuple(maximums)]
 
     def calculate_amplitudes_and_damping(self):
         X_interpolated = measure.sample_increase(X=self.X)
@@ -409,17 +163,8 @@ class DirectEstimator(BaseEstimator):
 
         return X_amplitudes_new
 
-    def true_and_prediction(self, X=None):
 
-        if X is None:
-            X=self.X
-
-        y_true = X[self.phi_key]
-        df_sim = self.predict(X)
-        y_pred = df_sim[self.phi_key]
-        return y_true, y_pred
-
-    def error(self, X):
+    def measure_error(self, X):
         y_true, y_pred = self.true_and_prediction(X=X)
         return y_pred - y_true
 
@@ -509,7 +254,7 @@ class DirectEstimator(BaseEstimator):
         if ax is None:
             fig, ax = plt.subplots()
 
-        error = self.error(X=X)
+        error = self.measure_error(X=X)
 
         ax.plot(self.X.index, error, label=self.__repr__(), **kwargs)
         ax.legend()
@@ -565,50 +310,3 @@ class DirectEstimator(BaseEstimator):
         index = np.argmax(np.abs(dft))
         ax.plot(omega, dft)
         ax.plot(omega0,dft[index],'ro')
-
-
-class DirectEstimatorZeta(DirectEstimator):
-
-    def __init__(self, d:float):
-        super().__init__()
-        self.d = d
-
-    @staticmethod
-    def equation(df, omega0, zeta):
-        phi_old = df['phi']
-        p_old = df['phi1d']
-        d = df['d']
-
-        phi2d = calculate_acceleration(d=d, omega0=omega0, p_old=p_old, phi_old=phi_old, zeta=zeta)
-        return phi2d
-
-    def fit(self, X, y=None):
-        X=X.copy()
-        X['d'] = self.d
-        super().fit(X=X, y=y)
-        self.parameters['d'] = self.d
-
-class DirectEstimatorD(DirectEstimator):
-
-    def __init__(self, zeta:float):
-        super().__init__()
-        self.zeta = zeta
-
-    @staticmethod
-    def equation(df, omega0, d):
-        phi_old = df['phi']
-        p_old = df['phi1d']
-        zeta = df['zeta']
-
-        phi2d = calculate_acceleration(d=d, omega0=omega0, p_old=p_old, phi_old=phi_old, zeta=zeta)
-        return phi2d
-
-    def fit(self, X, y=None):
-        X=X.copy()
-        X['zeta'] = self.zeta
-        super().fit(X=X, y=y)
-        self.parameters['zeta'] = self.zeta
-
-
-
-

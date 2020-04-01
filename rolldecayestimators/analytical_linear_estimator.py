@@ -108,7 +108,7 @@ class AnalyticalLinearEstimator(DirectEstimator):
         self.calculate_amplitudes_and_damping()
         self.X['omega0'] = self.omega0
 
-        popt, pcov = curve_fit(f=self.equation, xdata=self.X, ydata=self.X['phi'], maxfev=self.maxfev,
+        popt, pcov = curve_fit(f=self.estimator, xdata=self.X, ydata=self.X['phi'], maxfev=self.maxfev,
                                ftol=self.ftol, bounds=self.get_bounds(),
                                p0=self.get_inital_guess())
 
