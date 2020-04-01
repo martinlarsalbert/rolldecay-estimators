@@ -48,11 +48,6 @@ class DirectEstimator(RollDecay):
     acceleration = sp.Eq(lhs=phi, rhs=sp.solve(roll_diff_equation, phi.diff().diff())[0])
     functions = (lambdify(acceleration.rhs),)
 
-    def __init__(self, maxfev = 4000, bounds={}, ftol=10**-10, p0={}, omega_regression=False,fit_method='derivation'):
-        super().__init__(maxfev=maxfev, bounds=bounds, ftol=ftol, p0=p0)
-
-        self.omega_regression=omega_regression
-
     def simulate(self, t :np.ndarray, phi0 :float, phi1d0 :float,omega0:float, zeta:float, d:float)->pd.DataFrame:
         """
         Simulate a roll decay test using the quadratic method.
@@ -71,17 +66,6 @@ class DirectEstimator(RollDecay):
         }
         return self._simulate(t=t, phi0=phi0, phi1d0=phi1d0, parameters=parameters)
 
-    def estimator(self, x, xs):
-
-        phi = xs[self.phi_key]
-        phi1d = xs[self.phi1d_key]
-
-        parameters = {key: x for key, x in zip(self.parameter_names, x)}
-
-        acceleration = self.calculate_acceleration(phi=phi, phi1d=phi1d, **parameters)
-        return acceleration
-
-
 
     def calculate_amplitudes_and_damping(self):
         X_interpolated = measure.sample_increase(X=self.X)
@@ -91,54 +75,6 @@ class DirectEstimator(RollDecay):
         T0 = 2*self.X_amplitudes.index
         self.X_amplitudes['omega0'] = 2 * np.pi/T0
 
-    @property
-    def omega0(self):
-        """
-        Mean natural frequency
-        Returns
-        -------
-
-        """
-
-        #self.X_amplitudes['omega0'].mean()
-        frequencies, dft = self.fft(self.X['phi'])
-        omega0 = self.fft_omega0(frequencies=frequencies, dft=dft)
-        return omega0
-
-    @staticmethod
-    def fft_omega0(frequencies, dft):
-
-        index = np.argmax(dft)
-        natural_frequency = frequencies[index]
-        omega0 = 2*np.pi*natural_frequency
-        return omega0
-
-    @staticmethod
-    def fft(series):
-        """
-        FFT of a series
-        Parameters
-        ----------
-        series
-
-        Returns
-        -------
-
-        """
-
-        signal = series.values
-        time = series.index
-
-        number_of_samples = len(signal)  # Compute number of samples
-        nondimensional_frequencies = np.fft.rfftfreq(number_of_samples)
-
-        dt = np.mean(np.diff(time))  # Time step size in [s]
-        fs = 1 / dt  # Sampling frequency in [Hz]
-
-        frequencies = nondimensional_frequencies*fs
-        dft = np.abs(np.fft.rfft(signal))
-
-        return frequencies, dft
 
     @staticmethod
     def calculate_damping(X_amplitudes):

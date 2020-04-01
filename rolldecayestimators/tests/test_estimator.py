@@ -28,16 +28,30 @@ def check(X, estimator):
     assert_almost_equal(estimator.parameters['zeta'], zeta, decimal=5)
     assert_almost_equal(estimator.parameters['omega0'], omega0, decimal=5)
 
-def test_roll_decay_derivation():
+def test_roll_decay_derivation_omega():
 
-    estimator = RollDecay(fit_method='derivation')
+    estimator = RollDecay(fit_method='derivation', omega_regression=True)
     X = simulator(estimator=estimator)
     X['phi2d'] = np.gradient(X['phi1d'].values, X.index.values)
 
     check(X=X, estimator=estimator)
 
-def test_roll_decay_integration():
+def test_roll_decay_integration_omega():
 
-    estimator = RollDecay(fit_method='integration')
+    estimator = RollDecay(fit_method='integration', omega_regression=True)
+    X = simulator(estimator=estimator)
+    check(X=X, estimator=estimator)
+
+def test_roll_decay_derivation_no_omega():
+
+    estimator = RollDecay(fit_method='derivation', omega_regression=False)
+    X = simulator(estimator=estimator)
+    X['phi2d'] = np.gradient(X['phi1d'].values, X.index.values)
+
+    check(X=X, estimator=estimator)
+
+def test_roll_decay_integration_no_omega():
+
+    estimator = RollDecay(fit_method='integration', omega_regression=False)
     X = simulator(estimator=estimator)
     check(X=X, estimator=estimator)
