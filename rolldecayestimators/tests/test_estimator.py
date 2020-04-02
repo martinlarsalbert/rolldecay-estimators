@@ -21,6 +21,25 @@ def simulator_negative(estimator):
     t = np.arange(0, 120, 0.01)
     return estimator.simulate(t=t, phi0=phi0, phi1d0=phi1d0, omega0=omega0, zeta=zeta)
 
+def simulator_sparse(estimator):
+    phi0 = np.deg2rad(2)
+    phi1d0 = 0
+    t = np.arange(0, 120, 10)
+    df = estimator.simulate(t=t, phi0=phi0, phi1d0=phi1d0, omega0=omega0, zeta=zeta)
+    return df
+
+def simulator_noise(estimator):
+    phi0 = np.deg2rad(2)
+    phi1d0 = 0
+    t = np.arange(0, 120, 0.1)
+    df = estimator.simulate(t=t, phi0=phi0, phi1d0=phi1d0, omega0=omega0, zeta=zeta)
+    np.random.seed(0)
+    std = np.deg2rad(0.1)
+    noise = np.random.normal(loc=0.0, scale=std, size=len(t))
+    df['phi']+=noise
+
+    return df
+
 def check(X, estimator):
     estimator.fit(X=X)
     X_pred = estimator.predict(X=X)
@@ -31,8 +50,8 @@ def check(X, estimator):
 
     assert_almost_equal(X['phi'].values, X_pred['phi'].values, decimal=3)
     assert estimator.score(X) > 0.999
-    assert_almost_equal(estimator.parameters['zeta'], zeta, decimal=5)
-    assert_almost_equal(estimator.parameters['omega0'], omega0, decimal=5)
+    assert_almost_equal(estimator.parameters['zeta'], zeta, decimal=4)
+    assert_almost_equal(estimator.parameters['omega0'], omega0, decimal=4)
 
 def test_roll_decay_derivation_omega():
 
@@ -67,3 +86,27 @@ def test_roll_decay_integration_no_omega():
     estimator = RollDecay(fit_method='integration', omega_regression=False)
     X = simulator(estimator=estimator)
     check(X=X, estimator=estimator)
+
+def test_roll_decay_integration_sparse():
+
+    estimator = RollDecay(fit_method='integration', omega_regression=True)
+    X = simulator_sparse(estimator=estimator)
+
+    estimator.fit(X=X)
+    X_pred = estimator.predict(X=X)
+    fig, ax = plt.subplots()
+    X.plot(y='phi', ax=ax, label='actual')
+    X_pred.plot(y='phi', ax=ax, label='prediction')
+    plt.show()
+
+def test_roll_decay_integration_noise():
+
+    estimator = RollDecay(fit_method='integration', omega_regression=True)
+    X = simulator_noise(estimator=estimator)
+
+    estimator.fit(X=X)
+    X_pred = estimator.predict(X=X)
+    fig, ax = plt.subplots()
+    X.plot(y='phi', ax=ax, label='actual')
+    X_pred.plot(y='phi', ax=ax, label='prediction')
+    plt.show()

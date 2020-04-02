@@ -1,7 +1,7 @@
 import inspect
 from scipy.optimize import least_squares
 from scipy.integrate import odeint
-from scipy.integrate import RK45
+from scipy.integrate import solve_ivp
 from sklearn.base import BaseEstimator
 from sklearn.utils.validation import check_is_fitted
 from sklearn.metrics import r2_score
@@ -34,6 +34,7 @@ class RollDecay(BaseEstimator):
         self.ftol=ftol
         self.set_fit_method(fit_method=fit_method)
         self.omega_regression = omega_regression
+        self.assert_success = True
 
     def set_fit_method(self,fit_method):
         self.fit_method = fit_method
@@ -97,7 +98,13 @@ class RollDecay(BaseEstimator):
     def estimator_integration(self, t, phi0, phi1d0, parameters):
         parameters=dict(parameters)
 
-        df = self._simulate(t=t,phi0=phi0, phi1d0=phi1d0,parameters=parameters )
+        try:
+            df = self._simulate(t=t,phi0=phi0, phi1d0=phi1d0,parameters=parameters )
+        except:
+            df = pd.DataFrame(index=t)
+            df['phi']=np.inf
+            df['phi1d']=np.inf
+
         return df[self.y_key]
 
     def fit(self, X, y=None, **kwargs):
@@ -109,6 +116,9 @@ class RollDecay(BaseEstimator):
 
         self.result = least_squares(fun=self.error, x0=self.initial_guess, kwargs=kwargs, bounds=self.bounds,
                                     ftol=self.ftol, max_nfev=self.maxfev)
+        if self.assert_success:
+            assert self.result['success']
+
         self.parameters = {key: x for key, x in zip(self.parameter_names, self.result.x)}
 
         if not self.omega_regression:
@@ -137,16 +147,23 @@ class RollDecay(BaseEstimator):
         states0 = [phi0, phi1d0]
 
         #states = odeint(self.roll_decay_time_step, y0=states0, t=t, args=(self,parameters))
-        states = RK45()
+        #df[self.phi_key] = states[:, 0]
+        #df[self.phi1d_key] = states[:, 1]
+
+        t_ = t-t[0]
+        t_span = [t_[0], t_[-1]]
+        self.simulation_result = solve_ivp(fun=self.roll_decay_time_step, t_span=t_span, y0=states0, t_eval=t_,
+                                           args=(parameters,))
+        if not self.simulation_result['success']:
+            raise ValueError('Simulation failed')
 
         df = pd.DataFrame(index=t)
-        df[self.phi_key] = states[:, 0]
-        df[self.phi1d_key] = states[:, 1]
+        df[self.phi_key] = self.simulation_result.y[0, :]
+        df[self.phi1d_key] = self.simulation_result.y[1, :]
 
         return df
 
-    @staticmethod
-    def roll_decay_time_step(states, t, self, parameters):
+    def roll_decay_time_step(self,t,states,parameters):
         # states:
         # [phi,phi1d]
 
