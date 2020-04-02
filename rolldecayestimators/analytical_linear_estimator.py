@@ -14,9 +14,7 @@ from rolldecayestimators import equations
 
 from rolldecayestimators.direct_estimator import DirectEstimator
 
-analytical_solution_lambda = lambdify(sp.solve(equations.analytical_solution,phi)[0])
-analytical_solution_phi1d_lambda = lambdify(sp.solve(equations.analytical_phi1d,phi_dot)[0])
-analytical_solution_phi2s_lambda = lambdify(sp.solve(equations.analytical_phi2d,phi_dot_dot)[0])
+
 
 
 class AnalyticalLinearEstimator(DirectEstimator):
@@ -31,94 +29,49 @@ class AnalyticalLinearEstimator(DirectEstimator):
         A parameter used for demonstation of how to pass and store paramters.
     """
 
-    @staticmethod
-    def fit_derivation(df, zeta):
-        raise ValueError('Not yet implemented')
+    # Defining the diff equation for this estimator:
+    rhs = -phi_dot_dot / (omega0 ** 2) - 2 * zeta / omega0 * phi_dot
+    roll_diff_equation = sp.Eq(lhs=phi, rhs=rhs)
+    acceleration = sp.Eq(lhs=phi, rhs=sp.solve(roll_diff_equation, phi.diff().diff())[0])
+    functions = (
+        lambdify(sp.solve(equations.analytical_solution, phi)[0]),
+        lambdify(sp.solve(equations.analytical_phi1d, phi_dot)[0]),
+        lambdify(sp.solve(equations.analytical_phi2d, phi_dot_dot)[0]),
+    )
 
-    @staticmethod
-    def fit_integration(df, d, zeta):
+    @property
+    def parameter_names(self):
+        signature = inspect.signature(self.calculate_acceleration)
 
-        phi_01d=0  # Assuming
-        phi_0=df.iloc[0]['phi_0']
-        omega0=df.iloc[0]['omega0']
+        remove = ['phi_0','phi_01d', 't']
+        if not self.omega_regression:
+            remove.append('omega0')
 
-        t = np.array(df.index - df.index[0])
-        phi = analytical_solution_lambda(t=t,phi_0=phi_0, phi_01d=phi_01d, omega0=omega0, zeta=zeta)
+        return list(set(signature.parameters.keys()) - set(remove))
 
-        return phi
+    def estimator(self, x, xs):
+        parameters = {key: x for key, x in zip(self.parameter_names, x)}
 
-    @staticmethod
-    def _equation_omega(df, omega0, zeta):
-        phi_01d = 0  # Assuming
-        phi_0 = df.iloc[0]['phi_0']
+        if not self.omega_regression:
+            parameters['omega0'] = self.omega0
 
-        t = np.array(df.index - df.index[0])
-        phi = analytical_solution_lambda(t=t, phi_0=phi_0, phi_01d=phi_01d, omega0=omega0, zeta=zeta)
+        t = xs.index
+        phi_0 = xs.iloc[0][self.phi_key]
+        phi_01d = xs.iloc[0][self.phi1d_key]
 
-        return phi
+        return self.functions[0](t=t,phi_0=phi_0,phi_01d=phi_01d,**parameters)
 
-    def simulate(self, t: np.ndarray, phi0: float, phi1d0:float, omega0: float, zeta: float,
-                 **kwargs) -> pd.DataFrame:
-        """
-        Simulate a roll decay test using analytical solution
-        :param t: time vector to be simulated [s]
-        :param phi0: initial roll angle [rad]
-        :param phi1d0: initial roll speed [rad/s]
-        :param omega0: roll natural frequency[rad/s]
-        :param d: quadratic roll damping [-]
-        :param zeta:linear roll damping [-]
-        :return: pandas data frame with time series of 'phi' and 'phi1d'
-        """
+    def predict(self, X)->pd.DataFrame:
+
+        check_is_fitted(self, 'is_fitted_')
+
+        t = X.index
+        phi_0 = X.iloc[0][self.phi_key]
+        phi_01d = X.iloc[0][self.phi1d_key]
 
         df = pd.DataFrame(index=t)
-        df['phi_0'] = phi0
-
-        df['phi'] = self._equation_omega(df=df, omega0=omega0, zeta=zeta)
-
-
-        t0=t-t[0]
-        df['phi1d'] = analytical_solution_phi1d_lambda(t=t0,phi_0=phi0, phi_01d=phi1d0, omega0=omega0, zeta=zeta)
-        df['phi2d'] = analytical_solution_phi2s_lambda(t=t0,phi_0=phi0, phi_01d=phi1d0, omega0=omega0, zeta=zeta)
+        df['phi'] = self.functions[0](t=t, phi_0=phi_0, phi_01d=phi_01d, **self.parameters)
+        df['phi1d'] = self.functions[1](t=t, phi_0=phi_0, phi_01d=phi_01d, **self.parameters)
+        df['phi2d'] = self.functions[2](t=t, phi_0=phi_0, phi_01d=phi_01d, **self.parameters)
 
         return df
-
-    def fit(self, X, y=None, calculate_amplitudes_and_damping=True):
-        """A reference implementation of a fitting function.
-
-        Parameters
-        ----------
-        X : {array-like, sparse matrix}, shape (n_samples, n_features)
-            The training input samples.
-        y : Dummy not used.
-
-        Returns
-        -------
-        self : object
-            Returns self.
-        """
-        # X, y = check_X_y(X, y, accept_sparse=True)
-        self.is_fitted_ = True
-        # `fit` should always return `self`
-
-        self.X = X.copy()
-
-        self.boundaries['zeta'] = (0,0.999)  # The equation produce division by zero for zeta=0
-        self.X['phi_0'] = X.iloc[0]['phi']
-
-        self.calculate_amplitudes_and_damping()
-        self.X['omega0'] = self.omega0
-
-        popt, pcov = curve_fit(f=self.estimator, xdata=self.X, ydata=self.X['phi'], maxfev=self.maxfev,
-                               ftol=self.ftol, bounds=self.get_bounds(),
-                               p0=self.get_inital_guess())
-
-        parameter_values = list(popt)
-        parameters = dict(zip(self.parameter_names, parameter_values))
-
-        self.parameters = parameters
-        if not 'omega0' in self.parameters:
-            self.parameters['omega0'] = self.omega0
-
-        self.pcov = pcov
-
-        return self
