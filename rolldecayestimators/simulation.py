@@ -1,4 +1,3 @@
-from rolldecayestimators.direct_estimator import calculate_acceleration
 import numpy as np
 import pandas as pd
 from scipy.integrate import odeint
