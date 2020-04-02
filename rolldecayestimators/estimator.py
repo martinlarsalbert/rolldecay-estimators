@@ -69,7 +69,9 @@ class RollDecay(BaseEstimator):
 
     @staticmethod
     def error(x, self, xs, ys):
-        return ys - self.estimator(x, xs)
+        #return np.sum((ys - self.estimator(x, xs))**2)
+        return ys-self.estimator(x, xs)
+
 
     def estimator(self, x, xs):
         parameters = {key: x for key, x in zip(self.parameter_names, x)}
@@ -115,7 +117,7 @@ class RollDecay(BaseEstimator):
                   'ys': X[self.y_key]}
 
         self.result = least_squares(fun=self.error, x0=self.initial_guess, kwargs=kwargs, bounds=self.bounds,
-                                    ftol=self.ftol, max_nfev=self.maxfev)
+                                    ftol=self.ftol, max_nfev=self.maxfev, loss='soft_l1', f_scale=0.1,)
         if self.assert_success:
             assert self.result['success']
 
