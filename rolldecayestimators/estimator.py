@@ -1,6 +1,7 @@
 import inspect
 from scipy.optimize import least_squares
 from scipy.integrate import odeint
+from scipy.integrate import RK45
 from sklearn.base import BaseEstimator
 from sklearn.utils.validation import check_is_fitted
 from sklearn.metrics import r2_score
@@ -20,7 +21,7 @@ class RollDecay(BaseEstimator):
     acceleration = sp.Eq(lhs=phi, rhs=sp.solve(roll_diff_equation, phi.diff().diff())[0])
     functions = (lambdify(acceleration.rhs),)
 
-    def __init__(self, maxfev = 4000, bounds={}, ftol=10**-10, p0={}, fit_method='derivation', omega_regression=True):
+    def __init__(self, maxfev = 4000, bounds={}, ftol=10**-20, p0={}, fit_method='derivation', omega_regression=True):
         self.is_fitted_ = False
 
         self.phi_key = 'phi'  # Roll angle [rad]
@@ -82,7 +83,8 @@ class RollDecay(BaseEstimator):
         elif self.fit_method=='integration':
             t = xs.index
             phi0=xs.iloc[0][self.phi_key]
-            phi1d0=xs.iloc[0][self.phi1d_key]
+            #phi1d0=xs.iloc[0][self.phi1d_key]
+            phi1d0 = 0.0
 
             return self.estimator_integration(t=t, phi0=phi0, phi1d0=phi1d0, parameters=parameters)
         else:
@@ -98,7 +100,7 @@ class RollDecay(BaseEstimator):
         df = self._simulate(t=t,phi0=phi0, phi1d0=phi1d0,parameters=parameters )
         return df[self.y_key]
 
-    def fit(self, X):
+    def fit(self, X, y=None, **kwargs):
         self.X = X
 
         kwargs = {'self': self,
@@ -133,7 +135,10 @@ class RollDecay(BaseEstimator):
     def _simulate(self,t,phi0, phi1d0, parameters:dict)->pd.DataFrame:
 
         states0 = [phi0, phi1d0]
-        states = odeint(self.roll_decay_time_step, y0=states0, t=t, args=(self,parameters))
+
+        #states = odeint(self.roll_decay_time_step, y0=states0, t=t, args=(self,parameters))
+        states = RK45()
+
         df = pd.DataFrame(index=t)
         df[self.phi_key] = states[:, 0]
         df[self.phi1d_key] = states[:, 1]

@@ -15,6 +15,12 @@ def simulator(estimator):
     t = np.arange(0, 120, 0.01)
     return estimator.simulate(t=t, phi0=phi0, phi1d0=phi1d0, omega0=omega0, zeta=zeta)
 
+def simulator_negative(estimator):
+    phi0 = -np.deg2rad(2)
+    phi1d0 = 0
+    t = np.arange(0, 120, 0.01)
+    return estimator.simulate(t=t, phi0=phi0, phi1d0=phi1d0, omega0=omega0, zeta=zeta)
+
 def check(X, estimator):
     estimator.fit(X=X)
     X_pred = estimator.predict(X=X)
@@ -40,6 +46,12 @@ def test_roll_decay_integration_omega():
 
     estimator = RollDecay(fit_method='integration', omega_regression=True)
     X = simulator(estimator=estimator)
+    check(X=X, estimator=estimator)
+
+def test_roll_decay_integration_omega_negative():
+
+    estimator = RollDecay(fit_method='integration', omega_regression=True)
+    X = simulator_negative(estimator=estimator)
     check(X=X, estimator=estimator)
 
 def test_roll_decay_derivation_no_omega():
