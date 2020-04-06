@@ -86,8 +86,7 @@ class RollDecay(BaseEstimator):
         elif self.fit_method=='integration':
             t = xs.index
             phi0=xs.iloc[0][self.phi_key]
-            #phi1d0=xs.iloc[0][self.phi1d_key]
-            phi1d0 = 0.0
+            phi1d0 = xs.iloc[0][self.phi1d_key]
 
             return self.estimator_integration(t=t, phi0=phi0, phi1d0=phi1d0, parameters=parameters)
         else:

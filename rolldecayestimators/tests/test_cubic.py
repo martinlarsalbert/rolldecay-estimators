@@ -89,7 +89,7 @@ def test_fit_simualtion_derivation():
         'B_1': 10.0,
         'B_2': 0.0,
         'B_3': 0.0,
-        'C_1': 0.0,
+        'C_1': 2,
         'C_3': 0.0,
         'C_5': 0.0,
     }

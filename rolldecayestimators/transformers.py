@@ -24,11 +24,12 @@ class CutTransformer(BaseEstimator, TransformerMixin):
     n_features_ : int
         The number of features of the data passed to :meth:`fit`.
     """
-    def __init__(self, phi_max=np.deg2rad(90), phi_min=0):
+    def __init__(self, phi_max=np.deg2rad(90), phi_min=0, phi1d_start_tolerance=np.deg2rad(0.1)):
         self.phi_max = phi_max  # Maximum Roll angle [rad]
         self.phi_min = phi_min  # Minimum Roll angle [rad]
         self.phi_key = 'phi'  # Roll angle [rad]
         self.remove_end_samples = 200  # Remove this many samples from end (funky stuff may happen during end of tests)
+        self.phi1d_start_tolerance = phi1d_start_tolerance
 
     def fit(self, X, y=None):
         """Do the cut
@@ -117,6 +118,7 @@ class CutTransformer(BaseEstimator, TransformerMixin):
             start_index = df_large.index[-1]
             X_cut = X_cut.loc[start_index:]
 
+
         # Remove some small angles at end
         abs_phi = X_cut['phi'].abs()
         mask = abs_phi >= self.phi_min
@@ -125,7 +127,18 @@ class CutTransformer(BaseEstimator, TransformerMixin):
             stop_index = df_small.index[-1]
             X_cut = X_cut.loc[:stop_index]
 
+        X_zerocrossings = measure.get_zerocrossings(X=X_cut)
+        mask = X_cut.index > X_zerocrossings.index[0]
+        X_cut = X_cut.loc[mask]
 
+
+        if 'phi1d' in X_cut:
+            phi1d_start = np.abs(X_cut.iloc[0]['phi1d'])
+        
+            if phi1d_start > self.phi1d_start_tolerance:
+                raise ValueError('Start phi1d exceeds phi1d_start_tolerance (%f > %f)' % (phi1d_start, self.phi1d_start_tolerance) )
+
+        X_cut=X_cut.copy()
         return X_cut
 
 class LowpassFilterDerivatorTransformer(BaseEstimator, TransformerMixin):
