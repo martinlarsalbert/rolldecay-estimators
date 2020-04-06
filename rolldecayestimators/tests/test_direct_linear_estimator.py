@@ -4,7 +4,7 @@ import pandas as pd
 import numpy as np
 from numpy.testing import assert_almost_equal
 
-from rolldecayestimators.simulation_linear import simulate
+#from rolldecayestimators.simulation_linear import simulate
 from rolldecayestimators.direct_linear_estimator import DirectLinearEstimator
 import matplotlib.pyplot as plt
 
@@ -19,7 +19,8 @@ def df_roll_decay():
     zeta = 0.044
     N = 1000
     t = np.linspace(0, 120, N)
-    yield simulate(t=t, phi0=phi0, phi1d0=phi1d0, omega0=omega0, zeta=zeta)
+    estimator = DirectLinearEstimator()
+    yield estimator.simulate(t=t, phi0=phi0, phi1d0=phi1d0, omega0=omega0, zeta=zeta)
 
 def test_fit_simualtion_derivation(df_roll_decay):
 

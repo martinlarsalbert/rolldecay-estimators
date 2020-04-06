@@ -1,8 +1,8 @@
 import numpy as np
 import pandas as pd
 
-def sample_increase(X):
-    N = len(X) * 10
+def sample_increase(X, increase=5):
+    N = len(X) * increase
     t_interpolated = np.linspace(X.index[0], X.index[-1], N)
     X_interpolated = pd.DataFrame(index=t_interpolated)
 

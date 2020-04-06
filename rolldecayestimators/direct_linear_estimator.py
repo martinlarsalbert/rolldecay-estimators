@@ -34,3 +34,19 @@ class DirectLinearEstimator(DirectEstimator):
     roll_diff_equation = sp.Eq(lhs=phi, rhs=rhs)
     acceleration = sp.Eq(lhs=phi, rhs=sp.solve(roll_diff_equation, phi.diff().diff())[0])
     functions = (lambdify(acceleration.rhs),)
+
+    def simulate(self, t :np.ndarray, phi0 :float, phi1d0 :float,omega0:float, zeta:float)->pd.DataFrame:
+        """
+        Simulate a roll decay test using the quadratic method.
+        :param t: time vector to be simulated [s]
+        :param phi0: initial roll angle [rad]
+        :param phi1d0: initial roll speed [rad/s]
+        :param omega0: roll natural frequency[rad/s]
+        :param zeta:linear roll damping [-]
+        :return: pandas data frame with time series of 'phi' and 'phi1d'
+        """
+        parameters={
+            'omega0':omega0,
+            'zeta':zeta,
+        }
+        return self._simulate(t=t, phi0=phi0, phi1d0=phi1d0, parameters=parameters)

@@ -127,10 +127,10 @@ class CutTransformer(BaseEstimator, TransformerMixin):
             stop_index = df_small.index[-1]
             X_cut = X_cut.loc[:stop_index]
 
-        X_zerocrossings = measure.get_zerocrossings(X=X_cut)
-        mask = X_cut.index > X_zerocrossings.index[0]
-        X_cut = X_cut.loc[mask]
-
+        X_interpolated = measure.sample_increase(X=X_cut, increase=5)
+        X_zerocrossings = measure.get_zerocrossings(X=X_interpolated)
+        mask = X_interpolated.index >= X_zerocrossings.index[0]
+        X_cut = X_interpolated.loc[mask]
 
         if 'phi1d' in X_cut:
             phi1d_start = np.abs(X_cut.iloc[0]['phi1d'])
