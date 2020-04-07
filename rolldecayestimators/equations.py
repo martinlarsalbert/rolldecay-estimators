@@ -58,6 +58,13 @@ roll_decay_equation_cubic = roll_decay_equation_general_himeno.subs(subs)
 ## Equivalt linearized damping:
 B_e_equation = sp.Eq(B_e,B_1+8/(3*sp.pi)*omega0*phi_a*B_2)
 
+## Nondimensional damping Himeno:
+lhs = B_44_hat
+rhs = B_44/(rho*Disp*beam**2)*sp.sqrt(beam/(2*g))
+B44_equation = sp.Eq(lhs, rhs)
+omega0_equation_linear = omega0_equation.subs(C,sp.solve(C_equation_linear,C)[0])
+
+
 ## Analytical
 diff_eq = sp.Eq(y.diff().diff() + 2*delta*omega0*y.diff() + omega0**2*y,0)
 equation_D = sp.Eq(D,sp.sqrt(1-delta**2))

@@ -17,6 +17,8 @@ m = ss.Symbol(name='m',description='mass of ship',unit='kg')
 GM = ss.Symbol(name='GM', description='metacentric height', unit='m')
 dGM = ss.Symbol(name='dGM', description='metacentric height correction', unit='m/rad')
 omega = ss.Symbol(name='omega', description='Frequency of external moment', unit='Nm')
+L_pp = ss.Symbol(name='L_pp',description='ship perpendicular length',unit='m')
+beam = ss.Symbol(name='beam',description='ship beam',unit='m')
 
 phi = me.dynamicsymbols('phi')  # Roll angle
 #phi = ss.Symbol(name='phi', description='Roll angle', unit='rad')  # Roll angle
@@ -35,6 +37,7 @@ C = sp.Symbol(name='C')  # Introducing a helper coefficient C
 C_1, C_3, C_5 = sp.symbols('C_1 C_3 C_5')
 
 B_e = ss.Symbol(name='B_e', description='Equivalen linearized damping', unit='Nm/(rad/s)')
+B_44_hat = ss.Symbol(name='B_44_hat', description='Nondimensional damping', unit='-')
 
 ## Functions:
 GZ = sp.Function('GZ')(phi)
