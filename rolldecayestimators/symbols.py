@@ -20,6 +20,24 @@ omega = ss.Symbol(name='omega', description='Frequency of external moment', unit
 L_pp = ss.Symbol(name='L_pp',description='ship perpendicular length',unit='m')
 beam = ss.Symbol(name='beam',description='ship beam',unit='m')
 
+C_p = ss.Symbol(name='C_p',description='Prismatic coefficient',unit='-')
+I_RUD = ss.Symbol(name='I_RUD',description='Number of rudders',unit='-')
+BK_L = ss.Symbol(name='BK_L',description='Bilge keel length',unit='m')
+BK_B = ss.Symbol(name='BK_B',description='Bilge keel height',unit='m')
+A_0 = ss.Symbol(name='A_0',description='Mid ship area coefficient',unit='-')
+ship_type_id = ss.Symbol(name='ship_type',description='Ship type',unit='-')
+I_xx = ss.Symbol(name='I_xx',description='Roll intertia',unit='kg*m**2')
+K_xx = ss.Symbol(name='K_xx',description='Nondimensional roll radius of gyration',unit='-')
+R_h = ss.Symbol(name='R_h',description='Rudder height',unit='m')
+A_R = ss.Symbol(name='A_R',description='Rudder area',unit='m**2')
+TWIN = ss.Symbol(name='twin',description='Twin skrew',unit='True/False')
+kg = ss.Symbol(name='kg',description='Keel to g',unit='m')
+C_W = ss.Symbol(name='C_W',description='Water area coefficient',unit='-')
+T_F = ss.Symbol(name='T_F',description='Draught forward',unit='m')
+T_A = ss.Symbol(name='T_A',description='Draught aft',unit='m')
+T = ss.Symbol(name='T',description='Mean draught',unit='m')
+V = ss.Symbol(name='V',description='Ship speed',unit='m/s')
+
 phi = me.dynamicsymbols('phi')  # Roll angle
 #phi = ss.Symbol(name='phi', description='Roll angle', unit='rad')  # Roll angle
 phi_dot = phi.diff()
@@ -38,6 +56,8 @@ C_1, C_3, C_5 = sp.symbols('C_1 C_3 C_5')
 
 B_e = ss.Symbol(name='B_e', description='Equivalen linearized damping', unit='Nm/(rad/s)')
 B_44_hat = ss.Symbol(name='B_44_hat', description='Nondimensional damping', unit='-')
+omega_hat = ss.Symbol(name='omega_hat', description='Nondimensional roll frequency', unit='-')
+
 
 ## Functions:
 GZ = sp.Function('GZ')(phi)

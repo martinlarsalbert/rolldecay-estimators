@@ -110,3 +110,35 @@ def test_roll_decay_integration_noise():
     X.plot(y='phi', ax=ax, label='actual')
     X_pred.plot(y='phi', ax=ax, label='prediction')
     plt.show()
+
+def test_load():
+
+    estimator = RollDecay(fit_method='integration', omega_regression=False)
+    X = simulator(estimator=estimator)
+
+    data = {
+        'omega0' : omega0,
+        'zeta' : zeta,
+    }
+
+    estimator2 = RollDecay.load(data=data, X=X)
+    X_pred = estimator2.predict(X=X)
+    fig, ax = plt.subplots()
+    X.plot(y='phi', ax=ax, label='actual')
+    X_pred.plot(y='phi', ax=ax, label='loaded prediction')
+    plt.show()
+
+def test_load_score():
+
+    estimator = RollDecay(fit_method='integration', omega_regression=False)
+    X = simulator(estimator=estimator)
+
+    data = {
+        'omega0' : omega0,
+        'zeta' : zeta,
+    }
+
+    estimator2 = RollDecay.load(data=data, X=X)
+    assert estimator2.score(X=X) > 0.9999999999999
+
+

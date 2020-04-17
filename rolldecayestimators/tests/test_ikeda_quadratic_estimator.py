@@ -3,7 +3,7 @@ import pytest
 import pandas as pd
 import numpy as np
 from numpy.testing import assert_almost_equal
-from rolldecayestimators.ikeda_estimator import IkedaEstimator
+from rolldecayestimators.ikeda_estimator import IkedaQuadraticEstimator
 import matplotlib.pyplot as plt
 
 T0 = 20.0
@@ -28,12 +28,13 @@ def df_roll_decay():
     phi0 = np.deg2rad(2)
     phi1d0 = 0
     t = np.arange(0, 120, 0.01)
-    estimator = IkedaEstimator(lpp=lpp, TA=TA, TF=TF, beam=beam, BKL=BKL, BKB=BKB, A0=A0, kg=kg, Volume=Volume, gm=gm)
+    estimator = IkedaQuadraticEstimator(lpp=lpp, TA=TA, TF=TF, beam=beam, BKL=BKL, BKB=BKB, A0=A0, kg=kg, Volume=Volume, gm=gm)
     yield estimator.simulate(t=t, phi0=phi0, phi1d0=phi1d0, omega0=omega0, zeta=zeta, d=d)
 
 def check(X, estimator, omega0, d, zeta, decimal=4):
     estimator.fit(X=X)
-    #assert estimator.result['success']
+    estimator.plot_variation()
+    estimator.plot_B_fit()
 
     X_pred = estimator.predict(X=X)
     fig, ax = plt.subplots()
@@ -53,7 +54,7 @@ def check(X, estimator, omega0, d, zeta, decimal=4):
 
 def test_fit(df_roll_decay):
 
-    direct_estimator = IkedaEstimator(lpp=lpp, TA=TA, TF=TF, beam=beam, BKL=BKL, BKB=BKB, A0=A0, kg=kg, Volume=Volume, gm=gm)
+    direct_estimator = IkedaQuadraticEstimator(lpp=lpp, TA=TA, TF=TF, beam=beam, BKL=BKL, BKB=BKB, A0=A0, kg=kg, Volume=Volume, gm=gm)
     X = df_roll_decay
     X['phi2d'] = np.gradient(X['phi1d'].values, X.index.values)
     check(X=X, estimator=direct_estimator, omega0=omega0, d=d, zeta=zeta, decimal=2)

@@ -3,6 +3,7 @@ import matplotlib.pyplot as plt
 from sklearn.base import BaseEstimator, TransformerMixin
 from sklearn.utils.validation import check_is_fitted
 from sklearn.linear_model import LinearRegression
+import pandas as pd
 
 import rolldecayestimators.filters
 import rolldecayestimators.measure as measure
@@ -328,6 +329,9 @@ class ScaleFactorTransformer(BaseEstimator, TransformerMixin):
         #X = check_array(X, accept_sparse=True)
 
         self.n_features_ = X.shape[1]
+
+        if pd.isnull(self.scale_factor):
+            raise ValueError('Bad scale factor:%s' % self.scale_factor)
 
         # Return the transformer
         return self

@@ -36,6 +36,41 @@ class RollDecay(BaseEstimator):
         self.omega_regression = omega_regression
         self.assert_success = True
 
+    @classmethod
+    def load(cls,data:{}, X=None):
+        """
+        Load data and parameters from an existing fitted estimator
+
+        Parameters
+        ----------
+        data : dict
+            Dict containing data for this estimator such as parameters
+        X : pd.DataFrame
+            DataFrame containing the measurement that this estimator fits (optional).
+        Returns
+        -------
+        estimator
+            Loaded with parameters from data and maybe also a loaded measurement X
+        """
+        estimator = cls()
+        estimator.load_data(data=data)
+        estimator.load_X(X=X)
+        return estimator
+
+    def load_data(self,data:{}):
+        parameter_names = self.parameter_names
+        missing = list(set(parameter_names) - set(data.keys()))
+        if len(missing) > 0:
+            raise ValueError('The following parameters are missing in data:%s' % missing)
+
+        parameters = {key: value for key, value in data.items() if key in parameter_names}
+        self.parameters = parameters
+        self.is_fitted_ = True
+
+    def load_X(self, X=None):
+        if isinstance(X, pd.DataFrame):
+            self.X=X
+
     def set_fit_method(self,fit_method):
         self.fit_method = fit_method
 
@@ -301,3 +336,26 @@ class RollDecay(BaseEstimator):
         dft = np.abs(np.fft.rfft(signal))
 
         return frequencies, dft
+
+    def result_for_database(self):
+        check_is_fitted(self, 'is_fitted_')
+
+        s = {}
+        s.update(self.parameters)
+        s['score'] = self.score(X=self.X)
+
+        try:
+            s['mean_damping'] = self.calculate_average_linear_damping()
+        except:
+            pass
+
+        s['phi_start'] = self.X.iloc[0]['phi']
+        s['phi_stop'] = self.X.iloc[-1]['phi']
+
+        if not 'd' in s:
+            s['d'] = 0
+
+        return s
+
+
+

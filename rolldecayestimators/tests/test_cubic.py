@@ -3,16 +3,19 @@ import pytest
 import pandas as pd
 import numpy as np
 from numpy.testing import assert_almost_equal
-from rolldecayestimators.direct_estimator_cubic import DirectEstimatorCubic
+from rolldecayestimators.direct_estimator_cubic import DirectEstimatorCubic, DirectEstimatorQuadratic, DirectEstimatorLinear
 import matplotlib.pyplot as plt
 
-def simulate(t, phi0, phi1d0, A_44, B_1, B_2, B_3, C_1, C_3, C_5):
+def simulate(t, phi0, phi1d0, B_1A, B_2A, B_3A, C_1A, C_3A, C_5A):
 
     estimator = DirectEstimatorCubic()
-    return estimator.simulate(t=t,phi0=phi0, phi1d0=phi1d0,A_44=A_44,B_1=B_1,B_2=B_2,B_3=B_3,C_1=C_1,C_3=C_3,C_5=C_5)
+    return estimator.simulate(t=t,phi0=phi0, phi1d0=phi1d0,B_1A=B_1A,B_2A=B_2A,B_3A=B_3A,C_1A=C_1A,C_3A=C_3A,C_5A=C_5A)
 
 def check(X, estimator, parameters, decimal=2):
-    estimator.fit(X=X)
+
+    if not estimator.is_fitted_:
+        estimator.fit(X=X)
+
     assert estimator.result['success']
     X_pred = estimator.predict(X=X)
     fig, ax = plt.subplots()
@@ -23,19 +26,33 @@ def check(X, estimator, parameters, decimal=2):
     assert_almost_equal(X['phi'].values, X_pred['phi'].values, decimal=decimal)
     assert estimator.score(X) > 0.999
 
-    for key,value in parameters.items():
-        assert_almost_equal(estimator.parameters[key], parameters[key], decimal=decimal)
+
+    true_parameters = pd.Series(parameters)
+    predicted = pd.Series(estimator.parameters, index=true_parameters.index)
+    predicted.fillna(0, inplace=True)
+
+    # Normalize with A_44:
+    #true_parameters/=true_parameters['A_44']
+    #predicted/=predicted['A_44']
+
+    pd.testing.assert_series_equal(predicted.round(decimals=3), true_parameters)
+
+    #for key,value in parameters.items():
+    #    try:
+    #        assert_almost_equal(estimator.parameters[key], value, decimal=decimal)
+    #    except:
+    #        raise ValueError('%s predicted:%f, true:%f' % (key, estimator.parameters[key], value))
+
 
 def test_simulation():
 
     parameters={
-        'A_44':100.0,
-        'B_1':0.3,
-        'B_2':0.0,
-        'B_3':0.0,
-        'C_1':0.3,
-        'C_3':0.0,
-        'C_5':0.0,
+        'B_1A':0.3,
+        'B_2A':0.0,
+        'B_3A':0.0,
+        'C_1A':0.3,
+        'C_3A':0.0,
+        'C_5A':0.0,
     }
 
     phi0 = np.deg2rad(10)
@@ -48,85 +65,144 @@ def test_simulation():
     X_pred = direct_estimator.predict(X=X)
     assert_almost_equal(X['phi'].values, X_pred['phi'].values)
 
-def test_fit_simualtion_derivation_cheat():
+def test_fit_simualtion_cheat_p0():
 
     parameters={
-        'A_44':100.0,
-        'B_1':0.3,
-        'B_2':0.0,
-        'B_3':0.0,
-        'C_1':0.3,
-        'C_3':0.0,
-        'C_5':0.0,
+        'B_1A':0.7,
+        'B_2A':0.0,
+        'B_3A':0.0,
+        'C_1A':10.0,
+        'C_3A':0.0,
+        'C_5A':0.0,
     }
 
     p0 = parameters
 
-    direct_estimator = DirectEstimatorCubic(fit_method='derivation',p0=p0)
+    direct_estimator = DirectEstimatorCubic(fit_method='integration',p0=p0)
     phi0 = np.deg2rad(10)
     phi1d0 = 0
-    t = np.arange(0, 10, 0.1)
+    t = np.arange(0, 10, 0.01)
     X = simulate(t=t, phi0=phi0, phi1d0=phi1d0, **parameters)
 
     X['phi2d'] = np.gradient(X['phi1d'].values, X.index.values)
     check(X=X, estimator=direct_estimator, parameters=parameters)
 
+def test_fit_simualtion():
 
-def test_fit_simualtion_derivation():
-
-    parameters = {
-        'A_44': 100.0,
-        'B_1': 1.0,
-        'B_2': 15,
-        'B_3': 20,
-        'C_1': 2,
-        'C_3': 0.0,
-        'C_5': 0.0,
+    parameters={
+        'B_1A':0.7,
+        'B_2A':0.0,
+        'B_3A':0.0,
+        'C_1A':10.0,
+        'C_3A':0.0,
+        'C_5A':0.0,
     }
 
-    p0 = {
-        'A_44': 110.0,
-        'B_1': 10.0,
-        'B_2': 0.0,
-        'B_3': 0.0,
-        'C_1': 2,
-        'C_3': 0.0,
-        'C_5': 0.0,
+    direct_estimator = DirectEstimatorCubic(fit_method='integration')
+    phi0 = np.deg2rad(10)
+    phi1d0 = 0
+    t = np.arange(0, 10, 0.01)
+    X = simulate(t=t, phi0=phi0, phi1d0=phi1d0, **parameters)
+
+    X['phi2d'] = np.gradient(X['phi1d'].values, X.index.values)
+    check(X=X, estimator=direct_estimator, parameters=parameters)
+
+def test_fit_simualtion_quadratic_damping():
+
+    parameters={
+        'B_1A':0.7,
+        'B_2A':1.5,
+        'B_3A':0.0,
+        'C_1A':10.0,
+        'C_3A':0.0,
+        'C_5A':0.0,
     }
 
-    direct_estimator = DirectEstimatorCubic(fit_method='derivation',p0=p0)
+    direct_estimator = DirectEstimatorCubic(fit_method='integration')
+    phi0 = np.deg2rad(10)
+    phi1d0 = 0
+    t = np.arange(0, 10, 0.01)
+    X = simulate(t=t, phi0=phi0, phi1d0=phi1d0, **parameters)
+
+    X['phi2d'] = np.gradient(X['phi1d'].values, X.index.values)
+    check(X=X, estimator=direct_estimator, parameters=parameters)
+
+def test_fit_simualtion_cubic_damping():
+
+    parameters={
+        'B_1A':0.7,
+        'B_2A':1.5,
+        'B_3A':5.0,
+        'C_1A':10.0,
+        'C_3A':0.0,
+        'C_5A':0.0,
+    }
+
+    direct_estimator = DirectEstimatorCubic(fit_method='integration')
+    phi0 = np.deg2rad(10)
+    phi1d0 = 0
+    t = np.arange(0, 10, 0.01)
+    X = simulate(t=t, phi0=phi0, phi1d0=phi1d0, **parameters)
+
+    X['phi2d'] = np.gradient(X['phi1d'].values, X.index.values)
+    check(X=X, estimator=direct_estimator, parameters=parameters)
+
+def test_fit_simualtion_quadratic_stiffness():
+
+    parameters={
+        'B_1A':0.7,
+        'B_2A':0,
+        'B_3A':0.0,
+        'C_1A':10.0,
+        'C_3A':20.0,
+        'C_5A':0.0,
+    }
+
+    direct_estimator = DirectEstimatorCubic(fit_method='integration')
+    phi0 = np.deg2rad(10)
+    phi1d0 = 0
+    t = np.arange(0, 10, 0.01)
+    X = simulate(t=t, phi0=phi0, phi1d0=phi1d0, **parameters)
+
+    X['phi2d'] = np.gradient(X['phi1d'].values, X.index.values)
+    check(X=X, estimator=direct_estimator, parameters=parameters)
+
+def test_fit_simualtion_cubic_stiffness():
+
+    parameters={
+        'B_1A':0.7,
+        'B_2A':0,
+        'B_3A':0.0,
+        'C_1A':10.0,
+        'C_3A':20.0,
+        'C_5A':1000.0,
+    }
+
+    direct_estimator = DirectEstimatorCubic(fit_method='integration')
+    phi0 = np.deg2rad(10)
+    phi1d0 = 0
+    t = np.arange(0, 10, 0.01)
+    X = simulate(t=t, phi0=phi0, phi1d0=phi1d0, **parameters)
+
+    X['phi2d'] = np.gradient(X['phi1d'].values, X.index.values)
+    check(X=X, estimator=direct_estimator, parameters=parameters)
+
+def test_fit_simualtion_full_cubic():
+
+    parameters={
+        'B_1A':0.7,
+        'B_2A':1.0,
+        'B_3A':3.0,
+        'C_1A':10.0,
+        'C_3A':10.0,
+        'C_5A':0.0,
+    }
+
+    direct_estimator = DirectEstimatorCubic(fit_method='integration')
     phi0 = np.deg2rad(20)
     phi1d0 = 0
-    t = np.arange(0, 520, 0.1)
+    t = np.arange(0, 10, 0.01)
     X = simulate(t=t, phi0=phi0, phi1d0=phi1d0, **parameters)
 
     X['phi2d'] = np.gradient(X['phi1d'].values, X.index.values)
     check(X=X, estimator=direct_estimator, parameters=parameters)
-
-def test_fit_simualtion_integration():
-    parameters = {
-        'A_44': 10.0,
-        'B_1': 0.3,
-        'B_2': 0.1,
-        'B_3': 0.1,
-        'C_1': 0.3,
-        'C_3': 0.1,
-        'C_5': 0.1,
-    }
-
-    p0 = {
-        'A_44': 100.0,
-        'B_1': 0.3,
-        'B_2': 0.0,
-        'B_3': 0.0,
-        'C_1': 0.3,
-        'C_3': 0.0,
-        'C_5': 0.0,
-    }
-
-    direct_estimator = DirectEstimatorCubic(fit_method='integration', p0=p0)
-    X = simulate(**parameters)
-    X['phi2d'] = np.gradient(X['phi1d'].values, X.index.values)
-    check(X=X, estimator=direct_estimator, parameters=parameters)
-
-

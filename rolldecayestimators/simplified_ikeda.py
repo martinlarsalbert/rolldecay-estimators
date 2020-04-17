@@ -17,6 +17,8 @@ from numpy import exp as EXP
 from numpy import log as LOG
 from numpy import sqrt as SQRT
 from numpy import pi as PI
+import numpy as np
+import pandas as pd
 
 def calculate_roll_damping(LPP,Beam,CB,CMID,OG,PHI,lBK,bBK,OMEGA,
                            DRAFT):
@@ -44,15 +46,48 @@ def calculate_roll_damping(LPP,Beam,CB,CMID,OG,PHI,lBK,bBK,OMEGA,
     BEHAT: Eddy
     BBKHAT: Bilge keel
     """
+    verify_inputs(LPP,Beam,CB,CMID,OG,PHI,lBK,bBK,OMEGA,
+                           DRAFT)
 
     LBKL=lBK/LPP
     BD = Beam/DRAFT
     OGD = OG/DRAFT
     BBKB = bBK/Beam
     BRTH = Beam
-    OMEGA/= 2  # Magic factor!??? This value seemt o give better results..?
+    #OMEGA/= 2  # Magic factor!??? This value seemt o give better results..?
     OMEGAHAT = OMEGA * SQRT(BRTH / 2 / 9.81)
     TW = 2 * PI / OMEGA
+
+    return _calculate_roll_damping(LPP=LPP,BRTH=BRTH, CB=CB, CMID=CMID, OGD=OGD, PHI=PHI, LBKL=LBKL, BBKB=BBKB,
+                                   OMEGA=OMEGA, DRAFT=DRAFT, BD=BD, OMEGAHAT=OMEGAHAT, TW=TW)
+
+
+def _calculate_roll_damping(LPP, BRTH, CB, CMID, OGD, PHI, LBKL, BBKB, OMEGA,
+                           DRAFT, BD, OMEGAHAT, TW):
+    """
+    ********************************************************************
+    *** Calculation of roll damping by the proposed predition method ***
+    ********************************************************************
+
+    :param LPP: [m]
+    :param Beam: [m]
+    :param CB: Block coefficient [-]
+    :param CMID: Middship coefficient (A_m/(B*d) [-]
+    :param OG: distance from the still water level O to the roll axis G [m]
+    :param PHI: Roll angle [deg]
+    :param lBK: length of bilge keel [m]
+    :param bBK: height of bilge keel [m]
+    :param OMEGA: Frequency of motion [rad/s]
+    :param DRAFT: DRAFT : ship draught [m]
+    :param OMEGAHAT:
+    :return: B44HAT, BFHAT, BWHAT, BEHAT, BBKHAT
+     Nondimensional damping:
+    B44HAT: Total
+    BFHAT: Friction
+    BWHAT: Wave
+    BEHAT: Eddy
+    BBKHAT: Bilge keel
+    """
 
     #There must be a typo in the original fortran code it was 102 instead of 1025!?
     RO=1025  # Density of water
@@ -132,7 +167,7 @@ def calculate_roll_damping(LPP,Beam,CB,CMID,OG,PHI,lBK,bBK,OMEGA,
     BEHAT=4.0*OMEGAHAT*PHI*PI/180/(3.0*PI*CB*BD**3.0)*CR
 
     #*** Bilge Keel Component ***
-    if (lBK==0):
+    if (LBKL==0):
         BBKHAT=0.0
     else:
         FBK1=(-0.3651*CB+0.3907)*(BD-2.83)**2-2.21*CB+2.632
@@ -148,3 +183,46 @@ def calculate_roll_damping(LPP,Beam,CB,CMID,OG,PHI,lBK,bBK,OMEGA,
     B44HAT=BFHAT+BWHAT+BEHAT+BBKHAT
 
     return B44HAT, BFHAT, BWHAT, BEHAT, BBKHAT
+
+class SimplifiedIkedaInputError(ValueError): pass
+
+def verify_inputs(LPP,Beam,CB,CMID,OG,PHI,lBK,bBK,OMEGA,
+                           DRAFT):
+    inputs = {
+        'LPP': LPP,
+        'Beam': Beam,
+        'CB': CB,
+        'CMID': CMID,
+        'OG': OG,
+        'PHI': PHI,
+        'lBK': lBK,
+        'bBK': bBK,
+        'OMEGA': OMEGA,
+        'DRAFT': DRAFT
+    }
+
+    exclude_zero = 10*-10
+    limits={
+        'LPP'   : (exclude_zero,np.inf),
+        'Beam'  : (exclude_zero,np.inf),
+        'CB'    : (0.4,1.0),
+        'CMID'  : (0.4,1.0),
+        'OG'    : (-np.inf,np.inf),
+        'PHI'   : (exclude_zero, np.inf),
+        'lBK'   : (0,np.inf),
+        'bBK'   : (0,np.inf),
+        'OMEGA' : (exclude_zero,np.inf),
+        'DRAFT' : (exclude_zero,np.inf)
+    }
+
+    for key,value in inputs.items():
+        lims = limits.get(key)
+
+        if np.any(pd.isnull(value)):
+            raise SimplifiedIkedaInputError('%s is NaN' % key)
+
+        if not np.all((lims[0] <= value) & (value <= lims[1])):
+            raise SimplifiedIkedaInputError('%s has a bad value:%f' % (key,value))
+
+    if np.any((LPP/Beam > 100) | ((LPP/Beam) < 1)):
+        raise SimplifiedIkedaInputError('Lpp/Beam has bad ratio' % (LPP/Beam))

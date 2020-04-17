@@ -48,15 +48,38 @@ roll_decay_equation_quadratic = sp.factor(roll_decay_equation_quadratic, phi_dot
 
 roll_decay_equation_linear = roll_decay_equation_quadratic.subs(d,0)
 
+omega0_equation_linear = omega0_equation.subs(C,sp.solve(C_equation_linear,C)[0])
+A44 = sp.solve(omega0_equation_linear, A_44)[0]
+zeta_B1_equation = zeta_equation.subs(A_44,A44)
+d_B2_equation = d_equation.subs(A_44,A44)
+
 ## Cubic model:
 subs = [
     (B_44,sp.solve(b44_cubic_equation,B_44)[0]),
     (C_44,sp.solve(restoring_equation_cubic,C_44)[0])
 ]
 roll_decay_equation_cubic = roll_decay_equation_general_himeno.subs(subs)
+# But this equation does not have a unique solution, so we devide all witht the interia A_44:
+
+normalize_symbols = [B_1, B_2, B_3, C_1, C_3, C_5]
+normalize_equations = []
+new_symbols = {}
+subs_normalize = []
+for symbol in normalize_symbols:
+    new_symbol = sp.Symbol('%sA' % symbol.name)
+    new_symbols[symbol] = new_symbol
+    eq = sp.Eq(new_symbol,symbol/A_44)
+    normalize_equations.append(eq)
+    subs_normalize.append((symbol, sp.solve(eq, symbol)[0]))
+
+lhs = (roll_decay_equation_cubic.lhs/A_44).subs(subs_normalize).simplify()
+roll_decay_equation_cubic_A = sp.Eq(lhs=lhs,rhs=0)
+
 
 ## Equivalt linearized damping:
 B_e_equation = sp.Eq(B_e,B_1+8/(3*sp.pi)*omega0*phi_a*B_2)
+B_e_equation_cubic = sp.Eq(B_e,B_1+8/(3*sp.pi)*omega0*phi_a*B_2 + 3/4*omega0**2*phi_a**2*B_3)
+
 
 ## Nondimensional damping Himeno:
 lhs = B_44_hat
@@ -64,6 +87,7 @@ rhs = B_44/(rho*Disp*beam**2)*sp.sqrt(beam/(2*g))
 B44_equation = sp.Eq(lhs, rhs)
 omega0_equation_linear = omega0_equation.subs(C,sp.solve(C_equation_linear,C)[0])
 
+omega_hat_equation = sp.Eq(omega_hat,omega*sp.sqrt(beam/(2*g)))
 
 ## Analytical
 diff_eq = sp.Eq(y.diff().diff() + 2*delta*omega0*y.diff() + omega0**2*y,0)
