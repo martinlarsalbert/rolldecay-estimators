@@ -352,9 +352,6 @@ class RollDecay(BaseEstimator):
         s['phi_start'] = self.X.iloc[0]['phi']
         s['phi_stop'] = self.X.iloc[-1]['phi']
 
-        if not 'd' in s:
-            s['d'] = 0
-
         return s
 
 

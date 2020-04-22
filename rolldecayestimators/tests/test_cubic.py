@@ -3,12 +3,12 @@ import pytest
 import pandas as pd
 import numpy as np
 from numpy.testing import assert_almost_equal
-from rolldecayestimators.direct_estimator_cubic import DirectEstimatorCubic, DirectEstimatorQuadratic, DirectEstimatorLinear
+from rolldecayestimators.direct_estimator_cubic import EstimatorCubic, EstimatorQuadratic, EstimatorLinear
 import matplotlib.pyplot as plt
 
 def simulate(t, phi0, phi1d0, B_1A, B_2A, B_3A, C_1A, C_3A, C_5A):
 
-    estimator = DirectEstimatorCubic()
+    estimator = EstimatorCubic()
     return estimator.simulate(t=t,phi0=phi0, phi1d0=phi1d0,B_1A=B_1A,B_2A=B_2A,B_3A=B_3A,C_1A=C_1A,C_3A=C_3A,C_5A=C_5A)
 
 def check(X, estimator, parameters, decimal=2):
@@ -59,7 +59,7 @@ def test_simulation():
     phi1d0 = 0
     t = np.arange(0, 10, 0.1)
     X = simulate(t=t, phi0=phi0, phi1d0=phi1d0, **parameters)
-    direct_estimator = DirectEstimatorCubic()
+    direct_estimator = EstimatorCubic()
     direct_estimator.parameters=parameters
     direct_estimator.is_fitted_=True
     X_pred = direct_estimator.predict(X=X)
@@ -78,7 +78,7 @@ def test_fit_simualtion_cheat_p0():
 
     p0 = parameters
 
-    direct_estimator = DirectEstimatorCubic(fit_method='integration',p0=p0)
+    direct_estimator = EstimatorCubic(fit_method='integration', p0=p0)
     phi0 = np.deg2rad(10)
     phi1d0 = 0
     t = np.arange(0, 10, 0.01)
@@ -98,7 +98,7 @@ def test_fit_simualtion():
         'C_5A':0.0,
     }
 
-    direct_estimator = DirectEstimatorCubic(fit_method='integration')
+    direct_estimator = EstimatorCubic(fit_method='integration')
     phi0 = np.deg2rad(10)
     phi1d0 = 0
     t = np.arange(0, 10, 0.01)
@@ -118,7 +118,7 @@ def test_fit_simualtion_quadratic_damping():
         'C_5A':0.0,
     }
 
-    direct_estimator = DirectEstimatorCubic(fit_method='integration')
+    direct_estimator = EstimatorCubic(fit_method='integration')
     phi0 = np.deg2rad(10)
     phi1d0 = 0
     t = np.arange(0, 10, 0.01)
@@ -138,7 +138,7 @@ def test_fit_simualtion_cubic_damping():
         'C_5A':0.0,
     }
 
-    direct_estimator = DirectEstimatorCubic(fit_method='integration')
+    direct_estimator = EstimatorCubic(fit_method='integration')
     phi0 = np.deg2rad(10)
     phi1d0 = 0
     t = np.arange(0, 10, 0.01)
@@ -158,7 +158,7 @@ def test_fit_simualtion_quadratic_stiffness():
         'C_5A':0.0,
     }
 
-    direct_estimator = DirectEstimatorCubic(fit_method='integration')
+    direct_estimator = EstimatorCubic(fit_method='integration')
     phi0 = np.deg2rad(10)
     phi1d0 = 0
     t = np.arange(0, 10, 0.01)
@@ -178,7 +178,7 @@ def test_fit_simualtion_cubic_stiffness():
         'C_5A':1000.0,
     }
 
-    direct_estimator = DirectEstimatorCubic(fit_method='integration')
+    direct_estimator = EstimatorCubic(fit_method='integration')
     phi0 = np.deg2rad(10)
     phi1d0 = 0
     t = np.arange(0, 10, 0.01)
@@ -198,7 +198,7 @@ def test_fit_simualtion_full_cubic():
         'C_5A':0.0,
     }
 
-    direct_estimator = DirectEstimatorCubic(fit_method='integration')
+    direct_estimator = EstimatorCubic(fit_method='integration')
     phi0 = np.deg2rad(20)
     phi1d0 = 0
     t = np.arange(0, 10, 0.01)
