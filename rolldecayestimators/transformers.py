@@ -111,27 +111,25 @@ class CutTransformer(BaseEstimator, TransformerMixin):
 
         X_cut = X_cut.loc[index2:].copy()
 
-        # Remove some large angles at start
-        abs_phi = X_cut['phi'].abs()
-        mask = abs_phi >= self.phi_max
-        df_large = abs_phi.loc[mask]
-        if len(df_large) > 0:
-            start_index = df_large.index[-1]
-            X_cut = X_cut.loc[start_index:]
-
-
-        # Remove some small angles at end
-        abs_phi = X_cut['phi'].abs()
-        mask = abs_phi >= self.phi_min
-        df_small = abs_phi.loc[mask]
-        if len(df_small) > 0:
-            stop_index = df_small.index[-1]
-            X_cut = X_cut.loc[:stop_index]
-
         X_interpolated = measure.sample_increase(X=X_cut, increase=5)
         X_zerocrossings = measure.get_zerocrossings(X=X_interpolated)
         mask = X_interpolated.index >= X_zerocrossings.index[0]
         X_cut = X_interpolated.loc[mask]
+
+        # Remove some large angles at start
+        mask = X_zerocrossings['phi'].abs() < self.phi_max
+        X_zerocrossings2 = X_zerocrossings.loc[mask].copy()
+        if len(X_zerocrossings2) > 0:
+            mask2 = X_cut.index > X_zerocrossings2.index[0]
+            X_cut = X_cut.loc[mask2]
+
+
+        # Remove some small angles at end
+        mask = X_zerocrossings2['phi'].abs() < self.phi_min
+        X_zerocrossings3 = X_zerocrossings2.loc[mask].copy()
+        if len(X_zerocrossings3) > 0:
+            mask3 = X_cut.index < X_zerocrossings3.index[0]
+            X_cut = X_cut.loc[mask3]
 
         if 'phi1d' in X_cut:
             phi1d_start = np.abs(X_cut.iloc[0]['phi1d'])
