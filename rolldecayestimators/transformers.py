@@ -25,7 +25,7 @@ class CutTransformer(BaseEstimator, TransformerMixin):
     n_features_ : int
         The number of features of the data passed to :meth:`fit`.
     """
-    def __init__(self, phi_max=np.deg2rad(90), phi_min=0, phi1d_start_tolerance=np.deg2rad(0.1)):
+    def __init__(self, phi_max=np.deg2rad(90), phi_min=0, phi1d_start_tolerance=0.005):
         self.phi_max = phi_max  # Maximum Roll angle [rad]
         self.phi_min = phi_min  # Minimum Roll angle [rad]
         self.phi_key = 'phi'  # Roll angle [rad]

@@ -88,7 +88,7 @@ class EstimatorQuadratic(DirectEstimator):
     acceleration = sp.solve(roll_decay_equation_A, phi_dot_dot)[0]
     functions = (lambdify(acceleration),)
 
-    def __init__(self, maxfev=4000, bounds={}, ftol=10 ** -20, p0={}, fit_method='derivation'):
+    def __init__(self, maxfev=4000, bounds={}, ftol=10 ** -10, p0={}, fit_method='derivation'):
         super().__init__(maxfev=maxfev, bounds=bounds, ftol=ftol, p0=p0, fit_method=fit_method, omega_regression=True)
 
     def simulate(self, t :np.ndarray, phi0 :float, phi1d0 :float, B_1, B_2, C_1, C_3)->pd.DataFrame:
@@ -138,7 +138,7 @@ class EstimatorLinear(DirectEstimator):
     acceleration = sp.solve(roll_decay_equation_A, phi_dot_dot)[0]
     functions = (lambdify(acceleration),)
 
-    def __init__(self, maxfev=4000, bounds={}, ftol=10 ** -20, p0={}, fit_method='derivation'):
+    def __init__(self, maxfev=4000, bounds={}, ftol=10 ** -10, p0={}, fit_method='derivation'):
         super().__init__(maxfev=maxfev, bounds=bounds, ftol=ftol, p0=p0, fit_method=fit_method, omega_regression=True)
 
     def simulate(self, t :np.ndarray, phi0 :float, phi1d0 :float, B_1, C_1)->pd.DataFrame:

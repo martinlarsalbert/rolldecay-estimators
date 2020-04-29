@@ -83,7 +83,7 @@ class RollDecay(BaseEstimator):
 
     def __repr__(self):
         if self.is_fitted_:
-            parameters = ''.join('%s:%0.3f, '%(key,value) for key,value in self.parameters.items())[0:-1]
+            parameters = ''.join('%s:%0.3f, '%(key,value) for key,value in sorted(self.parameters.items()))[0:-1]
             return '%s(%s)' % (self.__class__.__name__,parameters)
         else:
             return '%s' % (self.__class__.__name__)
@@ -196,6 +196,9 @@ class RollDecay(BaseEstimator):
         df = pd.DataFrame(index=t)
         df[self.phi_key] = self.simulation_result.y[0, :]
         df[self.phi1d_key] = self.simulation_result.y[1, :]
+        p_old = df[self.phi1d_key]
+        phi_old = df[self.phi_key]
+        df[self.phi2d_key] = self.calculate_acceleration(phi1d=p_old, phi=phi_old, **parameters)
 
         return df
 

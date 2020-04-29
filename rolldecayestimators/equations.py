@@ -22,11 +22,15 @@ roll_decay_equation_himeno_quadratic =  roll_decay_equation_general_himeno.subs(
 
 restoring_equation = sp.Eq(C_44,m*g*GZ)
 restoring_equation_linear = sp.Eq(C_44,m*g*GM*phi)
-restoring_equation_cubic = sp.Eq(C_44,C_1*phi + C_3*phi**3 + C_5*phi**5)
+restoring_equation_quadratic = sp.Eq(C_44, C_1 * phi + C_3 * phi ** 3)
+restoring_equation_cubic = sp.Eq(C_44,C_1*phi + C_3*phi*sp.Abs(phi) + C_5*phi**3)
+
 
 C_equation = sp.Eq(C,C_44/phi)
 C_equation_linear = C_equation.subs(C_44,sp.solve(restoring_equation_linear,C_44)[0])
 C_equation_cubic = C_equation.subs(C_44,sp.solve(restoring_equation_cubic,C_44)[0])
+C_equation_quadratic = C_equation.subs(C_44,sp.solve(restoring_equation_quadratic,C_44)[0])
+
 
 
 roll_decay_equation_himeno_quadratic_c = roll_decay_equation_himeno_quadratic.subs(C_44,sp.solve(C_equation, C_44)[0])
@@ -62,14 +66,16 @@ roll_decay_equation_cubic = roll_decay_equation_general_himeno.subs(subs)
 # But this equation does not have a unique solution, so we devide all witht the interia A_44:
 
 normalize_symbols = [B_1, B_2, B_3, C_1, C_3, C_5]
-normalize_equations = []
+normalize_equations = {}
 new_symbols = {}
 subs_normalize = []
 for symbol in normalize_symbols:
     new_symbol = sp.Symbol('%sA' % symbol.name)
     new_symbols[symbol] = new_symbol
     eq = sp.Eq(new_symbol,symbol/A_44)
-    normalize_equations.append(eq)
+
+    normalize_equations[symbol]=eq
+
     subs_normalize.append((symbol, sp.solve(eq, symbol)[0]))
 
 lhs = (roll_decay_equation_cubic.lhs/A_44).subs(subs_normalize).simplify()
