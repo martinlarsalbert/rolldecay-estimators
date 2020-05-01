@@ -3,7 +3,7 @@ import pytest
 import pandas as pd
 import numpy as np
 from numpy.testing import assert_almost_equal
-from rolldecayestimators.direct_estimator_cubic import EstimatorCubic, EstimatorQuadraticBandC, EstimatorLinear
+from rolldecayestimators.direct_estimator_cubic import EstimatorCubic, EstimatorQuadraticB, EstimatorLinear
 import matplotlib.pyplot as plt
 
 def simulate(t, phi0, phi1d0, B_1A, B_2A, B_3A, C_1A, C_3A, C_5A):
@@ -199,6 +199,46 @@ def test_fit_simualtion_full_cubic():
     }
 
     direct_estimator = EstimatorCubic(fit_method='integration')
+    phi0 = np.deg2rad(20)
+    phi1d0 = 0
+    t = np.arange(0, 10, 0.01)
+    X = simulate(t=t, phi0=phi0, phi1d0=phi1d0, **parameters)
+
+    X['phi2d'] = np.gradient(X['phi1d'].values, X.index.values)
+    check(X=X, estimator=direct_estimator, parameters=parameters)
+
+def test_fit_simulation_quadratic():
+
+    parameters={
+        'B_1A':0.7,
+        'B_2A':1.0,
+        'B_3A':0.0,
+        'C_1A':10.0,
+        'C_3A':0.0,
+        'C_5A':0.0,
+    }
+
+    direct_estimator = EstimatorQuadraticB(fit_method='integration')
+    phi0 = np.deg2rad(20)
+    phi1d0 = 0
+    t = np.arange(0, 10, 0.01)
+    X = simulate(t=t, phi0=phi0, phi1d0=phi1d0, **parameters)
+
+    X['phi2d'] = np.gradient(X['phi1d'].values, X.index.values)
+    check(X=X, estimator=direct_estimator, parameters=parameters)
+
+def test_fit_simulation_linear():
+
+    parameters={
+        'B_1A':0.7,
+        'B_2A':0.0,
+        'B_3A':0.0,
+        'C_1A':10.0,
+        'C_3A':0.0,
+        'C_5A':0.0,
+    }
+
+    direct_estimator = EstimatorLinear(fit_method='integration')
     phi0 = np.deg2rad(20)
     phi1d0 = 0
     t = np.arange(0, 10, 0.01)

@@ -47,7 +47,7 @@ class EstimatorCubic(DirectEstimator):
     ]
 
     A44_equation = sp.Eq(symbols.A_44, sp.solve(eqs, symbols.C_1, symbols.A_44)[symbols.A_44])
-    A44_lambda = lambdify(sp.solve(A44_equation, symbols.A_44)[0])
+    functions['A44'] = lambdify(sp.solve(A44_equation, symbols.A_44)[0])
 
     def __init__(self, maxfev=4000, bounds={}, ftol=10 ** -15, p0={}, fit_method='derivation'):
         super().__init__(maxfev=maxfev, bounds=bounds, ftol=ftol, p0=p0, fit_method=fit_method, omega_regression=True)
@@ -72,7 +72,7 @@ class EstimatorCubic(DirectEstimator):
         }
         return self._simulate(t=t, phi0=phi0, phi1d0=phi1d0, parameters=parameters)
 
-class EstimatorQuadraticB(DirectEstimator):
+class EstimatorQuadraticB(EstimatorCubic):
     """ A template estimator to be used as a reference implementation.
 
     For more information regarding how to build your own estimator, read more
@@ -98,12 +98,9 @@ class EstimatorQuadraticB(DirectEstimator):
     roll_decay_equation_A = sp.Eq(lhs=lhs, rhs=0)
 
     acceleration = sp.solve(roll_decay_equation_A, phi_dot_dot)[0]
-    functions = {
-        'acceleration': lambdify(acceleration)
-    }
+    functions = dict(EstimatorCubic.functions)
+    functions['acceleration'] = lambdify(acceleration)
 
-    def __init__(self, maxfev=4000, bounds={}, ftol=10 ** -10, p0={}, fit_method='derivation'):
-        super().__init__(maxfev=maxfev, bounds=bounds, ftol=ftol, p0=p0, fit_method=fit_method, omega_regression=True)
 
     def simulate(self, t :np.ndarray, phi0 :float, phi1d0 :float, B_1, B_2, C_1)->pd.DataFrame:
         """
@@ -122,7 +119,7 @@ class EstimatorQuadraticB(DirectEstimator):
         }
         return self._simulate(t=t, phi0=phi0, phi1d0=phi1d0, parameters=parameters)
 
-class EstimatorQuadraticBandC(DirectEstimator):
+class EstimatorQuadraticBandC(EstimatorCubic):
     """ A template estimator to be used as a reference implementation.
 
     For more information regarding how to build your own estimator, read more
@@ -148,12 +145,9 @@ class EstimatorQuadraticBandC(DirectEstimator):
     roll_decay_equation_A = sp.Eq(lhs=lhs, rhs=0)
 
     acceleration = sp.solve(roll_decay_equation_A, phi_dot_dot)[0]
-    functions = {
-        'acceleration': lambdify(acceleration)
-    }
+    functions = dict(EstimatorCubic.functions)
+    functions['acceleration'] = lambdify(acceleration)
 
-    def __init__(self, maxfev=4000, bounds={}, ftol=10 ** -10, p0={}, fit_method='derivation'):
-        super().__init__(maxfev=maxfev, bounds=bounds, ftol=ftol, p0=p0, fit_method=fit_method, omega_regression=True)
 
     def simulate(self, t :np.ndarray, phi0 :float, phi1d0 :float, B_1, B_2, C_1, C_3)->pd.DataFrame:
         """
@@ -173,7 +167,7 @@ class EstimatorQuadraticBandC(DirectEstimator):
         }
         return self._simulate(t=t, phi0=phi0, phi1d0=phi1d0, parameters=parameters)
 
-class EstimatorLinear(DirectEstimator):
+class EstimatorLinear(EstimatorCubic):
     """ A template estimator to be used as a reference implementation.
 
     For more information regarding how to build your own estimator, read more
@@ -200,12 +194,8 @@ class EstimatorLinear(DirectEstimator):
     roll_decay_equation_A = sp.Eq(lhs=lhs, rhs=0)
 
     acceleration = sp.solve(roll_decay_equation_A, phi_dot_dot)[0]
-    functions = {
-        'acceleration': lambdify(acceleration)
-    }
-
-    def __init__(self, maxfev=4000, bounds={}, ftol=10 ** -10, p0={}, fit_method='derivation'):
-        super().__init__(maxfev=maxfev, bounds=bounds, ftol=ftol, p0=p0, fit_method=fit_method, omega_regression=True)
+    functions = dict(EstimatorCubic.functions)
+    functions['acceleration'] = lambdify(acceleration)
 
     def simulate(self, t :np.ndarray, phi0 :float, phi1d0 :float, B_1, C_1)->pd.DataFrame:
         """

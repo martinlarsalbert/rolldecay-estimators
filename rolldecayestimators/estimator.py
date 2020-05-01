@@ -357,7 +357,8 @@ class RollDecay(BaseEstimator):
         s['phi_start'] = self.X.iloc[0]['phi']
         s['phi_stop'] = self.X.iloc[-1]['phi']
 
-        s['omega0_fft'] = self.omega0
+        if hasattr(self,'omega0'):
+            s['omega0_fft'] = self.omega0
 
         return s
 
