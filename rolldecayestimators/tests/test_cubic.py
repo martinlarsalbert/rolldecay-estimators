@@ -3,7 +3,7 @@ import pytest
 import pandas as pd
 import numpy as np
 from numpy.testing import assert_almost_equal
-from rolldecayestimators.direct_estimator_cubic import EstimatorCubic, EstimatorQuadratic, EstimatorLinear
+from rolldecayestimators.direct_estimator_cubic import EstimatorCubic, EstimatorQuadraticBandC, EstimatorLinear
 import matplotlib.pyplot as plt
 
 def simulate(t, phi0, phi1d0, B_1A, B_2A, B_3A, C_1A, C_3A, C_5A):
