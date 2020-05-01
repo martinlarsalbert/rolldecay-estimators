@@ -46,7 +46,7 @@ class DirectEstimator(RollDecay):
     rhs = -phi_dot_dot / (omega0 ** 2) - 2 * zeta / omega0 * phi_dot - d * sp.Abs(phi_dot) * phi_dot / (omega0 ** 2)
     roll_diff_equation = sp.Eq(lhs=phi, rhs=rhs)
     acceleration = sp.Eq(lhs=phi, rhs=sp.solve(roll_diff_equation, phi.diff().diff())[0])
-    functions = (lambdify(acceleration.rhs),)
+    functions = {'acceleration':lambdify(acceleration.rhs)}
 
     def simulate(self, t :np.ndarray, phi0 :float, phi1d0 :float,omega0:float, zeta:float, d:float)->pd.DataFrame:
         """

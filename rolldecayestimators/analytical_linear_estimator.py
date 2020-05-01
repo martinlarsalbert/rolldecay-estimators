@@ -33,11 +33,11 @@ class AnalyticalLinearEstimator(DirectEstimator):
     rhs = -phi_dot_dot / (omega0 ** 2) - 2 * zeta / omega0 * phi_dot
     roll_diff_equation = sp.Eq(lhs=phi, rhs=rhs)
     acceleration = sp.Eq(lhs=phi, rhs=sp.solve(roll_diff_equation, phi.diff().diff())[0])
-    functions = (
-        lambdify(sp.solve(equations.analytical_solution, phi)[0]),
-        lambdify(sp.solve(equations.analytical_phi1d, phi_dot)[0]),
-        lambdify(sp.solve(equations.analytical_phi2d, phi_dot_dot)[0]),
-    )
+    functions = {
+        'phi':lambdify(sp.solve(equations.analytical_solution, phi)[0]),
+        'velocity':lambdify(sp.solve(equations.analytical_phi1d, phi_dot)[0]),
+        'acceleration':lambdify(sp.solve(equations.analytical_phi2d, phi_dot_dot)[0]),
+    }
 
     @property
     def parameter_names(self):
@@ -59,7 +59,7 @@ class AnalyticalLinearEstimator(DirectEstimator):
         phi_0 = xs.iloc[0][self.phi_key]
         phi_01d = xs.iloc[0][self.phi1d_key]
 
-        return self.functions[0](t=t,phi_0=phi_0,phi_01d=phi_01d,**parameters)
+        return self.functions['phi'](t=t,phi_0=phi_0,phi_01d=phi_01d,**parameters)
 
     def predict(self, X)->pd.DataFrame:
 
@@ -70,8 +70,8 @@ class AnalyticalLinearEstimator(DirectEstimator):
         phi_01d = X.iloc[0][self.phi1d_key]
 
         df = pd.DataFrame(index=t)
-        df['phi'] = self.functions[0](t=t, phi_0=phi_0, phi_01d=phi_01d, **self.parameters)
-        df['phi1d'] = self.functions[1](t=t, phi_0=phi_0, phi_01d=phi_01d, **self.parameters)
-        df['phi2d'] = self.functions[2](t=t, phi_0=phi_0, phi_01d=phi_01d, **self.parameters)
+        df['phi'] = self.functions['phi'](t=t, phi_0=phi_0, phi_01d=phi_01d, **self.parameters)
+        df['phi1d'] = self.functions['velocity'](t=t, phi_0=phi_0, phi_01d=phi_01d, **self.parameters)
+        df['phi2d'] = self.functions['acceleration'](t=t, phi_0=phi_0, phi_01d=phi_01d, **self.parameters)
 
         return df

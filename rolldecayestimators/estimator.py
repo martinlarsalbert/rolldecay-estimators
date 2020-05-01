@@ -19,7 +19,9 @@ class RollDecay(BaseEstimator):
     rhs = -phi_dot_dot/(omega0**2) - 2*zeta/omega0*phi_dot
     roll_diff_equation = sp.Eq(lhs=phi, rhs=rhs)
     acceleration = sp.Eq(lhs=phi, rhs=sp.solve(roll_diff_equation, phi.diff().diff())[0])
-    functions = (lambdify(acceleration.rhs),)
+    functions = {
+        'acceleration':lambdify(acceleration.rhs)
+    }
 
     def __init__(self, maxfev = 4000, bounds={}, ftol=10**-10, p0={}, fit_method='derivation', omega_regression=True):
         self.is_fitted_ = False
@@ -90,7 +92,7 @@ class RollDecay(BaseEstimator):
 
     @property
     def calculate_acceleration(self):
-        return self.functions[0]
+        return self.functions['acceleration']
 
     @property
     def parameter_names(self):

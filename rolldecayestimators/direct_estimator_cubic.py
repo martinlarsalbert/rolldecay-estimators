@@ -3,7 +3,7 @@ import pandas as pd
 from scipy.integrate import odeint
 from rolldecayestimators import DirectEstimator
 from rolldecayestimators.symbols import *
-from rolldecayestimators import equations
+from rolldecayestimators import equations, symbols
 from rolldecayestimators.substitute_dynamic_symbols import lambdify
 
 
@@ -35,7 +35,19 @@ class EstimatorCubic(DirectEstimator):
     roll_decay_equation_A = sp.Eq(lhs=lhs, rhs=0)
 
     acceleration = sp.solve(roll_decay_equation_A, phi_dot_dot)[0]
-    functions = (lambdify(acceleration),)
+    functions = {
+                'acceleration':lambdify(acceleration)
+                }
+
+    C_1_equation = equations.C_equation_linear.subs(symbols.C, symbols.C_1)  # C_1 = GM*gm
+
+    eqs = [
+        C_1_equation,
+        equations.normalize_equations[symbols.C_1]
+    ]
+
+    A44_equation = sp.Eq(symbols.A_44, sp.solve(eqs, symbols.C_1, symbols.A_44)[symbols.A_44])
+    A44_lambda = lambdify(sp.solve(A44_equation, symbols.A_44)[0])
 
     def __init__(self, maxfev=4000, bounds={}, ftol=10 ** -15, p0={}, fit_method='derivation'):
         super().__init__(maxfev=maxfev, bounds=bounds, ftol=ftol, p0=p0, fit_method=fit_method, omega_regression=True)
@@ -86,7 +98,9 @@ class EstimatorQuadraticB(DirectEstimator):
     roll_decay_equation_A = sp.Eq(lhs=lhs, rhs=0)
 
     acceleration = sp.solve(roll_decay_equation_A, phi_dot_dot)[0]
-    functions = (lambdify(acceleration),)
+    functions = {
+        'acceleration': lambdify(acceleration)
+    }
 
     def __init__(self, maxfev=4000, bounds={}, ftol=10 ** -10, p0={}, fit_method='derivation'):
         super().__init__(maxfev=maxfev, bounds=bounds, ftol=ftol, p0=p0, fit_method=fit_method, omega_regression=True)
@@ -134,7 +148,9 @@ class EstimatorQuadraticBandC(DirectEstimator):
     roll_decay_equation_A = sp.Eq(lhs=lhs, rhs=0)
 
     acceleration = sp.solve(roll_decay_equation_A, phi_dot_dot)[0]
-    functions = (lambdify(acceleration),)
+    functions = {
+        'acceleration': lambdify(acceleration)
+    }
 
     def __init__(self, maxfev=4000, bounds={}, ftol=10 ** -10, p0={}, fit_method='derivation'):
         super().__init__(maxfev=maxfev, bounds=bounds, ftol=ftol, p0=p0, fit_method=fit_method, omega_regression=True)
@@ -184,7 +200,9 @@ class EstimatorLinear(DirectEstimator):
     roll_decay_equation_A = sp.Eq(lhs=lhs, rhs=0)
 
     acceleration = sp.solve(roll_decay_equation_A, phi_dot_dot)[0]
-    functions = (lambdify(acceleration),)
+    functions = {
+        'acceleration': lambdify(acceleration)
+    }
 
     def __init__(self, maxfev=4000, bounds={}, ftol=10 ** -10, p0={}, fit_method='derivation'):
         super().__init__(maxfev=maxfev, bounds=bounds, ftol=ftol, p0=p0, fit_method=fit_method, omega_regression=True)
