@@ -342,17 +342,14 @@ class RollDecay(BaseEstimator):
 
         return frequencies, dft
 
-    def result_for_database(self):
+    def result_for_database(self, meta_data={}):
         check_is_fitted(self, 'is_fitted_')
 
         s = {}
         s.update(self.parameters)
         s['score'] = self.score(X=self.X)
 
-        try:
-            s['mean_damping'] = self.calculate_average_linear_damping()
-        except:
-            pass
+
 
         s['phi_start'] = self.X.iloc[0]['phi']
         s['phi_stop'] = self.X.iloc[-1]['phi']

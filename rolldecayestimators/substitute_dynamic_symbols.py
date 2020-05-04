@@ -85,4 +85,9 @@ def lambdify(expression):
 def run(function,inputs):
     s = signature(function)
     input_names = set(s.parameters.keys())
+    missing = list(input_names - set(inputs.index))
+
+    if len(missing) > 0:
+        raise ValueError('Sympy lambda function misses:%s' % (missing))
+
     return function(**inputs[input_names])

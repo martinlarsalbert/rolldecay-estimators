@@ -246,3 +246,32 @@ def test_fit_simulation_linear():
 
     X['phi2d'] = np.gradient(X['phi1d'].values, X.index.values)
     check(X=X, estimator=direct_estimator, parameters=parameters)
+
+def test_result_for_database():
+
+    parameters={
+        'B_1A':0.7,
+        'B_2A':1.0,
+        'B_3A':3.0,
+        'C_1A':10.0,
+        'C_3A':10.0,
+        'C_5A':0.0,
+    }
+
+    direct_estimator = EstimatorCubic(fit_method='integration')
+    phi0 = np.deg2rad(20)
+    phi1d0 = 0
+    t = np.arange(0, 10, 0.01)
+    X = simulate(t=t, phi0=phi0, phi1d0=phi1d0, **parameters)
+
+    X['phi2d'] = np.gradient(X['phi1d'].values, X.index.values)
+    direct_estimator.fit(X=X)
+
+    meta_data = {
+        'GM':1,
+        'Volume':1,
+    }
+
+    s = direct_estimator.result_for_database(meta_data=meta_data)
+
+    a = 1

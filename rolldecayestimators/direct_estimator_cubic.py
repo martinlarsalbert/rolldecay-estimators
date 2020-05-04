@@ -4,7 +4,8 @@ from scipy.integrate import odeint
 from rolldecayestimators import DirectEstimator
 from rolldecayestimators.symbols import *
 from rolldecayestimators import equations, symbols
-from rolldecayestimators.substitute_dynamic_symbols import lambdify
+from rolldecayestimators.substitute_dynamic_symbols import lambdify, run
+from sklearn.utils.validation import check_is_fitted
 
 
 
@@ -71,6 +72,53 @@ class EstimatorCubic(DirectEstimator):
             'C_5A':C_5A,
         }
         return self._simulate(t=t, phi0=phi0, phi1d0=phi1d0, parameters=parameters)
+
+    def calculate_additional_parameters(self, A44):
+        check_is_fitted(self, 'is_fitted_')
+
+        parameters_additional = {}
+
+        for key, value in self.parameters.items():
+            symbol_key = sp.Symbol(key)
+            new_key = key[0:-1]
+            symbol_new_key = sp.Symbol(new_key)
+
+            if symbol_new_key in equations.normalize_equations:
+                normalize_equation = equations.normalize_equations[symbol_new_key]
+                solution = sp.solve(normalize_equation,symbol_new_key)[0]
+                new_value = solution.subs([(symbol_key,value),
+                                           (symbols.A_44,A44),
+
+                               ])
+
+                parameters_additional[new_key]=new_value
+
+        return parameters_additional
+
+
+
+    def result_for_database(self, meta_data={}):
+        s = super().result_for_database(meta_data=meta_data)
+
+
+        inputs=pd.Series(meta_data)
+
+        if not 'g' in inputs:
+            inputs['g']=9.81
+
+        if not 'rho' in inputs:
+            inputs['rho'] = 1000
+
+        inputs['m'] = inputs['Volume']*inputs['rho']
+        parameters = pd.Series(self.parameters)
+        inputs = parameters.combine_first(inputs)
+
+        s['A44'] = run(self.functions['A44'], inputs=inputs)
+        parameters_additional = self.calculate_additional_parameters(A44=s['A44'])
+        s.update(parameters_additional)
+
+        return s
+
 
 class EstimatorQuadraticB(EstimatorCubic):
     """ A template estimator to be used as a reference implementation.
