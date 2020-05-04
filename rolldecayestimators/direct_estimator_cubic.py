@@ -50,6 +50,13 @@ class EstimatorCubic(DirectEstimator):
     A44_equation = sp.Eq(symbols.A_44, sp.solve(eqs, symbols.C_1, symbols.A_44)[symbols.A_44])
     functions['A44'] = lambdify(sp.solve(A44_equation, symbols.A_44)[0])
 
+    eqs = [equations.C_equation_linear,
+           equations.omega0_equation,
+           A44_equation,
+           ]
+    omgea0_equation = sp.Eq(symbols.omega0, sp.solve(eqs, symbols.A_44, symbols.C, symbols.omega0)[0][2])
+    functions['omega0'] = lambdify(sp.solve(omgea0_equation,symbols.omega0)[0])
+
     def __init__(self, maxfev=4000, bounds={}, ftol=10 ** -15, p0={}, fit_method='derivation'):
         super().__init__(maxfev=maxfev, bounds=bounds, ftol=ftol, p0=p0, fit_method=fit_method, omega_regression=True)
 
@@ -96,7 +103,6 @@ class EstimatorCubic(DirectEstimator):
         return parameters_additional
 
 
-
     def result_for_database(self, meta_data={}):
         s = super().result_for_database(meta_data=meta_data)
 
@@ -116,6 +122,9 @@ class EstimatorCubic(DirectEstimator):
         s['A44'] = run(self.functions['A44'], inputs=inputs)
         parameters_additional = self.calculate_additional_parameters(A44=s['A44'])
         s.update(parameters_additional)
+
+        inputs['A_44'] = s['A44']
+        s['omega0'] = run(function=self.functions['omega0'], inputs=inputs)
 
         return s
 

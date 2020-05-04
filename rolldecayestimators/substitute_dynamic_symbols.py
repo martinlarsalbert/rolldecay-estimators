@@ -1,6 +1,7 @@
 import sympy as sp
 import sympy.physics.mechanics as me
 from inspect import signature
+import pandas as pd
 
 def substitute_dynamic_symbols(expression):
     dynamic_symbols = me.find_dynamicsymbols(expression)
@@ -83,9 +84,21 @@ def lambdify(expression):
     return lambda_function
 
 def run(function,inputs):
+
+    if isinstance(inputs,dict):
+        inputs = pd.Series(inputs)
+
+    if isinstance(inputs, pd.Series):
+        inputs_columns = inputs.index
+    elif isinstance(inputs, pd.DataFrame):
+        inputs_columns = inputs.columns
+    else:
+        raise ValueError('inputs should be wither pd.Series or pd.DataFrame')
+
+
     s = signature(function)
     input_names = set(s.parameters.keys())
-    missing = list(input_names - set(inputs.index))
+    missing = list(input_names - set(inputs_columns))
 
     if len(missing) > 0:
         raise ValueError('Sympy lambda function misses:%s' % (missing))
