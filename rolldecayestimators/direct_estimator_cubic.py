@@ -119,11 +119,11 @@ class EstimatorCubic(DirectEstimator):
         parameters = pd.Series(self.parameters)
         inputs = parameters.combine_first(inputs)
 
-        s['A44'] = run(self.functions['A44'], inputs=inputs)
-        parameters_additional = self.calculate_additional_parameters(A44=s['A44'])
+        s['A_44'] = run(self.functions['A44'], inputs=inputs)
+        parameters_additional = self.calculate_additional_parameters(A44=s['A_44'])
         s.update(parameters_additional)
 
-        inputs['A_44'] = s['A44']
+        inputs['A_44'] = s['A_44']
         s['omega0'] = run(function=self.functions['omega0'], inputs=inputs)
 
         return s

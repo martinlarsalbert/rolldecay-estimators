@@ -56,6 +56,8 @@ C_1, C_3, C_5 = sp.symbols('C_1 C_3 C_5')
 
 B_e = ss.Symbol(name='B_e', description='Equivalen linearized damping', unit='Nm/(rad/s)')
 B_44_hat = ss.Symbol(name='B_44_hat', description='Nondimensional damping', unit='-')
+B_1_hat = ss.Symbol(name='B_1_hat', description='Nondimensional damping', unit='-')
+B_2_hat = ss.Symbol(name='B_2_hat', description='Nondimensional damping', unit='-')
 omega_hat = ss.Symbol(name='omega_hat', description='Nondimensional roll frequency', unit='-')
 
 

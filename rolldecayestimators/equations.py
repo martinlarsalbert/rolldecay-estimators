@@ -94,6 +94,10 @@ B44_equation = sp.Eq(lhs, rhs)
 omega0_equation_linear = omega0_equation.subs(C,sp.solve(C_equation_linear,C)[0])
 
 omega_hat_equation = sp.Eq(omega_hat,omega*sp.sqrt(beam/(2*g)))
+B44_hat_equation = sp.Eq(B_44_hat, B_44/(rho*Disp*beam**2)*sp.sqrt(beam/(2*g)))
+B_1_hat_equation = sp.Eq(B_1_hat, B_1/(rho*Disp*beam**2)*sp.sqrt(beam/(2*g)))
+B_2_hat_equation = sp.Eq(B_2_hat, B_2/(rho*Disp*beam**2)*sp.sqrt(beam/(2*g))**(0))
+
 
 ## Analytical
 diff_eq = sp.Eq(y.diff().diff() + 2*delta*omega0*y.diff() + omega0**2*y,0)

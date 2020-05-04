@@ -47,3 +47,32 @@ def calculate_amplitudes(X_zerocrossings):
     #X_amplitudes['phi']=2*X_zerocrossings['phi'].abs()  # Double amplitude!
 
     return X_amplitudes
+
+def fft_omega0(frequencies, dft):
+
+    index = np.argmax(dft)
+    natural_frequency = frequencies[index]
+    omega0 = 2 * np.pi * natural_frequency
+    return omega0
+
+def fft(series):
+    """
+    FFT of a series
+    Parameters
+    ----------
+    series
+
+    Returns
+    -------
+
+    """
+
+    signal = series.values
+    time = series.index
+
+    dt = np.mean(np.diff(time))
+    frequencies = np.fft.rfftfreq(n=len(time), d=dt) # [Hz]
+
+    dft = np.abs(np.fft.rfft(signal))
+
+    return frequencies, dft

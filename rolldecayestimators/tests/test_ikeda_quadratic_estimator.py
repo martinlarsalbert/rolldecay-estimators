@@ -34,7 +34,9 @@ def df_roll_decay():
 def check(X, estimator, omega0, d, zeta, decimal=4):
     estimator.fit(X=X)
     estimator.plot_variation()
+    plt.show()
     estimator.plot_B_fit()
+    plt.show()
 
     X_pred = estimator.predict(X=X)
     fig, ax = plt.subplots()
