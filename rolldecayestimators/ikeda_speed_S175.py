@@ -71,8 +71,7 @@ def bilge_keel(w, fi_a, V, B, d, A, bBK, R, g, OG, Ho, ra):
 
     # #
     # Hull pressure component
-    #So = 0.3 * pi * l * fi_a * f / bBK + 1.95; # S175 implementation
-    So = (0.3 * pi * l * fi_a * f / bBK + 1.95) * bBK;
+    So = 0.3 * pi * l * fi_a * f / bBK + 1.95; # S175 implementation
     m1 = R / d;
     m2 = OG / d;
     m3 = 1 - m1 - m2;
@@ -116,8 +115,7 @@ def bilge_keel(w, fi_a, V, B, d, A, bBK, R, g, OG, Ho, ra):
     lBK = l - bBK; # needs to be verified!!!!
     fi = fi_a;
 
-    #dBK = lBK * ((2 * d / B) / sqrt(1 + (2 * d / B) ** 2) * cos(fi) - sin(fi) / (1 + (2 * d / B) ** 2));  # S175 implementation
-    dBK = lBK * ((2 * d / B) / sqrt(1 + (2 * d / B)**2) * cos(fi) - sin(fi) / sqrt((1 + (2 * d / B)**2)));
+    dBK = lBK * ((2 * d / B) / sqrt(1 + (2 * d / B) ** 2) * cos(fi) - sin(fi) / (1 + (2 * d / B) ** 2));  # S175 implementation
 
     B44BKW0 = C_BK * exp(-w ** 2 / g * dBK); # non dimensional  wave damping from BK, ITTC
     return Bp44BK_N0, Bp44BK_H0, B44BK_L, B44BKW0
@@ -126,8 +124,8 @@ def frictional(w, fi_a, V, B, d, OG, ra, Cb, L, visc =1.15 * 10 ** -6):
     # ITTC
 
     Sf   = L*(1.7*d+Cb*B); # Wetted surface approx
-    #r_f  = 1/pi*((0.887+0.145*Cb)*(Sf/L)+2*OG);  # S175
-    r_f = 1 / pi * ((0.887 + 0.145 * Cb) * (Sf / L) - 2 * OG);
+    r_f  = 1/pi*((0.887+0.145*Cb)*(Sf/L)+2*OG);  # S175
+
 
     Rn = 0.512 * (r_f/fi_a) ** 2 * w / visc;
     Cf = 1.328*Rn**-0.5+0.14*Rn**-0.114;
@@ -139,13 +137,12 @@ def hull_lift(V,B, d, OG, ra, L, A):
 
     lo   = 0.3*d;
     lR   = 0.5*d;
-    #K    = 0.1;         #!! depends on CM  # S175
-    C_mid = A/(B*d)
-    K = 106 * (C_mid - 0.91)**2 - 700 * (C_mid - 0.91)**3;
+    K    = 0.1;         #!! depends on CM  # S175
+    #C_mid = A/(B*d)
+    #K = 106 * (C_mid - 0.91)**2 - 700 * (C_mid - 0.91)**3;
 
     kN   = 2*pi*d/L+K*(4.1*B/L-0.045);
-    #B44L = ra/2*V*L*d*kN*lo*lR*(1+1.4*OG/lR+0.7*OG**2/(lo*lR))  # S175
-    B44L = ra / 2 * V * L * d * kN * lo * lR * (1 - 1.4 * (OG) / lR + 0.7 * OG**2 / (lo * lR));
+    B44L = ra/2*V*L*d*kN*lo*lR*(1+1.4*OG/lR+0.7*OG**2/(lo*lR))  # S175
 
     return B44L
 

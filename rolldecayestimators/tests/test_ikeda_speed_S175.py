@@ -1,5 +1,5 @@
 import pytest
-from rolldecayestimators import ikeda_speed as ikeda
+from rolldecayestimators import ikeda_speed_S175 as ikeda  # Note that this one is slightly different (I'm not 100% sure wish one is correct)
 from numpy import sqrt, pi
 import numpy as np
 import pandas as pd
@@ -62,7 +62,7 @@ def test_friction():
 
 def test_hull_lift():
     V = 0  ## Ship speed
-    B44L = ikeda.hull_lift(V=V, B=B, d=d, OG=OG, ra=ra, L=L)
+    B44L = ikeda.hull_lift(V=V, B=B, d=d, OG=OG, ra=ra, L=L, A=A)
     assert_allclose(B44L, 0, rtol=0.001)
 
 def test_calculate_B44():

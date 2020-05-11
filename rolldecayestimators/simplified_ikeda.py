@@ -21,7 +21,7 @@ import numpy as np
 import pandas as pd
 
 def calculate_roll_damping(LPP,Beam,CB,CMID,OG,PHI,lBK,bBK,OMEGA,
-                           DRAFT):
+                           DRAFT, KVC = 1.14e-6):
     """
     ********************************************************************
     *** Calculation of roll damping by the proposed predition method ***
@@ -38,6 +38,7 @@ def calculate_roll_damping(LPP,Beam,CB,CMID,OG,PHI,lBK,bBK,OMEGA,
     :param OMEGA: Frequency of motion [rad/s]
     :param DRAFT: DRAFT : ship draught [m]
     :param OMEGAHAT:
+    :param KVC = 1.14e-6  # Kinematic Viscosity Coefficient
     :return: B44HAT, BFHAT, BWHAT, BEHAT, BBKHAT
      Nondimensional damping:
     B44HAT: Total
@@ -59,11 +60,11 @@ def calculate_roll_damping(LPP,Beam,CB,CMID,OG,PHI,lBK,bBK,OMEGA,
     TW = 2 * PI / OMEGA
 
     return _calculate_roll_damping(LPP=LPP,BRTH=BRTH, CB=CB, CMID=CMID, OGD=OGD, PHI=PHI, LBKL=LBKL, BBKB=BBKB,
-                                   OMEGA=OMEGA, DRAFT=DRAFT, BD=BD, OMEGAHAT=OMEGAHAT, TW=TW)
+                                   OMEGA=OMEGA, DRAFT=DRAFT, BD=BD, OMEGAHAT=OMEGAHAT, TW=TW, KVC=KVC)
 
 
 def _calculate_roll_damping(LPP, BRTH, CB, CMID, OGD, PHI, LBKL, BBKB, OMEGA,
-                           DRAFT, BD, OMEGAHAT, TW):
+                           DRAFT, BD, OMEGAHAT, TW, KVC = 1.14e-6):
     """
     ********************************************************************
     *** Calculation of roll damping by the proposed predition method ***
@@ -80,6 +81,7 @@ def _calculate_roll_damping(LPP, BRTH, CB, CMID, OGD, PHI, LBKL, BBKB, OMEGA,
     :param OMEGA: Frequency of motion [rad/s]
     :param DRAFT: DRAFT : ship draught [m]
     :param OMEGAHAT:
+    :param KVC = 1.14e-6  # Kinematic Viscosity Coefficient
     :return: B44HAT, BFHAT, BWHAT, BEHAT, BBKHAT
      Nondimensional damping:
     B44HAT: Total
@@ -91,7 +93,6 @@ def _calculate_roll_damping(LPP, BRTH, CB, CMID, OGD, PHI, LBKL, BBKB, OMEGA,
 
     #There must be a typo in the original fortran code it was 102 instead of 1025!?
     RO=1025  # Density of water
-    KVC = 1.14e-6  # Kinematic Viscosity Coefficient
 
     #*** Frictional Component ***
     RF=DRAFT*((0.887+0.145*CB)*(1.7+CB*BD)-2.0*OGD)/PI
