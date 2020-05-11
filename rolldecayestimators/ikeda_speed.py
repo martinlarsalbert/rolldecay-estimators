@@ -6,6 +6,7 @@ import numpy as np
 from numpy import tanh, exp, sqrt, pi, sin, cos, arctan
 import pandas as pd
 import scipy.interpolate
+import matplotlib.pyplot as plt
 
 dir_path = os.path.dirname(__file__)
 base_path = os.path.split(dir_path)[0]
@@ -18,21 +19,25 @@ def Bw0_S175(w):
     return Bw0
 
 def Bw_S175(w, V, d, g=9.81):
-
     Bw0 = Bw0_S175(w)
+    BW44 = Bw(w, V, d, Bw0, g=9.81)
+
+    return BW44
+
+def Bw(w, V, d, Bw0, g=9.81):
     OMEGA = w * V / g
-    zeta_d = w**2 * d / g
-    A1 = 1 + zeta_d**(-1.2) * exp(-2 * zeta_d)
-    A2 = 0.5 + zeta_d**(-1) * exp(-2 * zeta_d)
+    zeta_d = w ** 2 * d / g
+    A1 = 1 + zeta_d ** (-1.2) * exp(-2 * zeta_d)
+    A2 = 0.5 + zeta_d ** (-1) * exp(-2 * zeta_d)
 
     Bw_div_Bw0 = 0.5 * (
-                ((A1 + 1) + (A2 - 1) * tanh(20 * (OMEGA - 0.3))) + (2 * A1 - A2 - 1) * exp(-150 * (OMEGA - 0.25)**2))
-    bw44 = Bw0 * Bw_div_Bw0
+            ((A1 + 1) + (A2 - 1) * tanh(20 * (OMEGA - 0.3))) + (2 * A1 - A2 - 1) * exp(-150 * (OMEGA - 0.25) ** 2))
 
-    return bw44
+    BW44 = Bw0 * Bw_div_Bw0
+    return BW44
 
 
-def bilge_keel(wE, fi_a, V, B, d, A, bBK, R, g, OG, Ho, ra):
+def bilge_keel(w, fi_a, V, B, d, A, bBK, R, g, OG, Ho, ra):
     """
     ITTC
     definitions
@@ -47,7 +52,7 @@ def bilge_keel(wE, fi_a, V, B, d, A, bBK, R, g, OG, Ho, ra):
     f = 1 + 0.3 * exp(-160 * (1 - tata));
     l = d * sqrt((Ho - (1 - sqrt(2) / 2) * R / d) ** 2 + (1 - OG / d - (1 - sqrt(2) / 2) * R / d) ** 2) # distance from CoG to tip of bilge keel
     CD = 22.5 * bBK / (pi * l * fi_a * f) + 2.4;
-    Bp44BK_N0 = 8 / (3 * pi) * ra * l ** 3 * wE * fi_a * bBK * f * CD;
+    Bp44BK_N0 = 8 / (3 * pi) * ra * l ** 3 * w * fi_a * bBK * f * CD;
 
     # #
     # Hull pressure component
@@ -75,17 +80,17 @@ def bilge_keel(wE, fi_a, V, B, d, A, bBK, R, g, OG, Ho, ra):
     Cp_minus = -22.5 * bBK / (pi * l * fi_a * f) - 1.2;
     Cp_plus = 1.2;
 
-    Bp44BK_H0 = 4 / (3 * pi) * ra * l ** 2 * wE * fi_a * d ** 2 * (-Ao * Cp_minus + Bo * Cp_plus);
+    Bp44BK_H0 = 4 / (3 * pi) * ra * l ** 2 * w * fi_a * d ** 2 * (-Ao * Cp_minus + Bo * Cp_plus);
 
     # # Ikeda 1994 bilge keel generated Lift # Fartberoende??
     l1 = l + bBK / 2; # Lift Force
-    u = l1 * fi_a * wE; # tangential velocity
+    u = l1 * fi_a * w; # tangential velocity
     alpha = arctan(u / V); # flow velocity?
     Vr = sqrt(V ** 2 + u ** 2); # -'' -
 
     LBK = pi * ra * alpha * Vr ** 2 * bBK ** 2 / 2; # lift
 
-    B44BK_L = 2 * LBK * l1 / (fi_a * wE); #
+    B44BK_L = 2 * LBK * l1 / (fi_a * w); #
 
     # #
     # wave making contribution from bilge keels, normally very small...,
@@ -97,19 +102,19 @@ def bilge_keel(wE, fi_a, V, B, d, A, bBK, R, g, OG, Ho, ra):
 
     dBK = lBK * ((2 * d / B) / sqrt(1 + (2 * d / B) ** 2) * cos(fi) - sin(fi) / (1 + (2 * d / B) ** 2));
 
-    B44BKW0 = C_BK * exp(-wE ** 2 / g * dBK); # non dimensional  wave damping from BK, ITTC
+    B44BKW0 = C_BK * exp(-w ** 2 / g * dBK); # non dimensional  wave damping from BK, ITTC
     return Bp44BK_N0, Bp44BK_H0, B44BK_L, B44BKW0
 
-def  frictional(wE,fi_a,V,B, d, OG, ra, Cb, L, visc =   1.15*10**-6):
+def frictional(w, fi_a, V, B, d, OG, ra, Cb, L, visc =1.15 * 10 ** -6):
     # ITTC
 
     Sf   = L*(1.7*d+Cb*B); # Wetted surface approx
     r_f  = 1/pi*((0.887+0.145*Cb)*(Sf/L)+2*OG);
 
-    Rn = 0.512*(r_f/fi_a)**2*wE/visc;
+    Rn = 0.512 * (r_f/fi_a) ** 2 * w / visc;
     Cf = 1.328*Rn**-0.5+0.14*Rn**-0.114;
     B44F0=0.5*ra*r_f**3*Sf*Cf;
-    B44F=B44F0*8/(3*pi)*fi_a*wE*(1+4.1*V/(wE*L))
+    B44F= B44F0 * 8 / (3*pi) * fi_a * w * (1 + 4.1 * V / (w * L))
     return B44F
 
 def hull_lift(V,B, d, OG, ra, L):
@@ -122,3 +127,43 @@ def hull_lift(V,B, d, OG, ra, L):
     B44L = ra/2*V*L*d*kN*lo*lR*(1+1.4*OG/lR+0.7*OG**2/(lo*lR))
 
     return B44L
+
+def calculate_B44(w, V, d, Bw0, fi_a,  B,  A, bBK, R, OG, Ho, ra, Cb, L, LBK, visc =   1.15*10**-6, g=9.81):
+    BW44=Bw(w, V, d, Bw0, g=9.81)
+
+    Bp44BK_N0, Bp44BK_H0, B44BK_L, B44BKW0 = bilge_keel(w, fi_a, V, B, d, A, bBK, R, g, OG, Ho, ra)
+    B44BK_N0 = Bp44BK_N0*LBK
+    B44BK_H0 = Bp44BK_H0*LBK
+    B44BK_L = B44BK_L
+    # B44BKW0 = B44BKW0 * dim...
+    B44_BK = B44BK_N0 + B44BK_H0 + B44BK_L
+
+    B44F = frictional(w,fi_a,V,B, d, OG, ra, Cb, L, visc)
+
+    B44L = hull_lift(V,B, d, OG, ra, L)
+
+    B44 = BW44+B44_BK+B44F+B44L
+
+    return B44,BW44,B44_BK,B44F,B44L
+
+def calculate_B44_series(row):
+    s = pd.Series(name=row.name)
+    B_44,B_W,B_BK,B_F,B_L = calculate_B44(w=row['w'], V=row['V'], d=row['d'], Bw0=row['Bw0'], fi_a=row['fi_a'], B=row['B'], A=row['A'], bBK=row['bBK'], R=row['R'],
+                         OG=row['OG'], Ho=row['Ho'], ra=row['ra'], Cb=row['Cb'], L=row['L'], LBK=row['LBK'], visc=row['visc'], g=row['g'])
+    s['B_44']=B_44
+    s['B_W']=B_W
+    s['B_BK']=B_BK
+    s['B_F']=B_F
+    s['B_L']=B_L
+    return s
+
+
+
+
+
+
+
+
+
+
+
