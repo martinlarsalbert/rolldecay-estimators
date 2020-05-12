@@ -52,11 +52,12 @@ def calculate(row, catch_error=False):
     OG = (-row.kg + DRAFT)
     CB = row.CB
     CMID = row.A0
+    V = row.V
 
     s = pd.Series()
     try:
         B44HAT, BFHAT, BWHAT, BEHAT, BBKHAT, BLHAT = calculate_roll_damping(LPP, Beam, CB, CMID, OG, PHI, lBK, bBK,
-                                                                     OMEGA, DRAFT)
+                                                                     OMEGA, DRAFT, V=V)
     except SimplifiedIkedaInputError:
         if catch_error:
             return s

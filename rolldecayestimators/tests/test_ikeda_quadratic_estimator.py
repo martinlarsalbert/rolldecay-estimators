@@ -21,6 +21,7 @@ A0=0.95
 kg=10
 Volume = lpp*beam*TA*0.75
 gm=0.5
+V = 5
 
 @pytest.fixture
 def df_roll_decay():
@@ -28,7 +29,7 @@ def df_roll_decay():
     phi0 = np.deg2rad(2)
     phi1d0 = 0
     t = np.arange(0, 120, 0.01)
-    estimator = IkedaQuadraticEstimator(lpp=lpp, TA=TA, TF=TF, beam=beam, BKL=BKL, BKB=BKB, A0=A0, kg=kg, Volume=Volume, gm=gm)
+    estimator = IkedaQuadraticEstimator(lpp=lpp, TA=TA, TF=TF, beam=beam, BKL=BKL, BKB=BKB, A0=A0, kg=kg, Volume=Volume, gm=gm, V=0)
     yield estimator.simulate(t=t, phi0=phi0, phi1d0=phi1d0, omega0=omega0, zeta=zeta, d=d)
 
 def check(X, estimator, omega0, d, zeta, decimal=4):
@@ -47,17 +48,39 @@ def check(X, estimator, omega0, d, zeta, decimal=4):
     score = estimator.score(X)
     assert score > 0.90  # Have reached 0.98 before...
 
-    #assert_almost_equal(X['phi'].values, X_pred['phi'].values, decimal=decimal)
-    #assert estimator.score(X) > 0.999
-    #assert_almost_equal(estimator.parameters['omega0'], omega0, decimal=decimal)
-    #assert_almost_equal(estimator.parameters['zeta'], zeta, decimal=decimal)
-    #assert_almost_equal(estimator.parameters['d'], d, decimal=decimal)
-
 
 def test_fit(df_roll_decay):
 
     direct_estimator = IkedaQuadraticEstimator(lpp=lpp, TA=TA, TF=TF, beam=beam, BKL=BKL, BKB=BKB, A0=A0, kg=kg, Volume=Volume, gm=gm)
     X = df_roll_decay
+    X['phi2d'] = np.gradient(X['phi1d'].values, X.index.values)
+    check(X=X, estimator=direct_estimator, omega0=omega0, d=d, zeta=zeta, decimal=2)
+
+def test_speed(df_roll_decay):
+
+    estimator_zero_speed = IkedaQuadraticEstimator(lpp=lpp, TA=TA, TF=TF, beam=beam, BKL=BKL, BKB=BKB, A0=A0, kg=kg, Volume=Volume, gm=gm, V=0)
+    estimator_zero_speed.fit(X=df_roll_decay)
+
+    estimator_speed = IkedaQuadraticEstimator(lpp=lpp, TA=TA, TF=TF, beam=beam, BKL=BKL, BKB=BKB, A0=A0, kg=kg,
+                                                   Volume=Volume, gm=gm, V=V)
+    estimator_speed.fit(X=df_roll_decay)
+
+    fig,ax=plt.subplots()
+    estimator_zero_speed.plot_fit(ax=ax)
+    estimator_speed.plot_fit(ax=ax, model_test=False)
+
+    assert estimator_zero_speed.result['B44HAT'] != estimator_speed.result['B44HAT']
+    assert estimator_zero_speed.parameters['zeta']!=estimator_speed.parameters['zeta']
+    assert estimator_zero_speed.parameters['d'] != estimator_speed.parameters['d']
+    assert estimator_zero_speed.parameters['omega0'] == estimator_speed.parameters['omega0']
+
+    ax.legend()
+    plt.show()
+
+def test_fit_speed(df_roll_decay_speed):
+
+    direct_estimator = IkedaQuadraticEstimator(lpp=lpp, TA=TA, TF=TF, beam=beam, BKL=BKL, BKB=BKB, A0=A0, kg=kg, Volume=Volume, gm=gm, V=V)
+    X = df_roll_decay_speed
     X['phi2d'] = np.gradient(X['phi1d'].values, X.index.values)
     check(X=X, estimator=direct_estimator, omega0=omega0, d=d, zeta=zeta, decimal=2)
 

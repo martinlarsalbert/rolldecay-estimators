@@ -24,7 +24,7 @@ class IkedaEstimator(DirectEstimator):
                        lambdify(sp.solve(equations.B44_equation, symbols.B_44)[0]),
                        ]
 
-    def __init__(self, lpp:float, TA, TF, beam, BKL, BKB, A0, kg, Volume, gm, rho=1000, g=9.81, **kwargs):
+    def __init__(self, lpp:float, TA, TF, beam, BKL, BKB, A0, kg, Volume, gm, V=0, rho=1000, g=9.81, **kwargs):
         """
         Estimate a roll decay test using the Simplified Ikeda Method to predict roll damping.
         NOTE! This method is currently only valid for zero speed!
@@ -51,6 +51,8 @@ class IkedaEstimator(DirectEstimator):
             Displacement of ship [m3]
         gm
             metacentric height [m]
+        V
+            ship speed [m/s]
         rho
             Density of water [kg/m3]
         g
@@ -69,6 +71,7 @@ class IkedaEstimator(DirectEstimator):
         self.A0=A0
         self.kg=kg
         self.Volume=Volume
+        self.V = V
         self.rho=rho
         self.g=g
         self.gm=gm
@@ -123,6 +126,7 @@ class IkedaEstimator(DirectEstimator):
             'OG' : (-self.kg + DRAFT),
             'CB' : CB,
             'CMID' : self.A0,
+            'V':self.V,
 
         }
 
@@ -202,6 +206,7 @@ class IkedaQuadraticEstimator(IkedaEstimator):
             'OMEGA' : omega0,
             'OG' : (-self.kg + DRAFT),
             'CB' : CB,
+            'V'  : self.V,
             'CMID' : self.A0,
 
         }
@@ -237,6 +242,7 @@ class IkedaQuadraticEstimator(IkedaEstimator):
             'kg' :self.kg,
             'CB':self.ikeda_parameters['CB'],
             'A0' : self.A0,
+            'V' : self.V,
             'Volume':self.Volume,
         }
         self.ship = ship = pd.Series(data)
