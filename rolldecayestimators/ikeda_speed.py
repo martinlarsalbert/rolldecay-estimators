@@ -135,7 +135,32 @@ def frictional(w, fi_a, V, B, d, OG, ra, Cb, L, visc =1.15 * 10 ** -6):
     B44F= B44F0 * 8 / (3*pi) * fi_a * w * (1 + 4.1 * V / (w * L))
     return B44F
 
-def hull_lift(V,B, d, OG, ra, L, A):
+def hull_lift(V,B, d, OG, L, A, ra=1000):
+    """
+    Calculate the hull lift force damping
+    Parameters
+    ----------
+    V
+        Ship speed [m/s]
+    B
+        Ship beam [m]
+    d
+        Ship draught [m]
+    OG
+        Distance from roll axis to still water level [m]
+    ra
+        density of water [kg/m3]
+    L
+        Ship length [m]
+    A
+        Mid section area [m2]
+
+    Returns
+    -------
+    B44L
+        Hull lift damping [Nm]
+
+    """
 
     lo   = 0.3*d;
     lR   = 0.5*d;
@@ -161,7 +186,7 @@ def calculate_B44(w, V, d, Bw0, fi_a,  B,  A, bBK, R, OG, Ho, ra, Cb, L, LBK, vi
 
     B44F = frictional(w,fi_a,V,B, d, OG, ra, Cb, L, visc)
 
-    B44L = hull_lift(V,B, d, OG, ra, L, A)
+    B44L = hull_lift(V,B, d, OG, L, A, ra)
 
     B44 = BW44+B44_BK+B44F+B44L
 

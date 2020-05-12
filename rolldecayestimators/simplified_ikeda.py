@@ -19,9 +19,10 @@ from numpy import sqrt as SQRT
 from numpy import pi as PI
 import numpy as np
 import pandas as pd
+from rolldecayestimators import ikeda_speed
 
 def calculate_roll_damping(LPP,Beam,CB,CMID,OG,PHI,lBK,bBK,OMEGA,
-                           DRAFT, KVC = 1.14e-6):
+                           DRAFT, V=0, KVC = 1.14e-6):
     """
     ********************************************************************
     *** Calculation of roll damping by the proposed predition method ***
@@ -38,6 +39,7 @@ def calculate_roll_damping(LPP,Beam,CB,CMID,OG,PHI,lBK,bBK,OMEGA,
     :param OMEGA: Frequency of motion [rad/s]
     :param DRAFT: DRAFT : ship draught [m]
     :param OMEGAHAT:
+    :param V: ship speed [m/s]
     :param KVC = 1.14e-6  # Kinematic Viscosity Coefficient
     :return: B44HAT, BFHAT, BWHAT, BEHAT, BBKHAT
      Nondimensional damping:
@@ -59,9 +61,17 @@ def calculate_roll_damping(LPP,Beam,CB,CMID,OG,PHI,lBK,bBK,OMEGA,
     OMEGAHAT = OMEGA * SQRT(BRTH / 2 / 9.81)
     TW = 2 * PI / OMEGA
 
-    return _calculate_roll_damping(LPP=LPP,BRTH=BRTH, CB=CB, CMID=CMID, OGD=OGD, PHI=PHI, LBKL=LBKL, BBKB=BBKB,
+    B44HAT, BFHAT, BWHAT, BEHAT, BBKHAT = _calculate_roll_damping(LPP=LPP,BRTH=BRTH, CB=CB, CMID=CMID, OGD=OGD, PHI=PHI, LBKL=LBKL, BBKB=BBKB,
                                    OMEGA=OMEGA, DRAFT=DRAFT, BD=BD, OMEGAHAT=OMEGAHAT, TW=TW, KVC=KVC)
 
+    A=CMID*Beam*DRAFT
+    BL=ikeda_speed.hull_lift(V=V,B=Beam, d=DRAFT, OG=OG, L=LPP, A=A, ra=1025)
+    disp=LPP*Beam*DRAFT*CB
+    ND_factorB = np.sqrt(Beam / (2 * 9.81)) / (1025 * disp * (Beam**2));  # Nondimensiolizing factor of B44
+    BLHAT=BL*ND_factorB
+    B44HAT+=BLHAT
+
+    return B44HAT, BFHAT, BWHAT, BEHAT, BBKHAT, BLHAT
 
 def _calculate_roll_damping(LPP, BRTH, CB, CMID, OGD, PHI, LBKL, BBKB, OMEGA,
                            DRAFT, BD, OMEGAHAT, TW, KVC = 1.14e-6):

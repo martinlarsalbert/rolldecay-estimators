@@ -142,7 +142,7 @@ class IkedaEstimator(DirectEstimator):
 
     def calculate(self):
 
-        B44HAT, BFHAT, BWHAT, BEHAT, BBKHAT = calculate_roll_damping(**self.ikeda_parameters)
+        B44HAT, BFHAT, BWHAT, BEHAT, BBKHAT, BLHAT = calculate_roll_damping(**self.ikeda_parameters)
         s = pd.Series()
         s['B44HAT'] = B44HAT
         s['BFHAT'] = BFHAT

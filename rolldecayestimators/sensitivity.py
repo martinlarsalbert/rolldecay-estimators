@@ -55,7 +55,7 @@ def calculate(row, catch_error=False):
 
     s = pd.Series()
     try:
-        B44HAT, BFHAT, BWHAT, BEHAT, BBKHAT = calculate_roll_damping(LPP, Beam, CB, CMID, OG, PHI, lBK, bBK,
+        B44HAT, BFHAT, BWHAT, BEHAT, BBKHAT, BLHAT = calculate_roll_damping(LPP, Beam, CB, CMID, OG, PHI, lBK, bBK,
                                                                      OMEGA, DRAFT)
     except SimplifiedIkedaInputError:
         if catch_error:
