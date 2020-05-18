@@ -223,6 +223,7 @@ class IkedaQuadraticEstimator(IkedaEstimator):
         B_1,B_2 = self.fit_Bs()
         self.result['B_1'] = B_1
         self.result['B_2'] = B_2
+                
         zeta, d = self.Bs_to_zeta_d(B_1=B_1, B_2=B_2)
         factor = 1.0  # Factor
         phi_a = np.abs(np.deg2rad(self.phi_max))/ factor  # [Radians]

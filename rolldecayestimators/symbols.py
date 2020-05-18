@@ -39,6 +39,7 @@ T_F = ss.Symbol(name='T_F',description='Draught forward',unit='m')
 T_A = ss.Symbol(name='T_A',description='Draught aft',unit='m')
 T = ss.Symbol(name='T',description='Mean draught',unit='m')
 V = ss.Symbol(name='V',description='Ship speed',unit='m/s')
+OG = ss.Symbol(name='OG',description='Distance from roll axis to still water level',unit='m')
 
 
 phi = me.dynamicsymbols('phi')  # Roll angle
@@ -66,6 +67,13 @@ B_2_hat = ss.Symbol(name='B_2_hat', description='Nondimensional damping', unit='
 omega_hat = ss.Symbol(name='omega_hat', description='Nondimensional roll frequency', unit='-')
 B_1_hat0 = ss.Symbol(name='B_1_hat0', description='Nondimensional damping at zero speed', unit='-')
 
+B_44_ = ss.Symbol(name='B_44', description='Total roll damping', unit='Nm/(rad/s)')
+B_F = ss.Symbol(name='B_F', description='Friction roll damping', unit='Nm/(rad/s)')
+B_W = ss.Symbol(name='B_W', description='Wave roll damping', unit='Nm/(rad/s)')
+B_E = ss.Symbol(name='B_E', description='Eddy roll damping', unit='Nm/(rad/s)')
+B_BK = ss.Symbol(name='B_{BK}', description='Bilge keel roll damping', unit='Nm/(rad/s)')
+B_L = ss.Symbol(name='B_L', description='Hull lift roll damping', unit='Nm/(rad/s)')
+
 
 ## Functions:
 GZ = sp.Function('GZ')(phi)
@@ -85,5 +93,7 @@ phi_0 = me.dynamicsymbols('phi_0')
 phi_0_dot = phi_0.diff()
 phi_0_dotdot = phi_0_dot.diff()
 
-
+ikeda_simplified = sp.Function('Ikeda_{simplified}')(L_pp,beam,C_b,A_0,
+                                  OG,phi_a,BK_L,BK_B,omega,
+                                  T, V)
 

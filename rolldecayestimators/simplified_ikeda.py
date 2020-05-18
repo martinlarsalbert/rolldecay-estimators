@@ -84,14 +84,16 @@ def _calculate_roll_damping(LPP, BRTH, CB, CMID, OGD, PHI, LBKL, BBKB, OMEGA,
     :param Beam: [m]
     :param CB: Block coefficient [-]
     :param CMID: Middship coefficient (A_m/(B*d) [-]
-    :param OG: distance from the still water level O to the roll axis G [m]
+    :param OGD: OG/DRAFT
     :param PHI: Roll angle [deg]
-    :param lBK: length of bilge keel [m]
-    :param bBK: height of bilge keel [m]
+    :param LBKL: lBK/LPP
+    :param BBKB : bBK/Beam
     :param OMEGA: Frequency of motion [rad/s]
     :param DRAFT: DRAFT : ship draught [m]
+    :param BD: Beam/DRAFT
     :param OMEGAHAT:
     :param KVC = 1.14e-6  # Kinematic Viscosity Coefficient
+
     :return: B44HAT, BFHAT, BWHAT, BEHAT, BBKHAT
      Nondimensional damping:
     B44HAT: Total

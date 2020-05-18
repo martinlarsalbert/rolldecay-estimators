@@ -148,3 +148,12 @@ subs = [
 analytical_solution = analytical_solution_general.subs(subs)
 analytical_phi1d = sp.Eq(phi_dot,sp.simplify(analytical_solution.rhs.diff(t)))
 analytical_phi2d = sp.Eq(phi_dot_dot,sp.simplify(analytical_phi1d.rhs.diff(t)))
+
+### Simplified Ikeda
+simplified_ikeda_equation = sp.Eq((B_44_,
+      B_F,
+      B_W,
+      B_E,
+      B_BK,
+       B_L,
+      ),ikeda_simplified)
