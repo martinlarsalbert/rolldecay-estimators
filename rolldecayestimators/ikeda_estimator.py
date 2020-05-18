@@ -80,6 +80,7 @@ class IkedaEstimator(DirectEstimator):
         self.g=g
         self.gm=gm
         self.phi_max=phi_max
+        self.two_point_regression=False
 
     @property
     def zeta_lambda(self):
@@ -219,11 +220,21 @@ class IkedaQuadraticEstimator(IkedaEstimator):
         }
 
         self.result=self.calculate()
+
+
         self.result_variation=self.calculate_phi_a_variation()
-        B_1,B_2 = self.fit_Bs()
+
+        if self.two_point_regression:
+            B_1,B_2 = self.calculate_two_point_regression()
+            B_1_, B_2_ = self.fit_Bs()  # Not used...
+        else:
+            B_1, B_2 = self.fit_Bs()  # Not used...
+
+
+
         self.result['B_1'] = B_1
         self.result['B_2'] = B_2
-                
+
         zeta, d = self.Bs_to_zeta_d(B_1=B_1, B_2=B_2)
         factor = 1.0  # Factor
         phi_a = np.abs(np.deg2rad(self.phi_max))/ factor  # [Radians]
@@ -236,6 +247,34 @@ class IkedaQuadraticEstimator(IkedaEstimator):
         }
 
         self.is_fitted_ = True
+
+    def calculate_two_point_regression(self):
+        # Two point regression:
+        data = {
+            'lpp': self.lpp,
+            'beam': self.beam,
+            'DRAFT': (self.TA + self.TF) / 2,
+            'phi_max': self.phi_max,
+            'BKL': self.BKL,
+            'BKB': self.BKB,
+            'omega0': self.ikeda_parameters['OMEGA'],
+            'kg': self.kg,
+            'CB': self.ikeda_parameters['CB'],
+            'A0': self.A0,
+            'V': self.V,
+            'Volume': self.Volume,
+        }
+        row1 = pd.Series(data)
+        row1.phi_max *= 0.5
+        row2 = pd.Series(data)
+        s1 = calculate(row1)
+        s2 = calculate(row2)
+        s1['B_44'] = self.B44_lambda(B_44_hat=s1.B44HAT, Disp=row1.Volume, beam=row1.beam, g=self.g, rho=self.rho)
+        s2['B_44'] = self.B44_lambda(B_44_hat=s2.B44HAT, Disp=row2.Volume, beam=row2.beam, g=self.g, rho=self.rho)
+        x = np.deg2rad([row1.phi_max, row2.phi_max]) * 8 * row1.omega0 / (3 * np.pi)
+        B_2 = (s2['B_44'] - s1['B_44']) / (x[1] - x[0])
+        B_1 = s1['B_44'] - B_2 * x[0]
+        return B_1,B_2
 
     def calculate_phi_a_variation(self):
 

@@ -237,5 +237,5 @@ def verify_inputs(LPP,Beam,CB,CMID,OG,PHI,lBK,bBK,OMEGA,
         if not np.all((lims[0] <= value) & (value <= lims[1])):
             raise SimplifiedIkedaInputError('%s has a bad value:%f' % (key,value))
 
-    if np.any((LPP/Beam > 100) | ((LPP/Beam) < 1)):
+    if np.any((LPP/Beam > 100)):
         raise SimplifiedIkedaInputError('Lpp/Beam has bad ratio' % (LPP/Beam))
