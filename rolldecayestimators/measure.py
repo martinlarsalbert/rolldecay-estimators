@@ -71,8 +71,10 @@ def fft(series):
     time = series.index
 
     dt = np.mean(np.diff(time))
-    frequencies = np.fft.rfftfreq(n=len(time), d=dt) # [Hz]
+    #n = 11*len(time)
+    n = 50000
+    frequencies = np.fft.rfftfreq(n=n, d=dt) # [Hz]
 
-    dft = np.abs(np.fft.rfft(signal))
+    dft = np.abs(np.fft.rfft(signal, n=n))
 
     return frequencies, dft
