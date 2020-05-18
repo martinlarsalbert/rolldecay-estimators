@@ -13,6 +13,7 @@ from rolldecayestimators.substitute_dynamic_symbols import lambdify
 from rolldecayestimators.symbols import *
 from rolldecayestimators.measure import fft, fft_omega0
 
+class FitError(Exception):pass
 
 class RollDecay(BaseEstimator):
 
@@ -24,7 +25,7 @@ class RollDecay(BaseEstimator):
         'acceleration':lambdify(acceleration.rhs)
     }
 
-    def __init__(self, maxfev = 4000, bounds={}, ftol=10**-10, p0={}, fit_method='derivation', omega_regression=True):
+    def __init__(self, maxfev = 100, bounds={}, ftol=10**-10, p0={}, fit_method='derivation', omega_regression=True, omega0=None):
         self.is_fitted_ = False
 
         self.phi_key = 'phi'  # Roll angle [rad]
@@ -38,6 +39,7 @@ class RollDecay(BaseEstimator):
         self.set_fit_method(fit_method=fit_method)
         self.omega_regression = omega_regression
         self.assert_success = True
+        self._omega0 = omega0
 
     @classmethod
     def load(cls,data:{}, X=None):
@@ -156,7 +158,8 @@ class RollDecay(BaseEstimator):
         self.result = least_squares(fun=self.error, x0=self.initial_guess, kwargs=kwargs, bounds=self.bounds,
                                     ftol=self.ftol, max_nfev=self.maxfev, loss='soft_l1', f_scale=0.1,)
         if self.assert_success:
-            assert self.result['success']
+            if not self.result['success']:
+                raise FitError(self.result['message'])
 
         self.parameters = {key: x for key, x in zip(self.parameter_names, self.result.x)}
 
@@ -304,22 +307,26 @@ class RollDecay(BaseEstimator):
 
         """
 
+        if not self._omega0 is None:
+            return self._omega0
+
         frequencies, dft = fft(self.X['phi'])
         omega0 = fft_omega0(frequencies=frequencies, dft=dft)
+
         return omega0
 
 
-    def result_for_database(self, meta_data={}):
+    def result_for_database(self, meta_data={}, score=True):
         check_is_fitted(self, 'is_fitted_')
 
         s = {}
         s.update(self.parameters)
-        s['score'] = self.score(X=self.X)
+        if score:
+            s['score'] = self.score(X=self.X)
 
-
-
-        s['phi_start'] = self.X.iloc[0]['phi']
-        s['phi_stop'] = self.X.iloc[-1]['phi']
+        if not self.X is None:
+            s['phi_start'] = self.X.iloc[0]['phi']
+            s['phi_stop'] = self.X.iloc[-1]['phi']
 
         if hasattr(self,'omega0'):
             s['omega0_fft'] = self.omega0

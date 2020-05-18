@@ -57,7 +57,7 @@ class EstimatorCubic(DirectEstimator):
     omgea0_equation = sp.Eq(symbols.omega0, sp.solve(eqs, symbols.A_44, symbols.C, symbols.omega0)[0][2])
     functions['omega0'] = lambdify(sp.solve(omgea0_equation,symbols.omega0)[0])
 
-    def __init__(self, maxfev=4000, bounds={}, ftol=10 ** -15, p0={}, fit_method='derivation'):
+    def __init__(self, maxfev=100, bounds={}, ftol=10 ** -15, p0={}, fit_method='integration'):
         super().__init__(maxfev=maxfev, bounds=bounds, ftol=ftol, p0=p0, fit_method=fit_method, omega_regression=True)
 
     def simulate(self, t :np.ndarray, phi0 :float, phi1d0 :float, B_1A, B_2A, B_3A, C_1A, C_3A, C_5A,)->pd.DataFrame:
@@ -188,7 +188,7 @@ class EstimatorQuadraticBandC(EstimatorCubic):
         A parameter used for demonstation of how to pass and store paramters.
     """
 
-    ## Cubic model:
+    ## Quadratic model:
     b44_quadratic_equation = sp.Eq(B_44, B_1 * phi_dot + B_2 * phi_dot * sp.Abs(phi_dot))
     restoring_equation_quadratic = sp.Eq(C_44, C_1 * phi + C_3 * phi ** 3)
 
@@ -236,7 +236,7 @@ class EstimatorLinear(EstimatorCubic):
         A parameter used for demonstation of how to pass and store paramters.
     """
 
-    ## Cubic model:
+    ## Linear model:
     b44_linear_equation = sp.Eq(B_44, B_1 * phi_dot)
     restoring_linear_quadratic = sp.Eq(C_44, C_1 * phi)
 

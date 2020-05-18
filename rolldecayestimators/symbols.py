@@ -21,6 +21,8 @@ L_pp = ss.Symbol(name='L_pp',description='ship perpendicular length',unit='m')
 beam = ss.Symbol(name='beam',description='ship beam',unit='m')
 
 C_p = ss.Symbol(name='C_p',description='Prismatic coefficient',unit='-')
+C_b = ss.Symbol(name='C_b',description='Block coefficient',unit='-')
+
 I_RUD = ss.Symbol(name='I_RUD',description='Number of rudders',unit='-')
 BK_L = ss.Symbol(name='BK_L',description='Bilge keel length',unit='m')
 BK_B = ss.Symbol(name='BK_B',description='Bilge keel height',unit='m')
@@ -37,6 +39,7 @@ T_F = ss.Symbol(name='T_F',description='Draught forward',unit='m')
 T_A = ss.Symbol(name='T_A',description='Draught aft',unit='m')
 T = ss.Symbol(name='T',description='Mean draught',unit='m')
 V = ss.Symbol(name='V',description='Ship speed',unit='m/s')
+
 
 phi = me.dynamicsymbols('phi')  # Roll angle
 #phi = ss.Symbol(name='phi', description='Roll angle', unit='rad')  # Roll angle
@@ -56,9 +59,12 @@ C_1, C_3, C_5 = sp.symbols('C_1 C_3 C_5')
 
 B_e = ss.Symbol(name='B_e', description='Equivalen linearized damping', unit='Nm/(rad/s)')
 B_44_hat = ss.Symbol(name='B_44_hat', description='Nondimensional damping', unit='-')
+B_e_hat = ss.Symbol(name='B_e_hat', description='Nondimensional damping', unit='-')
+
 B_1_hat = ss.Symbol(name='B_1_hat', description='Nondimensional damping', unit='-')
 B_2_hat = ss.Symbol(name='B_2_hat', description='Nondimensional damping', unit='-')
 omega_hat = ss.Symbol(name='omega_hat', description='Nondimensional roll frequency', unit='-')
+B_1_hat0 = ss.Symbol(name='B_1_hat0', description='Nondimensional damping at zero speed', unit='-')
 
 
 ## Functions:

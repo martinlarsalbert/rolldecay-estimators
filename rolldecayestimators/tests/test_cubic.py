@@ -5,6 +5,7 @@ import numpy as np
 from numpy.testing import assert_almost_equal
 from rolldecayestimators.direct_estimator_cubic import EstimatorCubic, EstimatorQuadraticB, EstimatorLinear
 import matplotlib.pyplot as plt
+from rolldecayestimators.estimator import FitError
 
 def simulate(t, phi0, phi1d0, B_1A, B_2A, B_3A, C_1A, C_3A, C_5A):
 
@@ -138,7 +139,7 @@ def test_fit_simualtion_cubic_damping():
         'C_5A':0.0,
     }
 
-    direct_estimator = EstimatorCubic(fit_method='integration')
+    direct_estimator = EstimatorCubic(fit_method='integration',maxfev=100, )
     phi0 = np.deg2rad(10)
     phi1d0 = 0
     t = np.arange(0, 10, 0.01)
@@ -146,6 +147,28 @@ def test_fit_simualtion_cubic_damping():
 
     X['phi2d'] = np.gradient(X['phi1d'].values, X.index.values)
     check(X=X, estimator=direct_estimator, parameters=parameters)
+
+def test_fit_simualtion_cubic_damping_not_converged():
+
+    parameters={
+        'B_1A':0.7,
+        'B_2A':1.5,
+        'B_3A':5.0,
+        'C_1A':10.0,
+        'C_3A':0.0,
+        'C_5A':0.0,
+    }
+
+    direct_estimator = EstimatorCubic(fit_method='integration',maxfev=1, )
+    phi0 = np.deg2rad(10)
+    phi1d0 = 0
+    t = np.arange(0, 10, 0.01)
+    X = simulate(t=t, phi0=phi0, phi1d0=phi1d0, **parameters)
+
+    X['phi2d'] = np.gradient(X['phi1d'].values, X.index.values)
+
+    with pytest.raises(FitError):
+        check(X=X, estimator=direct_estimator, parameters=parameters)
 
 def test_fit_simualtion_quadratic_stiffness():
 

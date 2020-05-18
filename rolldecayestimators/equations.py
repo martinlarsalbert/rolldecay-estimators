@@ -9,21 +9,44 @@ roll_equation_himeno = sp.Eq(lhs=lhs, rhs=rhs)
 # No external forces (during roll decay)
 roll_decay_equation_general_himeno = roll_equation_himeno.subs(M_44,0)
 
-b44_cubic_equation = sp.Eq(B_44,B_1*phi_dot + B_2*phi_dot*sp.Abs(phi_dot) + B_3*phi_dot**3 )
-b44_quadratic_equation = sp.Eq(B_44,B_1*phi_dot + B_2*phi_dot*sp.Abs(phi_dot) )
-b44_quadratic_linear = sp.Eq(B_44,B_1*phi_dot)
-
-eqs = [roll_decay_equation_general_himeno,
-            b44_quadratic_equation,
-            ]
-roll_decay_equation_himeno_quadratic =  roll_decay_equation_general_himeno.subs(B_44,
-                                                        sp.solve(b44_quadratic_equation,B_44)[0])
-
 
 restoring_equation = sp.Eq(C_44,m*g*GZ)
 restoring_equation_linear = sp.Eq(C_44,m*g*GM*phi)
 restoring_equation_quadratic = sp.Eq(C_44, C_1 * phi + C_3 * phi ** 3)
 restoring_equation_cubic = sp.Eq(C_44,C_1*phi + C_3*phi*sp.Abs(phi) + C_5*phi**3)
+
+## Cubic model:
+b44_cubic_equation = sp.Eq(B_44, B_1 * phi_dot + B_2 * phi_dot * sp.Abs(phi_dot) + B_3 * phi_dot ** 3)
+restoring_equation_cubic = sp.Eq(C_44, C_1 * phi + C_3 * phi ** 3 + C_5 * phi ** 5)
+
+subs = [
+    (B_44, sp.solve(b44_cubic_equation, B_44)[0]),
+    (C_44, sp.solve(restoring_equation_cubic, C_44)[0])
+]
+roll_decay_equation_himeno_quadratic = roll_decay_equation_general_himeno.subs(subs)
+
+
+## Quadratic model:
+b44_quadratic_equation = sp.Eq(B_44, B_1 * phi_dot + B_2 * phi_dot * sp.Abs(phi_dot))
+restoring_equation_quadratic = sp.Eq(C_44, C_1 * phi + C_3 * phi ** 3)
+
+subs = [
+    (B_44, sp.solve(b44_quadratic_equation, B_44)[0]),
+    (C_44, sp.solve(restoring_equation_quadratic, C_44)[0])
+]
+roll_decay_equation_himeno_quadratic = roll_decay_equation_general_himeno.subs(subs)
+
+## Linear model:
+b44_linear_equation = sp.Eq(B_44, B_1 * phi_dot)
+restoring_linear_quadratic = sp.Eq(C_44, C_1 * phi)
+
+subs = [
+    (B_44, sp.solve(b44_linear_equation, B_44)[0]),
+    (C_44, sp.solve(restoring_linear_quadratic, C_44)[0])
+]
+roll_decay_equation_himeno_linear = roll_decay_equation_general_himeno.subs(subs)
+
+
 
 
 C_equation = sp.Eq(C,C_44/phi)
@@ -31,6 +54,9 @@ C_equation_linear = C_equation.subs(C_44,sp.solve(restoring_equation_linear,C_44
 C_equation_cubic = C_equation.subs(C_44,sp.solve(restoring_equation_cubic,C_44)[0])
 C_equation_quadratic = C_equation.subs(C_44,sp.solve(restoring_equation_quadratic,C_44)[0])
 
+roll_decay_equation_himeno_quadratic =  roll_decay_equation_general_himeno.subs(B_44,
+                                                        sp.solve(b44_quadratic_equation,B_44)[0]).subs(C,
+                                                            sp.solve(C_equation_quadratic,C)[0])
 
 
 roll_decay_equation_himeno_quadratic_c = roll_decay_equation_himeno_quadratic.subs(C_44,sp.solve(C_equation, C_44)[0])
@@ -97,6 +123,9 @@ omega_hat_equation = sp.Eq(omega_hat,omega*sp.sqrt(beam/(2*g)))
 B44_hat_equation = sp.Eq(B_44_hat, B_44/(rho*Disp*beam**2)*sp.sqrt(beam/(2*g)))
 B_1_hat_equation = sp.Eq(B_1_hat, B_1/(rho*Disp*beam**2)*sp.sqrt(beam/(2*g)))
 B_2_hat_equation = sp.Eq(B_2_hat, B_2/(rho*Disp*beam**2)*sp.sqrt(beam/(2*g))**(0))
+
+B44_hat_equation_quadratic = B44_hat_equation.subs(B_44,sp.solve(b44_quadratic_equation,B_44)[0])
+omega0_hat_equation = omega_hat_equation.subs(omega,omega0)
 
 
 ## Analytical

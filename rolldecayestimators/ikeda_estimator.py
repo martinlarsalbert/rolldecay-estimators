@@ -24,7 +24,7 @@ class IkedaEstimator(DirectEstimator):
                        lambdify(sp.solve(equations.B44_equation, symbols.B_44)[0]),
                        ]
 
-    def __init__(self, lpp:float, TA, TF, beam, BKL, BKB, A0, kg, Volume, gm, V=0, rho=1000, g=9.81, **kwargs):
+    def __init__(self, lpp:float, TA, TF, beam, BKL, BKB, A0, kg, Volume, gm, V=0, rho=1000, g=9.81, phi_max=8, omega0=None, **kwargs):
         """
         Estimate a roll decay test using the Simplified Ikeda Method to predict roll damping.
         NOTE! This method is currently only valid for zero speed!
@@ -57,10 +57,14 @@ class IkedaEstimator(DirectEstimator):
             Density of water [kg/m3]
         g
             acceleration of gravity [m/s**2]
+        phi_max
+            max roll angle during test [deg]
+        omega0
+            Natural frequency of motion [rad/s], if None it will be calculated with fft of signal
 
         For more info see: "rolldecaysestimators/simplified_ikeda.py"
         """
-        super().__init__()
+        super().__init__(omega0=omega0)
 
         self.lpp=lpp
         self.TA=TA
@@ -75,6 +79,7 @@ class IkedaEstimator(DirectEstimator):
         self.rho=rho
         self.g=g
         self.gm=gm
+        self.phi_max=phi_max
 
     @property
     def zeta_lambda(self):
@@ -155,9 +160,9 @@ class IkedaEstimator(DirectEstimator):
         s['BBKHAT'] = BBKHAT
         return s
 
-    def result_for_database(self):
+    def result_for_database(self, score=True, **kwargs):
 
-        s = super().result_for_database()
+        s = super().result_for_database(score=score, **kwargs)
         s.update(self.result)
 
         return s
@@ -181,10 +186,12 @@ class IkedaQuadraticEstimator(IkedaEstimator):
     def d_B2_lambda(self):
         return self.functions_ikeda[4]
 
-    def fit(self, X, y=None, **kwargs):
+    def fit(self, X=None, y=None, **kwargs):
         self.X = X
 
-        self.phi_max = np.rad2deg(self.X[self.phi_key].abs().max())  ## Initial roll angle in [deg]
+        if not self.X is None:
+            self.phi_max = np.rad2deg(self.X[self.phi_key].abs().max())  ## Initial roll angle in [deg]
+
 
         DRAFT=(self.TA + self.TF) / 2
         omega0=self.omega0

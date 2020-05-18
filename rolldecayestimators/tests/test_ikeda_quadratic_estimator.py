@@ -77,12 +77,6 @@ def test_speed(df_roll_decay):
     ax.legend()
     plt.show()
 
-def test_fit_speed(df_roll_decay_speed):
-
-    direct_estimator = IkedaQuadraticEstimator(lpp=lpp, TA=TA, TF=TF, beam=beam, BKL=BKL, BKB=BKB, A0=A0, kg=kg, Volume=Volume, gm=gm, V=V)
-    X = df_roll_decay_speed
-    X['phi2d'] = np.gradient(X['phi1d'].values, X.index.values)
-    check(X=X, estimator=direct_estimator, omega0=omega0, d=d, zeta=zeta, decimal=2)
 
 
 
