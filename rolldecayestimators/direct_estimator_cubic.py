@@ -58,6 +58,13 @@ class EstimatorCubic(DirectEstimator):
     functions['omega0'] = lambdify(sp.solve(omgea0_equation,symbols.omega0)[0])
 
     def __init__(self, maxfev=100, bounds={}, ftol=10 ** -15, p0={}, fit_method='integration'):
+
+        new_bounds={
+            'B_1_A':(0, np.inf),
+        }
+        new_bounds.update(bounds)
+        bounds=new_bounds
+
         super().__init__(maxfev=maxfev, bounds=bounds, ftol=ftol, p0=p0, fit_method=fit_method, omega_regression=True)
 
     def simulate(self, t :np.ndarray, phi0 :float, phi1d0 :float, B_1A, B_2A, B_3A, C_1A, C_3A, C_5A,)->pd.DataFrame:
