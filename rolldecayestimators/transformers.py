@@ -114,30 +114,32 @@ class CutTransformer(BaseEstimator, TransformerMixin):
         X_interpolated = measure.sample_increase(X=X_cut, increase=5)
         X_zerocrossings = measure.get_zerocrossings(X=X_interpolated)
         mask = X_interpolated.index >= X_zerocrossings.index[0]
-        X_cut = X_interpolated.loc[mask]
+        X_interpolated = X_interpolated.loc[mask]
 
         # Remove some large angles at start
         mask = X_zerocrossings['phi'].abs() < self.phi_max
         X_zerocrossings2 = X_zerocrossings.loc[mask].copy()
         if len(X_zerocrossings2) > 0:
-            mask2 = X_cut.index > X_zerocrossings2.index[0]
-            X_cut = X_cut.loc[mask2]
+            mask2 = X_interpolated.index > X_zerocrossings2.index[0]
+            X_interpolated = X_interpolated.loc[mask2]
 
 
         # Remove some small angles at end
         mask = X_zerocrossings2['phi'].abs() < self.phi_min
         X_zerocrossings3 = X_zerocrossings2.loc[mask].copy()
         if len(X_zerocrossings3) > 0:
-            mask3 = X_cut.index < X_zerocrossings3.index[0]
-            X_cut = X_cut.loc[mask3]
+            mask3 = X_interpolated.index < X_zerocrossings3.index[0]
+            X_interpolated = X_interpolated.loc[mask3]
 
         if 'phi1d' in X_cut:
-            phi1d_start = np.abs(X_cut.iloc[0]['phi1d'])
+            phi1d_start = np.abs(X_interpolated.iloc[0]['phi1d'])
         
             if phi1d_start > self.phi1d_start_tolerance:
                 raise ValueError('Start phi1d exceeds phi1d_start_tolerance (%f > %f)' % (phi1d_start, self.phi1d_start_tolerance) )
 
-        X_cut=X_cut.copy()
+        mask = ((X_cut.index >= X_interpolated.index[0]) & (X_cut.index <= X_interpolated.index[-1]))
+        X_cut=X_cut.loc[mask].copy()
+
         return X_cut
 
 class LowpassFilterDerivatorTransformer(BaseEstimator, TransformerMixin):
