@@ -139,7 +139,7 @@ class IkedaEstimator(DirectEstimator):
         self.result=self.calculate()
 
         m = self.Volume * self.rho
-        B_44 = self.B44_lambda(B_44_hat=self.result.B44HAT, Disp=self.Volume, beam=self.beam, g=self.g, rho=self.rho)
+        B_44 = self.B44_lambda(B_44_hat=self.result.B_44_HAT, Disp=self.Volume, beam=self.beam, g=self.g, rho=self.rho)
         zeta = self.zeta_lambda(B_1=B_44, GM=self.gm, g=self.g, m=m, omega0=omega0)
         self.parameters={
             'zeta':zeta,
@@ -154,11 +154,13 @@ class IkedaEstimator(DirectEstimator):
 
         B44HAT, BFHAT, BWHAT, BEHAT, BBKHAT, BLHAT = calculate_roll_damping(**self.ikeda_parameters)
         s = pd.Series()
-        s['B44HAT'] = B44HAT
-        s['BFHAT'] = BFHAT
-        s['BWHAT'] = BWHAT
-        s['BEHAT'] = BEHAT
-        s['BBKHAT'] = BBKHAT
+        s['B_44_HAT'] = B44HAT
+        s['B_F_HAT'] = BFHAT
+        s['B_W_HAT'] = BWHAT
+        s['B_E_HAT'] = BEHAT
+        s['B_BK_HAT'] = BBKHAT
+        s['B_L_HAT'] = BLHAT
+
         return s
 
     def result_for_database(self, score=True, **kwargs):

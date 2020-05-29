@@ -60,7 +60,7 @@ class EstimatorCubic(DirectEstimator):
     def __init__(self, maxfev=100, bounds={}, ftol=10 ** -15, p0={}, fit_method='integration'):
 
         new_bounds={
-            'B_1_A':(0, np.inf),
+            'B_1A':(0, np.inf),
         }
         new_bounds.update(bounds)
         bounds=new_bounds

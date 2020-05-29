@@ -2,6 +2,8 @@ import sympy as sp
 import sympy.physics.mechanics as me
 from inspect import signature
 import pandas as pd
+from sympy.core.numbers import Float
+import numpy as np
 
 def substitute_dynamic_symbols(expression):
     dynamic_symbols = me.find_dynamicsymbols(expression)
@@ -83,10 +85,14 @@ def lambdify(expression):
     lambda_function = sp.lambdify(symbols, new_expression, modules='numpy')
     return lambda_function
 
-def run(function,inputs):
+def run(function,inputs, **kwargs):
+
+    inputs=inputs.copy()
 
     if isinstance(inputs,dict):
         inputs = pd.Series(inputs)
+
+    constants = pd.Series(dict(**kwargs))
 
     if isinstance(inputs, pd.Series):
         inputs_columns = inputs.index
@@ -95,12 +101,64 @@ def run(function,inputs):
     else:
         raise ValueError('inputs should be wither pd.Series or pd.DataFrame')
 
+    constant_columns = constants.index
+    constant_columns = list(set(constant_columns) - set(inputs_columns))
+    for constant_column in constant_columns:
+        inputs[constant_column] = constants[constant_column]
 
     s = signature(function)
     input_names = set(s.parameters.keys())
-    missing = list(input_names - set(inputs_columns))
+    missing = list(input_names - set(inputs_columns) - set(constant_columns))
 
     if len(missing) > 0:
         raise ValueError('Sympy lambda function misses:%s' % (missing))
 
     return function(**inputs[input_names])
+
+
+def significant(number, precision=3):
+    """
+    Get the number with significant figures
+    Parameters
+    ----------
+    number
+        Sympy Float
+    precision
+        number of significant figures
+
+    Returns
+    -------
+        Sympy Float with significant figures.
+    """
+    number_string = np.format_float_positional(float(number), precision=precision,
+                                               unique=False, fractional=False, trim='k')
+    return Float(number_string)
+
+
+def significant_numbers(expression, precision=3):
+    """
+    Change to a wanted number of significant figures in the expression
+    Parameters
+    ----------
+    expression
+        Sympy expression
+    precision
+        number of significant figures
+
+    Returns
+    -------
+        Sympy expression with significant figures.
+    """
+    new_expression = expression.copy()
+    return _significant_numbers(new_expression, precision=precision)
+
+
+def _significant_numbers(new_expression, precision=3):
+    for part in new_expression.args:
+        if isinstance(part, Float):
+            new_expression = new_expression.subs(part, significant(part, precision=precision))
+        elif hasattr(part, 'args'):
+            new_part = _significant_numbers(part, precision=precision)
+            new_expression = new_expression.subs(part, new_part)
+
+    return new_expression
