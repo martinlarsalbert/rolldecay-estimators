@@ -9,7 +9,7 @@ import sympy.physics.mechanics as me
 t = ss.Symbol(name='t',description='time',unit='s')
 I = ss.Symbol(name='I',description='total roll inertia',unit='kg*m**2')
 B = ss.Symbol(name='B',description='total roll damping',unit='kg*m*/s')
-rho = ss.Symbol(name='rho',description='water density',unit='kg/m3')
+rho = ss.Symbol(name='rho',description='water density',unit='kg/m**3')
 g = ss.Symbol(name='g',description='acceleration of gravity',unit='m/s**2')
 Disp = ss.Symbol(name='Disp',description='displacement',unit='m**3')
 M_x = ss.Symbol(name='M_x',description='External roll moment',unit='Nm')
@@ -53,14 +53,18 @@ omega0 = ss.Symbol(name='omega0',description='Natural angular velocity',unit='ra
 
 d = sp.Symbol('d')  # Nonlinear roll damping coefficient
 
-A_44 = ss.Symbol(name='A_44', description='General roll inertia', unit='kg*m**2')
+A_44 = ss.Symbol(name='A_44', description='Total mass moment of inertia', unit='kg*m**2')
 
 B_1 = ss.Symbol(name='B_1',description='Linear damping coefficient',unit='Nm/(rad/s)')  # Natural roll frequency
 B_2 = ss.Symbol(name='B_2',description='Quadratic damping coefficient',unit='Nm/(rad/s**2')  # Natural roll frequency
 B_3 = ss.Symbol(name='B_3',description='Cubic damping coefficient',unit='Nm/(rad/s)**3')  # Natural roll frequency
 
 C = sp.Symbol(name='C')  # Introducing a helper coefficient C
-C_1, C_3, C_5 = sp.symbols('C_1 C_3 C_5')
+
+C_1 = ss.Symbol(description='Linear stiffness coefficient', unit=r'Nm/rad')
+C_3 = ss.Symbol(description='Stiffness coefficient', unit=r'Nm/rad**3')
+C_5 = ss.Symbol(description='Stiffness coefficient', unit=r'Nm/rad**5')
+
 
 B_e = ss.Symbol(name='B_e', description='Equivalen linearized damping', unit='Nm/(rad/s)')
 B_44_hat = ss.Symbol(name='B_44_hat', description='Nondimensional damping', unit='-')
@@ -107,7 +111,7 @@ phi_0 = me.dynamicsymbols('phi_0')
 phi_0_dot = phi_0.diff()
 phi_0_dotdot = phi_0_dot.diff()
 
-ikeda_simplified = sp.Function('Ikeda_{simplified}')(L_pp,beam,C_b,A_0,
+ikeda_simplified = sp.Function('f')(L_pp,beam,C_b,A_0,
                                   OG,phi_a,BK_L,BK_B,omega,
                                   T, V)
 

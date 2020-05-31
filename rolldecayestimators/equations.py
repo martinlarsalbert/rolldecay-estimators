@@ -46,9 +46,6 @@ subs = [
 ]
 roll_decay_equation_himeno_linear = roll_decay_equation_general_himeno.subs(subs)
 
-
-
-
 C_equation = sp.Eq(C,C_44/phi)
 C_equation_linear = C_equation.subs(C_44,sp.solve(restoring_equation_linear,C_44)[0])
 C_equation_cubic = C_equation.subs(C_44,sp.solve(restoring_equation_cubic,C_44)[0])
@@ -57,6 +54,12 @@ C_equation_quadratic = C_equation.subs(C_44,sp.solve(restoring_equation_quadrati
 roll_decay_equation_himeno_quadratic =  roll_decay_equation_general_himeno.subs(B_44,
                                                         sp.solve(b44_quadratic_equation,B_44)[0]).subs(C,
                                                             sp.solve(C_equation_quadratic,C)[0])
+
+subs = [
+    (B_44, sp.solve(b44_quadratic_equation, B_44)[0]),
+    (C_44, sp.solve(restoring_linear_quadratic, C_44)[0])
+]
+roll_decay_equation_himeno_quadratic_b = roll_decay_equation_general_himeno.subs(subs)
 
 
 roll_decay_equation_himeno_quadratic_c = roll_decay_equation_himeno_quadratic.subs(C_44,sp.solve(C_equation, C_44)[0])
@@ -75,7 +78,6 @@ subs = [
 
 roll_decay_equation_quadratic = sp.Eq(sp.expand(eq.lhs).subs(subs), 0)
 roll_decay_equation_quadratic = sp.factor(roll_decay_equation_quadratic, phi_dot)
-
 roll_decay_equation_linear = roll_decay_equation_quadratic.subs(d,0)
 
 omega0_equation_linear = omega0_equation.subs(C,sp.solve(C_equation_linear,C)[0])
@@ -152,8 +154,7 @@ analytical_phi1d = sp.Eq(phi_dot,sp.simplify(analytical_solution.rhs.diff(t)))
 analytical_phi2d = sp.Eq(phi_dot_dot,sp.simplify(analytical_phi1d.rhs.diff(t)))
 
 ### Simplified Ikeda
-simplified_ikeda_equation = sp.Eq((B_44_,
-      B_F,
+simplified_ikeda_equation = sp.Eq((B_F,
       B_W,
       B_E,
       B_BK,
