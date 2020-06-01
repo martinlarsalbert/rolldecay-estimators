@@ -42,6 +42,7 @@ V = ss.Symbol(name='V',description='Ship speed',unit='m/s')
 OG = ss.Symbol(name='OG',description='Distance from roll axis to still water level',unit='m')
 
 
+
 phi = me.dynamicsymbols('phi')  # Roll angle
 #phi = ss.Symbol(name='phi', description='Roll angle', unit='rad')  # Roll angle
 phi_dot = phi.diff()
@@ -61,9 +62,9 @@ B_3 = ss.Symbol(name='B_3',description='Cubic damping coefficient',unit='Nm/(rad
 
 C = sp.Symbol(name='C')  # Introducing a helper coefficient C
 
-C_1 = ss.Symbol(description='Linear stiffness coefficient', unit=r'Nm/rad')
-C_3 = ss.Symbol(description='Stiffness coefficient', unit=r'Nm/rad**3')
-C_5 = ss.Symbol(description='Stiffness coefficient', unit=r'Nm/rad**5')
+C_1 = ss.Symbol(name='C_1', description='Linear stiffness coefficient', unit=r'Nm/rad')
+C_3 = ss.Symbol(name='C_3',description='Stiffness coefficient', unit=r'Nm/rad**3')
+C_5 = ss.Symbol(name='C_5',description='Stiffness coefficient', unit=r'Nm/rad**5')
 
 
 B_e = ss.Symbol(name='B_e', description='Equivalen linearized damping', unit='Nm/(rad/s)')
