@@ -199,6 +199,17 @@ def _calculate_roll_damping(LPP, BRTH, CB, CMID, OGD, PHI, LBKL, BBKB, OMEGA,
 
 class SimplifiedIkedaInputError(ValueError): pass
 
+limits_kawahara = {
+    'CB'    : (0.5,0.85),
+    r'B/d'  : (2.5,4.5),
+    r'OG/d' : (-1.5,0.2),
+    'CMID'    : (0.9,0.99),
+    r'bBk/B': (0.01, 0.06),
+    r'lBk/LPP': (0.05, 0.4),
+    'OMEGA_hat': (0,1.0)
+}  # Input limits for damping according to the original paper ny Kawahara
+
+
 def verify_inputs(LPP,Beam,CB,CMID,OG,PHI,lBK,bBK,OMEGA,
                            DRAFT):
     inputs = {
@@ -211,7 +222,12 @@ def verify_inputs(LPP,Beam,CB,CMID,OG,PHI,lBK,bBK,OMEGA,
         'lBK': lBK,
         'bBK': bBK,
         'OMEGA': OMEGA,
-        'DRAFT': DRAFT
+        'DRAFT': DRAFT,
+        r'B/d': Beam / DRAFT,
+        r'OG/d': OG / Beam,
+        r'bBk/B': bBK/Beam,
+        r'lBk/LPP': lBK/LPP,
+        'OMEGA_hat': OMEGA * SQRT(Beam / 2 / 9.81)
     }
 
     exclude_zero = 10*-10
@@ -227,6 +243,7 @@ def verify_inputs(LPP,Beam,CB,CMID,OG,PHI,lBK,bBK,OMEGA,
         'OMEGA' : (exclude_zero,np.inf),
         'DRAFT' : (exclude_zero,np.inf)
     }
+    limits.update(limits_kawahara)
 
     for key,value in inputs.items():
         lims = limits.get(key)

@@ -1,4 +1,6 @@
-from rolldecayestimators.simplified_ikeda import calculate_roll_damping, _calculate_roll_damping
+import pytest
+from rolldecayestimators.simplified_ikeda import calculate_roll_damping, _calculate_roll_damping, limits_kawahara, verify_inputs, SimplifiedIkedaInputError
+import rolldecayestimators.ikeda_simple  ## Peter Piehl implementation
 import numpy as np
 from numpy.testing import assert_almost_equal
 
@@ -59,4 +61,105 @@ def test_calculate_roll_damping_subfunction():
     assert BWHAT == BWHAT2
     assert BEHAT == BEHAT2
     assert BBKHAT == BBKHAT2
+
+def test_verify_input():
+    Beam = LPP/L_div_B
+    DRAFT = Beam / BD
+
+    lBK = LPP * LBKL
+    bBK = Beam * BBKB
+    OMEGA = OMEGAHAT/(np.sqrt(Beam / 2 / 9.81))
+    OG = DRAFT * OGD
+
+    verify_inputs(LPP,Beam,CB,CMID,OG,PHI,lBK,bBK,OMEGA,
+                           DRAFT)
+
+
+def test_verify_input_fail1():
+    Beam = LPP/L_div_B
+    DRAFT = Beam / BD
+
+    lBK = LPP * LBKL
+    bBK = Beam * BBKB
+    OMEGA = OMEGAHAT/(np.sqrt(Beam / 2 / 9.81))
+    OG = DRAFT * OGD
+
+    CB_fail=0.45
+    with pytest.raises(SimplifiedIkedaInputError):
+
+        verify_inputs(LPP,Beam,CB_fail,CMID,OG,PHI,lBK,bBK,OMEGA,
+                           DRAFT)
+
+def test_verify_input_fail2():
+    Beam = LPP/L_div_B
+    DRAFT = Beam / BD
+
+    lBK = LPP * 0.44
+    bBK = Beam * BBKB
+    OMEGA = OMEGAHAT/(np.sqrt(Beam / 2 / 9.81))
+    OG = DRAFT * OGD
+
+    with pytest.raises(SimplifiedIkedaInputError):
+
+        verify_inputs(LPP,Beam,CB,CMID,OG,PHI,lBK,bBK,OMEGA,
+                           DRAFT)
+
+
+def random_value(limits):
+    return np.random.random()*(limits[1]-limits[0])+limits[0]
+
+def random_values():
+    LPP=1.0
+    Beam=1.0
+    DRAFT=Beam/2.5
+    value={
+        'LPP':LPP,
+        'Beam':Beam,
+        'DRAFT':DRAFT,
+        'CB':random_value(limits_kawahara['CB']),
+        'CMID':random_value(limits_kawahara['CMID']),
+        'OG':DRAFT*random_value(limits_kawahara[r'OG/d']),
+        'PHI':PHI,
+        'lBK':LPP*random_value(limits_kawahara[r'lBk/LPP']),
+        'bBK':Beam*random_value(limits_kawahara[r'bBk/B']),
+        'OMEGA':random_value(limits_kawahara['OMEGA_hat'])/(np.sqrt(Beam / 2 / 9.81)),
+
+    }
+    return value
+
+
+
+def test_peter_piehl_implementation():
+    np.random.seed(seed=1)
+
+    ikeda = rolldecayestimators.ikeda_simple.Ikeda()  # Peter Piehl
+
+    for i in range(1000):
+        r = random_values()
+        B44HAT, BFHAT, BWHAT, BEHAT, BBKHAT, BLHAT = calculate_roll_damping(**r)
+
+        # Peter Piehl:
+
+        r2 = {}
+        r2['CMID']=r['CMID']
+        r2['TW']=(2*np.pi)/r['OMEGA']
+        r2['LPP']=r['LPP']
+        r2['BRTH']=r['Beam']
+        r2['DRAFT']=r['DRAFT']
+        r2['CB']=r['CB']
+        r2['OG']=r['OG']
+        r2['PHI']=r['PHI']
+        r2['BKCOMP']=(r['lBK']>0)
+        r2['lBK']=r['lBK']
+        r2['bBK']=r['bBK']
+
+        ikeda.setPara(r2)
+        ikeda.ikedaMethod()
+
+        assert_almost_equal(B44HAT,ikeda.B44HAT)
+        assert_almost_equal(BFHAT, ikeda.BFHAT)
+        assert_almost_equal(BWHAT, ikeda.BWHAT)
+        assert_almost_equal(BEHAT, ikeda.BEHAT)
+        assert_almost_equal(BBKHAT, ikeda.BBKHAT)
+
 
