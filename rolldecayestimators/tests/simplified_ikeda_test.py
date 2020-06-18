@@ -104,6 +104,51 @@ def test_verify_input_fail2():
         verify_inputs(LPP,Beam,CB,CMID,OG,PHI,lBK,bBK,OMEGA,
                            DRAFT)
 
+def test_limit_input():
+    Beam = LPP/L_div_B
+    DRAFT = Beam / BD
+
+    lBK = LPP * 0.44
+    bBK = Beam * BBKB
+    OMEGA = OMEGAHAT/(np.sqrt(Beam / 2 / 9.81))
+    OG = DRAFT * OGD
+
+    with pytest.raises(SimplifiedIkedaInputError):
+
+        calculate_roll_damping(LPP,Beam,CB,CMID,OG,PHI,lBK,bBK,OMEGA,DRAFT)
+
+    calculate_roll_damping(LPP, Beam, CB, CMID, OG, PHI, lBK, bBK, OMEGA, DRAFT, limit_inputs=True)
+
+def test_limit_input2():
+    Beam = LPP/L_div_B
+    DRAFT = Beam / BD
+
+    lBK = LPP * 0.30
+    bBK = Beam * 0.001
+    OMEGA = OMEGAHAT/(np.sqrt(Beam / 2 / 9.81))
+    OG = DRAFT * OGD
+
+    with pytest.raises(SimplifiedIkedaInputError):
+
+        calculate_roll_damping(LPP,Beam,CB,CMID,OG,PHI,lBK,bBK,OMEGA,DRAFT)
+
+    calculate_roll_damping(LPP, Beam, CB, CMID, OG, PHI, lBK, bBK, OMEGA, DRAFT, limit_inputs=True)
+
+def test_limit_input3():
+    Beam = LPP/L_div_B
+    DRAFT = Beam / BD
+
+    lBK = LPP * 0.30
+    bBK = Beam * 0.002
+    OMEGA = OMEGAHAT/(np.sqrt(Beam / 2 / 9.81))
+    OG = DRAFT*0.25
+
+    with pytest.raises(SimplifiedIkedaInputError):
+
+        calculate_roll_damping(LPP,Beam,CB,CMID,OG,PHI,lBK,bBK,OMEGA,DRAFT)
+
+    calculate_roll_damping(LPP, Beam, CB, CMID, OG, PHI, lBK, bBK, OMEGA, DRAFT, limit_inputs=True)
+
 
 def random_value(limits):
     return np.random.random()*(limits[1]-limits[0])+limits[0]

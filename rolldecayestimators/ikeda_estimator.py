@@ -24,7 +24,8 @@ class IkedaEstimator(DirectEstimator):
                        lambdify(sp.solve(equations.B44_equation, symbols.B_44)[0]),
                        ]
 
-    def __init__(self, lpp:float, TA, TF, beam, BKL, BKB, A0, kg, Volume, gm, V=0, rho=1000, g=9.81, phi_max=8, omega0=None, **kwargs):
+    def __init__(self, lpp:float, TA, TF, beam, BKL, BKB, A0, kg, Volume, gm, V=0, rho=1000, g=9.81, phi_max=8, omega0=None,
+                 verify_input = True, limit_inputs=False, **kwargs):
         """
         Estimate a roll decay test using the Simplified Ikeda Method to predict roll damping.
         NOTE! This method is currently only valid for zero speed!
@@ -81,6 +82,8 @@ class IkedaEstimator(DirectEstimator):
         self.gm=gm
         self.phi_max=phi_max
         self.two_point_regression=False
+        self.verify_input = verify_input
+        self.limit_inputs = limit_inputs
 
     @property
     def zeta_lambda(self):
@@ -133,6 +136,8 @@ class IkedaEstimator(DirectEstimator):
             'CB' : CB,
             'CMID' : self.A0,
             'V':self.V,
+            'verify_input':self.verify_input,
+            'limit_inputs':self.limit_inputs,
 
         }
 
@@ -218,7 +223,8 @@ class IkedaQuadraticEstimator(IkedaEstimator):
             'CB' : CB,
             'V'  : self.V,
             'CMID' : self.A0,
-
+            'verify_input': self.verify_input,
+            'limit_inputs': self.limit_inputs,
         }
 
         self.result=self.calculate()
@@ -299,7 +305,7 @@ class IkedaQuadraticEstimator(IkedaEstimator):
         N = 40
         changes = np.linspace(1, 0.0001, N)
         df_variation = variate_ship(ship=ship, key='phi_max', changes=changes)
-        result = calculate_variation(df=df_variation)
+        result = calculate_variation(df=df_variation, limit_inputs=self.limit_inputs, verify_input=self.verify_input)
         df_variation['g'] = 9.81
         df_variation['rho'] = 1000
         result = pd.concat((result, df_variation), axis=1)

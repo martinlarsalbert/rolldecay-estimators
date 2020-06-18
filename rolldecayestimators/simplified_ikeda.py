@@ -22,7 +22,7 @@ import pandas as pd
 from rolldecayestimators import ikeda_speed
 
 def calculate_roll_damping(LPP,Beam,CB,CMID,OG,PHI,lBK,bBK,OMEGA,
-                           DRAFT, V=0, KVC = 1.14e-6):
+                           DRAFT, V=0, KVC = 1.14e-6, verify_input=True, limit_inputs=False):
     """
     ********************************************************************
     *** Calculation of roll damping by the proposed predition method ***
@@ -41,6 +41,8 @@ def calculate_roll_damping(LPP,Beam,CB,CMID,OG,PHI,lBK,bBK,OMEGA,
     :param OMEGAHAT:
     :param V: ship speed [m/s]
     :param KVC = 1.14e-6  # Kinematic Viscosity Coefficient
+    :param verify_input = True, should the inputs be verified to be within limits?
+    :param limit_inputs = False, use limit value if input limit is exceeded.
     :return: B44HAT, BFHAT, BWHAT, BEHAT, BBKHAT
      Nondimensional damping:
     B44HAT: Total
@@ -49,7 +51,22 @@ def calculate_roll_damping(LPP,Beam,CB,CMID,OG,PHI,lBK,bBK,OMEGA,
     BEHAT: Eddy
     BBKHAT: Bilge keel
     """
-    verify_inputs(LPP,Beam,CB,CMID,OG,PHI,lBK,bBK,OMEGA,
+
+    if limit_inputs:
+        outputs = _limit_inputs(LPP=LPP,Beam=Beam, CB=CB,CMID=CMID,OG=OG,PHI=PHI,lBK=lBK,bBK=bBK,OMEGA=OMEGA,DRAFT=DRAFT)
+        LPP = outputs['LPP']
+        Beam = outputs['Beam']
+        CB = outputs['CB']
+        CMID = outputs['CMID']
+        OG = outputs['OG']
+        PHI = outputs['PHI']
+        lBK = outputs['lBK']
+        bBK = outputs['bBK']
+        OMEGA = outputs['OMEGA']
+        DRAFT = outputs['DRAFT']
+
+    if verify_input:
+        verify_inputs(LPP,Beam,CB,CMID,OG,PHI,lBK,bBK,OMEGA,
                            DRAFT)
 
     LBKL=lBK/LPP
@@ -209,6 +226,16 @@ limits_kawahara = {
     'OMEGA_hat': (0,1.0)
 }  # Input limits for damping according to the original paper ny Kawahara
 
+def _calculate_limit_compare_value(LPP, Beam, OG, lBK, bBK, OMEGA,
+                                   DRAFT):
+    inputs = {
+        r'B/d': Beam / DRAFT,
+        r'OG/d': OG / DRAFT,
+        r'bBk/B': bBK / Beam,
+        r'lBk/LPP': lBK / LPP,
+        'OMEGA_hat': OMEGA * SQRT(Beam / 2 / 9.81)
+    }
+    return inputs
 
 def verify_inputs(LPP,Beam,CB,CMID,OG,PHI,lBK,bBK,OMEGA,
                            DRAFT):
@@ -223,12 +250,11 @@ def verify_inputs(LPP,Beam,CB,CMID,OG,PHI,lBK,bBK,OMEGA,
         'bBK': bBK,
         'OMEGA': OMEGA,
         'DRAFT': DRAFT,
-        r'B/d': Beam / DRAFT,
-        r'OG/d': OG / Beam,
-        r'bBk/B': bBK/Beam,
-        r'lBk/LPP': lBK/LPP,
-        'OMEGA_hat': OMEGA * SQRT(Beam / 2 / 9.81)
     }
+    limit_inputs = _calculate_limit_compare_value(LPP, Beam, OG, lBK, bBK, OMEGA,
+                                                  DRAFT)
+
+    inputs.update(limit_inputs)
 
     exclude_zero = 10*-10
     limits={
@@ -244,15 +270,96 @@ def verify_inputs(LPP,Beam,CB,CMID,OG,PHI,lBK,bBK,OMEGA,
         'DRAFT' : (exclude_zero,np.inf)
     }
     limits.update(limits_kawahara)
+    if lBK==0:
+        # Remove bilge keel limit when the bilge keel is not present:
+        if r'bBk/B' in limits:
+            limits.pop(r'bBk/B')
+
+        if r'lBk/LPP' in limits:
+            limits.pop(r'lBk/LPP')
 
     for key,value in inputs.items():
+
+        if not key in limits:
+            continue
+
         lims = limits.get(key)
 
         if np.any(pd.isnull(value)):
             raise SimplifiedIkedaInputError('%s is NaN' % key)
 
-        if not np.all((lims[0] <= value) & (value <= lims[1])):
-            raise SimplifiedIkedaInputError('%s has a bad value:%f' % (key,value))
+        #if not np.all((lims[0] <= value) & (value <= lims[1])):
+        #    raise SimplifiedIkedaInputError('%s has a bad value:%f is not in (%f,%f)' % (key,value, lims[0], lims[1]))
+
+        if np.any((value - lims[0]) < -0.000001):
+            raise SimplifiedIkedaInputError('%s:%f is too small  (<%f)' % (key, value, lims[0]))
+
+        if np.any((lims[1] - value) < -0.000001):
+            raise SimplifiedIkedaInputError('%s:%f is too large  (>%f)' % (key, value, lims[1]))
 
     if np.any((LPP/Beam > 100)):
         raise SimplifiedIkedaInputError('Lpp/Beam has bad ratio' % (LPP/Beam))
+
+def _calculate_limit_value(LPP, Beam, DRAFT):
+
+    beam_limit = np.array(limits_kawahara['B/d']) * DRAFT
+    _beam=Beam
+    if Beam < beam_limit[0]:
+        _beam =beam_limit[0]
+    elif Beam > beam_limit[1]:
+        _beam = beam_limit[1]
+
+    limits = {
+        'CB': np.array(limits_kawahara['CB']),
+        'CMID': np.array(limits_kawahara['CMID']),
+        'Beam': np.array(limits_kawahara['B/d'])*DRAFT,
+        'OG': np.array(limits_kawahara[r'OG/d'])*DRAFT,
+        'bBK': np.array(limits_kawahara[r'bBk/B'])*_beam,
+        'lBK': np.array(limits_kawahara[r'lBk/LPP'])*LPP,
+        'OMEGA': np.array(limits_kawahara['OMEGA_hat'])/(SQRT(_beam / 2 / 9.81)),
+    }
+
+    return limits
+
+def _limit_inputs(LPP,Beam,CB,CMID,OG,PHI,lBK,bBK,OMEGA,
+                           DRAFT):
+    inputs = {
+        'LPP': LPP,
+        'Beam': Beam,
+        'CB': CB,
+        'CMID': CMID,
+        'OG': OG,
+        'PHI': PHI,
+        'lBK': lBK,
+        'bBK': bBK,
+        'OMEGA': OMEGA,
+        'DRAFT': DRAFT,
+    }
+
+    limits = _calculate_limit_value(LPP=LPP, Beam=Beam, DRAFT=DRAFT)
+
+    if lBK==0:
+        # Remove bilge keel limit when the bilge keel is not present:
+        if 'lBK' in limits:
+            limits.pop('lBK')
+
+        if 'bBK' in limits:
+            limits.pop('bBK')
+
+    outputs = {}
+    for key, value in inputs.items():
+
+        if not key in limits:
+            outputs[key] = inputs[key]
+            continue
+
+        limit = limits[key]
+        if inputs[key] < limit[0]:
+            outputs[key] = limit[0]
+        elif inputs[key] > limit[1]:
+            outputs[key] = limit[1]
+        else:
+            outputs[key] = inputs[key]
+
+    return outputs
+

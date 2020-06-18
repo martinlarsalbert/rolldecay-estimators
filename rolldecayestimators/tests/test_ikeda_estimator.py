@@ -53,7 +53,7 @@ def check(X, estimator, omega0, d, zeta, decimal=4):
 
 def test_fit(df_roll_decay):
 
-    direct_estimator = IkedaEstimator(lpp=lpp, TA=TA, TF=TF, beam=beam, BKL=BKL, BKB=BKB, A0=A0, kg=kg, Volume=Volume, gm=gm)
+    direct_estimator = IkedaEstimator(lpp=lpp, TA=TA, TF=TF, beam=beam, BKL=BKL, BKB=BKB, A0=A0, kg=kg, Volume=Volume, gm=gm, verify_input=False)
     X = df_roll_decay
     X['phi2d'] = np.gradient(X['phi1d'].values, X.index.values)
     check(X=X, estimator=direct_estimator, omega0=omega0, d=d, zeta=zeta, decimal=2)
