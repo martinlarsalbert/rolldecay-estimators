@@ -39,7 +39,28 @@ def Bw_faust(w, V, d, g=9.81):
 
     return BW44
 
-def Bw(w, V, d, Bw0, g=9.81):
+def Bw(w, V, d, Bw0, g=9.81, Bw_div_Bw0_max=12):
+    """
+    Wave damping speed correction
+    Parameters
+    ----------
+    w
+        "omega" frequency of motion [rad/s]
+    V
+        ship speed [m/s]
+    d
+        ship draught [m]
+    Bw0
+        wave roll damping at zero speed
+    g
+        gravity
+
+    Returns
+    -------
+    BW44
+        wave roll camping at speed
+
+    """
     OMEGA = w * V / g
     zeta_d = w ** 2 * d / g
     A1 = 1 + zeta_d ** (-1.2) * exp(-2 * zeta_d)
@@ -47,6 +68,10 @@ def Bw(w, V, d, Bw0, g=9.81):
 
     Bw_div_Bw0 = 0.5 * (
             ((A1 + 1) + (A2 - 1) * tanh(20 * (OMEGA - 0.3))) + (2 * A1 - A2 - 1) * exp(-150 * (OMEGA - 0.25) ** 2))
+
+    # Proposing a limit here:
+    if Bw_div_Bw0>Bw_div_Bw0_max:
+        Bw_div_Bw0=Bw_div_Bw0_max
 
     BW44 = Bw0 * Bw_div_Bw0
     return BW44
@@ -174,8 +199,8 @@ def hull_lift(V,B, d, OG, L, A, ra=1000):
 
     return B44L
 
-def calculate_B44(w, V, d, Bw0, fi_a,  B,  A, bBK, R, OG, Ho, ra, Cb, L, LBK, visc =   1.15*10**-6, g=9.81):
-    BW44=Bw(w, V, d, Bw0, g=9.81)
+def calculate_B44(w, V, d, Bw0, fi_a,  B,  A, bBK, R, OG, Ho, ra, Cb, L, LBK, visc =   1.15*10**-6, g=9.81, Bw_div_Bw0_max=12):
+    BW44=Bw(w, V, d, Bw0, g=9.81, Bw_div_Bw0_max=Bw_div_Bw0_max)
 
     Bp44BK_N0, Bp44BK_H0, B44BK_L, B44BKW0 = bilge_keel(w, fi_a, V, B, d, A, bBK, R, g, OG, Ho, ra)
     B44BK_N0 = Bp44BK_N0*LBK
@@ -192,10 +217,10 @@ def calculate_B44(w, V, d, Bw0, fi_a,  B,  A, bBK, R, OG, Ho, ra, Cb, L, LBK, vi
 
     return B44,BW44,B44_BK,B44F,B44L
 
-def calculate_B44_series(row):
+def calculate_B44_series(row, Bw_div_Bw0_max=12):
     s = pd.Series(name=row.name)
     B_44,B_W,B_BK,B_F,B_L = calculate_B44(w=row['w'], V=row['V'], d=row['d'], Bw0=row['Bw0'], fi_a=row['fi_a'], B=row['B'], A=row['A'], bBK=row['bBK'], R=row['R'],
-                         OG=row['OG'], Ho=row['Ho'], ra=row['ra'], Cb=row['Cb'], L=row['L'], LBK=row['LBK'], visc=row['visc'], g=row['g'])
+                         OG=row['OG'], Ho=row['Ho'], ra=row['ra'], Cb=row['Cb'], L=row['L'], LBK=row['LBK'], visc=row['visc'], g=row['g'], Bw_div_Bw0_max=Bw_div_Bw0_max)
     s['B_44']=B_44
     s['B_W']=B_W
     s['B_BK']=B_BK

@@ -22,7 +22,8 @@ import pandas as pd
 from rolldecayestimators import ikeda_speed
 
 def calculate_roll_damping(LPP,Beam,CB,CMID,OG,PHI,lBK,bBK,OMEGA,
-                           DRAFT, V=0, KVC = 1.14e-6, verify_input=True, limit_inputs=False):
+                           DRAFT, V=0, KVC = 1.14e-6, verify_input=True, limit_inputs=False, Bw_div_Bw0_max=12,
+                           BWHAT_lim=0.005):
     """
     ********************************************************************
     *** Calculation of roll damping by the proposed predition method ***
@@ -43,6 +44,10 @@ def calculate_roll_damping(LPP,Beam,CB,CMID,OG,PHI,lBK,bBK,OMEGA,
     :param KVC = 1.14e-6  # Kinematic Viscosity Coefficient
     :param verify_input = True, should the inputs be verified to be within limits?
     :param limit_inputs = False, use limit value if input limit is exceeded.
+    :param Bw_div_Bw0_max=12, There are some problems with the wave damping speed dependence being over predicted this
+        is a limit. Set it to np.inf to turn it off.
+    :param BWHAT_lim=0.005, There are some problems with the wave damping being over predicted this
+        is a limit. Set it to np.inf to turn it off.
     :return: B44HAT, BFHAT, BWHAT, BEHAT, BBKHAT
      Nondimensional damping:
     B44HAT: Total
@@ -52,7 +57,27 @@ def calculate_roll_damping(LPP,Beam,CB,CMID,OG,PHI,lBK,bBK,OMEGA,
     BBKHAT: Bilge keel
     """
 
+    # Check if any input is null:
+    inputs = {
+        'LPP': LPP,
+        'Beam': Beam,
+        'CB': CB,
+        'CMID': CMID,
+        'OG': OG,
+        'PHI': PHI,
+        'lBK': lBK,
+        'bBK': bBK,
+        'OMEGA': OMEGA,
+        'DRAFT': DRAFT,
+    }
+    inputs=pd.Series(inputs)
+    mask = pd.isnull(inputs)
+    nulls = inputs[mask]
+    if len(nulls)>0:
+        raise SimplifiedIkedaInputError('%s is NaN' % nulls)
+
     if limit_inputs:
+        # Limit the inputs to not exceed the limits.
         outputs = _limit_inputs(LPP=LPP,Beam=Beam, CB=CB,CMID=CMID,OG=OG,PHI=PHI,lBK=lBK,bBK=bBK,OMEGA=OMEGA,DRAFT=DRAFT)
         LPP = outputs['LPP']
         Beam = outputs['Beam']
@@ -81,12 +106,24 @@ def calculate_roll_damping(LPP,Beam,CB,CMID,OG,PHI,lBK,bBK,OMEGA,
     B44HAT, BFHAT, BWHAT, BEHAT, BBKHAT = _calculate_roll_damping(LPP=LPP,BRTH=BRTH, CB=CB, CMID=CMID, OGD=OGD, PHI=PHI, LBKL=LBKL, BBKB=BBKB,
                                    OMEGA=OMEGA, DRAFT=DRAFT, BD=BD, OMEGAHAT=OMEGAHAT, TW=TW, KVC=KVC)
 
+    # Speed dependance:
+    # Hull lift:
     A=CMID*Beam*DRAFT
     BL=ikeda_speed.hull_lift(V=V,B=Beam, d=DRAFT, OG=OG, L=LPP, A=A, ra=1025)
     disp=LPP*Beam*DRAFT*CB
     ND_factorB = np.sqrt(Beam / (2 * 9.81)) / (1025 * disp * (Beam**2));  # Nondimensiolizing factor of B44
     BLHAT=BL*ND_factorB
     B44HAT+=BLHAT
+
+    # Wave speed dependance:
+    if V>0:
+        BWHAT_speed =ikeda_speed.Bw(w=OMEGA, V=V, d=DRAFT, Bw0=BWHAT, Bw_div_Bw0_max=Bw_div_Bw0_max)
+
+        if BWHAT_speed>BWHAT_lim:
+            BWHAT_speed=BWHAT_lim # This limit give some improvement
+
+        B44HAT = B44HAT - BWHAT + BWHAT_speed
+        BWHAT = BWHAT_speed
 
     return B44HAT, BFHAT, BWHAT, BEHAT, BBKHAT, BLHAT
 

@@ -81,7 +81,8 @@ def test_calculate_B44():
     wE = 2 * pi * 1 / T;  # circular frequency
     fi_a = 10 * pi / 180;  # roll amplitude !!rad??
     Bw0 = ikeda.Bw0_faust(w=wE)
-    B44,BW44,B44_BK,B44F,B44L = ikeda.calculate_B44(w=wE, V=V, d=d, Bw0=Bw0, fi_a=fi_a,  B=B,  A=A, bBK=bBK, R=R, OG=OG, Ho=Ho, ra=ra, Cb=Cb, L=L, LBK=LBK, visc = visc, g=g)
+    B44,BW44,B44_BK,B44F,B44L = ikeda.calculate_B44(w=wE, V=V, d=d, Bw0=Bw0, fi_a=fi_a,  B=B,  A=A, bBK=bBK, R=R, OG=OG,
+                                                    Ho=Ho, ra=ra, Cb=Cb, L=L, LBK=LBK, visc = visc, g=g, Bw_div_Bw0_max=np.inf)
 
     assert_allclose(BW44, 5.752259942483836e+07, rtol=0.001)
     assert_allclose(B44_BK, 7.956499497049402e+07, rtol=0.001)
@@ -116,7 +117,7 @@ def test_calculate_B44_speeds():
     inputs['visc']=visc
     inputs['g']=g
 
-    results = inputs.apply(func=ikeda.calculate_B44_series, axis=1)
+    results = inputs.apply(func=ikeda.calculate_B44_series, Bw_div_Bw0_max=np.inf, axis=1)
     # Wave:
     BW44_matlab = [15230056.1985294,15245650.7598695,15312025.5743705,15551094.8502096,16275924.5707451,18116404.2772792,22004594.1044359,28771214.8371744,38312799.5815772,48887362.9192075,57522599.4248384]
     assert_allclose(results['B_W'], BW44_matlab, rtol=0.001)
