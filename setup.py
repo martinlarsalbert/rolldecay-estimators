@@ -15,7 +15,7 @@ DISTNAME = 'rolldecay-estimators'
 DESCRIPTION = 'A template for scikit-learn compatible packages.'
 with codecs.open('README.rst', encoding='utf-8-sig') as f:
     LONG_DESCRIPTION = f.read()
-MAINTAINER = 'V. Birodkars, G. Lemaitre'
+MAINTAINER = 'Martin Alexandersson'
 MAINTAINER_EMAIL = 'vighneshbirodkar@nyu.edu, g.lemaitre58@gmail.com'
 URL = 'https://github.com/scikit-learn-contrib/project-template'
 LICENSE = 'new BSD'
@@ -49,6 +49,10 @@ EXTRAS_REQUIRE = {
     ]
 }
 
+package_data= {
+          "rolldecayestimators": ["*.csv"],
+      }
+
 setup(name=DISTNAME,
       maintainer=MAINTAINER,
       maintainer_email=MAINTAINER_EMAIL,
@@ -62,4 +66,6 @@ setup(name=DISTNAME,
       classifiers=CLASSIFIERS,
       packages=find_packages(),
       install_requires=INSTALL_REQUIRES,
-      extras_require=EXTRAS_REQUIRE)
+      extras_require=EXTRAS_REQUIRE,
+      package_data=package_data,
+      )
