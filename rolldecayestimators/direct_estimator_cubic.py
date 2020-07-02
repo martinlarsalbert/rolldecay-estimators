@@ -60,7 +60,10 @@ class EstimatorCubic(DirectEstimator):
     def __init__(self, maxfev=100, bounds={}, ftol=10 ** -15, p0={}, fit_method='integration'):
 
         new_bounds={
-            'B_1A':(0, np.inf),
+            'B_1A':(0, np.inf),  # Assuming only positive coefficients
+            'B_2A': (0, np.inf),  # Assuming only positive coefficients
+            'B_3A': (0, np.inf),  # Assuming only positive coefficients
+
         }
         new_bounds.update(bounds)
         bounds=new_bounds
@@ -95,7 +98,7 @@ class EstimatorCubic(DirectEstimator):
         for key, value in self.parameters.items():
             symbol_key = sp.Symbol(key)
             new_key = key[0:-1]
-            symbol_new_key = sp.Symbol(new_key)
+            symbol_new_key = ss.Symbol(new_key)
 
             if symbol_new_key in equations.normalize_equations:
                 normalize_equation = equations.normalize_equations[symbol_new_key]

@@ -301,4 +301,10 @@ def test_result_for_database():
 
     assert_almost_equal(s['omega0'],np.sqrt(parameters['C_1A']))
 
-    a = 1
+    g=9.81
+    m=meta_data['Volume']*rho
+    C = meta_data['GM']*g*m
+    A_44 = C/s['omega0']**2
+    assert_almost_equal(s['A_44'],A_44)
+    B_1 = s['B_1A']*A_44
+    assert_almost_equal(s['B_1'],B_1)
