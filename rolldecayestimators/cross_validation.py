@@ -57,7 +57,14 @@ def plot_validate(model, data, features, label='B_e_hat', n_splits=5):
 
     fig,axes=plt.subplots(ncols=ncols, nrows=nrows)
 
-    axess=axes.flatten()[0:n_splits]
+    axess=axes.flatten()
+
+    not_used = axess[n_splits:]
+    for ax in not_used:
+        ax.remove()
+
+    axess=axess[0:n_splits]
+
 
     fold=0
     for (train_index, test_index),ax in zip(kf.split(models),axess):
