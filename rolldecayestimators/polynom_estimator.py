@@ -6,6 +6,7 @@ pd.set_option("display.max_columns", None)
 import numpy as np
 from sklearn.base import BaseEstimator
 from sklearn.pipeline import Pipeline
+import os.path
 
 from rolldecayestimators.substitute_dynamic_symbols import lambdify,run
 
@@ -123,6 +124,10 @@ class Polynom(BaseEstimator):
         return sp.Eq(self.y_symbol, rhs)
 
     def save(self, file_path:str):
+
+        if not os.path.splitext(file_path)[-1]:
+            file_path+='.sym'
+
         dill.dump(self, open(file_path, 'wb'))
 
     @classmethod
