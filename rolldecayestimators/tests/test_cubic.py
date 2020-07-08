@@ -99,7 +99,14 @@ def test_fit_simualtion():
         'C_5A':0.0,
     }
 
-    direct_estimator = EstimatorCubic(fit_method='integration')
+    bounds = {
+        'B_1A': (-np.inf, np.inf),  # Assuming only positive coefficients
+        'B_2A': (-np.inf, np.inf),  # Assuming only positive coefficients
+        'B_3A': (-np.inf, np.inf),  # Assuming only positive coefficients
+
+    }
+
+    direct_estimator = EstimatorCubic(fit_method='integration', bounds=bounds)
     phi0 = np.deg2rad(10)
     phi1d0 = 0
     t = np.arange(0, 10, 0.01)
@@ -119,7 +126,14 @@ def test_fit_simualtion_quadratic_damping():
         'C_5A':0.0,
     }
 
-    direct_estimator = EstimatorCubic(fit_method='integration')
+    bounds = {
+        'B_1A': (-np.inf, np.inf),  # Assuming only positive coefficients
+        'B_2A': (-np.inf, np.inf),  # Assuming only positive coefficients
+        'B_3A': (-np.inf, np.inf),  # Assuming only positive coefficients
+
+    }
+
+    direct_estimator = EstimatorCubic(fit_method='integration', bounds=bounds)
     phi0 = np.deg2rad(10)
     phi1d0 = 0
     t = np.arange(0, 10, 0.01)
@@ -181,7 +195,14 @@ def test_fit_simualtion_quadratic_stiffness():
         'C_5A':0.0,
     }
 
-    direct_estimator = EstimatorCubic(fit_method='integration')
+    bounds = {
+        'B_1A': (-np.inf, np.inf),  # Assuming only positive coefficients
+        'B_2A': (-np.inf, np.inf),  # Assuming only positive coefficients
+        'B_3A': (-np.inf, np.inf),  # Assuming only positive coefficients
+
+    }
+
+    direct_estimator = EstimatorCubic(fit_method='integration', bounds=bounds)
     phi0 = np.deg2rad(10)
     phi1d0 = 0
     t = np.arange(0, 10, 0.01)
@@ -201,7 +222,14 @@ def test_fit_simualtion_cubic_stiffness():
         'C_5A':1000.0,
     }
 
-    direct_estimator = EstimatorCubic(fit_method='integration')
+    bounds = {
+        'B_1A': (-np.inf, np.inf),  # Assuming only positive coefficients
+        'B_2A': (-np.inf, np.inf),  # Assuming only positive coefficients
+        'B_3A': (-np.inf, np.inf),  # Assuming only positive coefficients
+
+    }
+
+    direct_estimator = EstimatorCubic(fit_method='integration',bounds=bounds)
     phi0 = np.deg2rad(10)
     phi1d0 = 0
     t = np.arange(0, 10, 0.01)
