@@ -65,6 +65,13 @@ class Polynom(BaseEstimator):
         return r2_score(y_true=y, y_pred=y_pred)
 
     def predict(self, X):
+
+        if isinstance(X,dict):
+            return run(self.lamda, X)
+
+        if isinstance(X,pd.Series):
+            return run(self.lamda, X)
+
         if not isinstance(X, pd.DataFrame):
             assert X.shape[1] == len(self.columns)
             X = pd.DataFrame(data=X, columns=self.columns)
