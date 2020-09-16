@@ -200,6 +200,62 @@ def hull_lift(V,B, d, OG, L, A, ra=1000):
     return B44L
 
 def calculate_B44(w, V, d, Bw0, fi_a,  B,  A, bBK, R, OG, Ho, ra, Cb, L, LBK, visc =   1.15*10**-6, g=9.81, Bw_div_Bw0_max=12):
+    """
+
+    Parameters
+    ----------
+    w : float
+        roll frequency [rad/s]
+    V : float
+        Ship speed [m/s]
+    d : float
+        Draught of hull [m]
+    Bw0 : float
+        Zero speed wave damping [Nm*s/rad]
+    fi_a : float
+        Roll amplitude [rad]
+    B : float
+        Breadth of hull [m]
+    A : float
+        Area of cross section of hull [m2]
+    bBK : float
+        breadth of Bilge keel [m] !!(=height???)
+    R : float
+        Bilge Radis [m]
+    OG : float
+        distance from roll axis to still water level [m]
+    Ho : float
+        half breadth to draft ratio B/(2*d) [-]
+    ra : float
+         density of water (1025) [kg/m3]
+    Cb : float
+        Block coeff [-]
+    L : float
+        Ship length [m]
+    LBK : float
+        Bilge keel length [m]
+    visc : float
+        kinematic viscosity [m2/s]
+    g : float
+        gravity accelaration [m/s2]
+    Bw_div_Bw0_max : float
+        maxmum allowed difference between Bw0 and at speed.
+
+    Returns
+    -------
+    B44 : float
+        Total damping [Nm*s/rad]
+    BW44 : float
+        Wave damping [Nm*s/rad]
+    B44_BK : float
+        Bilge keel damping [Nm*s/rad]
+    B44F : float
+        Friction damping [Nm*s/rad]
+    B44L : float
+        Hull lift damping [Nm*s/rad]
+
+    """
+
     BW44=Bw(w, V, d, Bw0, g=9.81, Bw_div_Bw0_max=Bw_div_Bw0_max)
 
     Bp44BK_N0, Bp44BK_H0, B44BK_L, B44BKW0 = bilge_keel(w, fi_a, V, B, d, A, bBK, R, g, OG, Ho, ra)

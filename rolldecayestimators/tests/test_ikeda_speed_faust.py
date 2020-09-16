@@ -6,8 +6,8 @@ import pandas as pd
 from numpy.testing import assert_almost_equal,assert_allclose
 import matplotlib.pyplot as plt
 
-ScaleF =  1 #%/29.565;                  # Scale Factor [-]
-visc =   1.15*10**-6;                  # [m2/s], kinematic viscosity
+ScaleF =  1 #%/29.565;                # Scale Factor [-]
+visc =   1.15*10**-6;                 # [m2/s], kinematic viscosity
 Cb   =   0.61;                        # Block coeff
 L    =   220*ScaleF;                  # Length
 vcg  =   14.4*ScaleF;                 # roll axis (vertical centre of gravity) [m]
