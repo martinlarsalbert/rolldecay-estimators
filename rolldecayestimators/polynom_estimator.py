@@ -142,4 +142,7 @@ class Polynom(BaseEstimator):
         with open(file_path, 'rb') as file:
             polynom = dill.load(file)
 
+        polynom.equation = polynom.get_equation()
+        polynom.lamda = lambdify(polynom.equation.rhs)
+
         return polynom
