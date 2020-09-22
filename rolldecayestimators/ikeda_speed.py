@@ -3,7 +3,7 @@ This is a translation of Carl-Johans implementation in Matlab to Python
 """
 import os.path
 import numpy as np
-from numpy import tanh, exp, sqrt, pi, sin, cos, arctan
+from numpy import tanh, exp, sqrt, pi, sin, cos, arccos, min, max
 import pandas as pd
 import scipy.interpolate
 import matplotlib.pyplot as plt
@@ -18,6 +18,7 @@ f_interpolation_S175 = scipy.interpolate.interp1d(data_S175['w_vec'], data_S175[
 data_path_faust = os.path.join(base_path, 'rolldecayestimators', 'Bw0_faust.csv')
 data_faust = pd.read_csv(data_path_faust, sep=';')
 f_interpolation_faust = scipy.interpolate.interp1d(data_faust['w_vec'], data_faust['b44_vec'], kind='cubic')
+from scipy.integrate import simps
 
 def Bw0_S175(w):
     Bw0 = f_interpolation_S175(w)
@@ -126,7 +127,7 @@ def bilge_keel(w, fi_a, V, B, d, A, bBK, R, g, OG, Ho, ra):
     # # Ikeda 1994 bilge keel generated Lift # Fartberoende??
     l1 = l + bBK / 2; # Lift Force
     u = l1 * fi_a * w; # tangential velocity
-    alpha = arctan(u / V); # flow velocity?
+    alpha = np.arctan2(u,V); # flow velocity?
     Vr = sqrt(V ** 2 + u ** 2); # -'' -
 
     LBK = pi * ra * alpha * Vr ** 2 * bBK ** 2 / 2; # lift
@@ -285,7 +286,116 @@ def calculate_B44_series(row, Bw_div_Bw0_max=12):
     return s
 
 
+def calculate_sectional_lewis(B, T, S):
+    """
+    Lewis form approximation' is obtained.
+    Given the section's area, S, beam B and draught T, the constants a, a a_3 are uniquely defined
+    by von Kerczek and Tuck18 as:
 
+    Parameters
+    ----------
+    B : array_like
+        Sectional beams [m]
+    T : array_like
+        Sectional draughts [m]
+    S : array_like
+        Sectional area [m2]
+
+    Returns
+    -------
+    a, a_1, a_3 : array_like
+        sectional lewis coefficients.
+
+    """
+    H = B / (2 * T)
+    sigma_s = S / (B * T)
+    C_1 = (3 + 4 * sigma_s / np.pi) + (1 - 4 * sigma_s / np.pi) * ((H - 1) / (H + 1)) ** 2
+    a_3 = (-C_1 + 3 + np.sqrt(9 - 2 * C_1)) / C_1
+    a_1 = (1 + a_3) * (H - 1) / (H + 1)
+    a = B / (2 * (1 + a_1 + a_3))
+
+    return a, a_1, a_3, sigma_s, H
+
+def eddy(bwl:np.ndarray, a_1:np.ndarray, a_3:np.ndarray, sigma:np.ndarray, xs:np.ndarray, H0:np.ndarray, Ts:np.ndarray,
+         OG:float, R:float, d:float, wE:float, fi_a:float, ra=1000.0):
+    """
+    Calculation of eddy damping according to Ikeda.
+    This implementation is a translation from Carl-Johans Matlab implementation.
+
+    Parameters
+    ----------
+    bwl
+        sectional beam water line [m]
+    a_1
+        sectional lewis coefficients
+    a_3
+        sectional lewis coefficients
+    sigma
+        sectional coefficient
+    xs
+        sectional x position [m]
+    H0
+        sectional coefficient
+    Ts
+        sectional draft [m]
+    OG
+        vertical distance water line to cg [m]
+    R
+        bilge radius [m]
+    d
+        ship draft [m]
+    ra
+        water density [kg/m3]
+    wE
+        roll requency [rad/s]
+    fi_a
+        roll amplitude [rad]
+
+    Returns
+    -------
+    B_E0
+        Eddy damping at zero speed.
+    """
+
+    N=len(bwl)
+    M = bwl / (2 * (1 + a_1 + a_3));
+
+    fi1 = 0;
+    fi2 = 0.5 * arccos(a_1 * (1 + a_3)) / (4 * a_3);
+    rmax_fi1 = M * M*sqrt(((1+a_1)*sin(fi1)-a_3*sin(fi1))**2+((1-a_1)*cos(fi1)-a_3*cos(fi1))**2)
+    rmax_fi2 = M*sqrt(((1+a_1)*sin(fi2)-a_3*sin(fi2))**2+((1-a_1)*cos(fi2)-a_3*cos(fi2))**2)
+
+    mask=rmax_fi2 > rmax_fi1
+    fi=np.zeros(N)
+    fi[mask] = fi2[mask]
+    fi[~mask] = fi1
+
+    B0 = -2 * a_3 * sin(5 * fi) + a_1 * (1 - a_3) * sin(3 * fi) + (
+                (6 + 3 * a_1) * a_3 ** 2 + (3 * a_1 + a_1 ** 2) * a_3 + a_1 ** 2) * sin(fi)
+    A0 = -2 * a_3 * cos(5 * fi) + a_1 * (1 - a_3) * cos(3 * fi) + (
+                (6 - 3 * a_1) * a_3 ** 2 + (a_1 ** 2 - 3 * a_1) * a_3 + a_1 ** 2) * cos(fi)
+    H = 1 + a_1 ** 2 + 9 * a_3 ** 2 + 2 * a_1 * (1 - 3 * a_3) * cos(2 * fi) - 6 * a_3 * cos(4 * fi)
+
+    sigma_p = sigma
+
+    f3 = 1 + 4 * exp(-1.65 * 10 ** 5 * (1 - sigma) ** 2);
+
+    gamma = sqrt(pi) * f3 * (max(rmax_fi1, rmax_fi2) + 2 * M / H * sqrt(B0 ** 2 * A0 ** 2)) / (
+                2 * Ts * sqrt(H0 * (sigma_p + OG / Ts))); # Journee
+
+    f1 = 0.5 * (1 + tanh(20 * (sigma - 0.7)));
+    f2 = 0.5 * (1 - cos(pi * sigma)) - 1.5 * (1 - exp(-5 * (1 - sigma))) * (sin(pi * sigma)) ** 2
+
+    Cp = 0.5 * (0.87 * exp(-gamma) - 4 * exp(-0.187 * gamma) + 3);
+
+    Cr = ((1 - f1 * R / d) * (1 - OG / d) + f2 * (H0 - f1 * R / d) ** 2) * Cp * (max(rmax_fi1, rmax_fi2) / d) ** 2
+
+
+    Bp44E0s = 4 * ra * d ** 4 * wE * fi_a * Cr / (3 * pi)
+
+    Bp44E0 = simps(y=Bp44E0s, x=xs)
+
+    return Bp44E0
 
 
 

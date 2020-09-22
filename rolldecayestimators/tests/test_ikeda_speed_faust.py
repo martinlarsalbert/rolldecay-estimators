@@ -138,3 +138,8 @@ def test_calculate_B44_speeds():
     result_nondim = results*ND_factor
     result_nondim.plot.area(y = ['B_BK','B_L','B_W','B_F'], ax=ax)
     plt.show()
+
+def test_calculate_sectional_lewis():
+    N=21
+    B=T=S=np.ones(N)
+    a, a_1, a_3, sigma_s, H = ikeda.calculate_sectional_lewis(B=B, T=T, S=S)
