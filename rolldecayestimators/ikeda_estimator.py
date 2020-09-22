@@ -155,9 +155,9 @@ class IkedaEstimator(DirectEstimator):
         self.is_fitted_ = True
 
 
-    def calculate(self):
+    def calculate(self,**kwargs):
 
-        B44HAT, BFHAT, BWHAT, BEHAT, BBKHAT, BLHAT = calculate_roll_damping(**self.ikeda_parameters)
+        B44HAT, BFHAT, BWHAT, BEHAT, BBKHAT, BLHAT = calculate_roll_damping(**self.ikeda_parameters, **kwargs)
         s = pd.Series()
         s['B_44_HAT'] = B44HAT
         s['B_F_HAT'] = BFHAT
@@ -227,13 +227,13 @@ class IkedaQuadraticEstimator(IkedaEstimator):
             'limit_inputs': self.limit_inputs,
         }
 
-        self.result=self.calculate()
+        self.result=self.calculate(**kwargs)
 
 
         self.result_variation=self.calculate_phi_a_variation()
 
         if self.two_point_regression:
-            B_1,B_2 = self.calculate_two_point_regression()
+            B_1,B_2 = self.calculate_two_point_regression(**kwargs)
             B_1_, B_2_ = self.fit_Bs()  # Not used...
         else:
             B_1, B_2 = self.fit_Bs()
@@ -256,7 +256,7 @@ class IkedaQuadraticEstimator(IkedaEstimator):
 
         self.is_fitted_ = True
 
-    def calculate_two_point_regression(self):
+    def calculate_two_point_regression(self, **kwargs):
         # Two point regression:
         data = {
             'lpp': self.lpp,
@@ -275,8 +275,8 @@ class IkedaQuadraticEstimator(IkedaEstimator):
         row1 = pd.Series(data)
         row1.phi_max *= 0.5
         row2 = pd.Series(data)
-        s1 = calculate(row1, verify_input=self.verify_input, limit_inputs=self.limit_inputs)
-        s2 = calculate(row2, verify_input=self.verify_input, limit_inputs=self.limit_inputs)
+        s1 = calculate(row1, verify_input=self.verify_input, limit_inputs=self.limit_inputs, **kwargs)
+        s2 = calculate(row2, verify_input=self.verify_input, limit_inputs=self.limit_inputs, **kwargs)
         s1['B_44'] = self.B44_lambda(B_44_hat=s1.B44HAT, Disp=row1.Volume, beam=row1.beam, g=self.g, rho=self.rho)
         s2['B_44'] = self.B44_lambda(B_44_hat=s2.B44HAT, Disp=row2.Volume, beam=row2.beam, g=self.g, rho=self.rho)
         x = np.deg2rad([row1.phi_max, row2.phi_max]) * 8 * row1.omega0 / (3 * np.pi)

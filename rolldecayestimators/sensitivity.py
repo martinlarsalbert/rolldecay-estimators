@@ -45,7 +45,7 @@ def _plot_result(ship, result, key, changes, plot_change_factor=True, ax=None):
     ax.set_title('Variation of %s: %0.3f' % (key, ship[key]))
     return ax
 
-def calculate(row, catch_error=False, limit_inputs=False, verify_input=True):
+def calculate(row, catch_error=False, limit_inputs=False, verify_input=True, **kwargs):
     LPP = row.lpp
     Beam = row.beam
     DRAFT = row.DRAFT
@@ -63,7 +63,7 @@ def calculate(row, catch_error=False, limit_inputs=False, verify_input=True):
     try:
         B44HAT, BFHAT, BWHAT, BEHAT, BBKHAT, BLHAT = calculate_roll_damping(LPP, Beam, CB, CMID, OG, PHI, lBK, bBK,
                                                                     OMEGA, DRAFT, V=V ,limit_inputs=limit_inputs,
-                                                                            verify_input=verify_input)
+                                                                            verify_input=verify_input, **kwargs)
     except SimplifiedIkedaInputError:
         if catch_error:
             return s

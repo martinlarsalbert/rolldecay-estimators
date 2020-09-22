@@ -23,7 +23,7 @@ from rolldecayestimators import ikeda_speed
 
 def calculate_roll_damping(LPP,Beam,CB,CMID,OG,PHI,lBK,bBK,OMEGA,
                            DRAFT, V=0, KVC = 1.14e-6, verify_input=True, limit_inputs=False, Bw_div_Bw0_max=12,
-                           BWHAT_lim=0.005):
+                           BWHAT_lim=0.005, rho=1000, alternative_bilge_keel=False, RdivB=0.02):
     """
     ********************************************************************
     *** Calculation of roll damping by the proposed predition method ***
@@ -48,6 +48,10 @@ def calculate_roll_damping(LPP,Beam,CB,CMID,OG,PHI,lBK,bBK,OMEGA,
         is a limit. Set it to np.inf to turn it off.
     :param BWHAT_lim=0.005, There are some problems with the wave damping being over predicted this
         is a limit. Set it to np.inf to turn it off.
+    :param rho, water density
+    :param alternative_bilge_keel, if True an alternative bilge keel calculation is used.
+    :RdivB, bilge radius / ship beam (only used if alternative_bilge_keel=True)
+
     :return: B44HAT, BFHAT, BWHAT, BEHAT, BBKHAT
      Nondimensional damping:
     B44HAT: Total
@@ -124,6 +128,30 @@ def calculate_roll_damping(LPP,Beam,CB,CMID,OG,PHI,lBK,bBK,OMEGA,
 
         B44HAT = B44HAT - BWHAT + BWHAT_speed
         BWHAT = BWHAT_speed
+
+    # Eddy speed dependence:
+    if V>0:
+        factor=(0.04*OMEGA*LPP/V)**2
+        B44HAT-=BEHAT
+        BEHAT*=(factor)/(1+factor)
+        B44HAT+=BEHAT
+
+    if alternative_bilge_keel and bBK>0:
+
+        B44HAT-=BBKHAT
+
+        A=CMID*Beam*DRAFT
+        g=9.81
+        Ho = Beam / (2 * DRAFT)  # half breadth to draft ratio
+        R = RdivB*Beam
+        Bp44BK_N0, Bp44BK_H0, B44BK_L, B44BKW0 = ikeda_speed.bilge_keel(w=OMEGA, fi_a=np.deg2rad(PHI), V=V, B=Beam, d=DRAFT, A=A, bBK=bBK, R=R, g=g, OG=OG, Ho=Ho, ra=rho)
+        B44BK_N0 = Bp44BK_N0 * lBK
+        B44BK_H0 = Bp44BK_H0 * lBK
+        B44BK_L = B44BK_L
+        # B44BKW0 = B44BKW0 * dim...
+        B44_BK = B44BK_N0 + B44BK_H0 + B44BK_L
+        BBKHAT=ND_factorB*B44_BK
+        B44HAT+=BBKHAT
 
     return B44HAT, BFHAT, BWHAT, BEHAT, BBKHAT, BLHAT
 

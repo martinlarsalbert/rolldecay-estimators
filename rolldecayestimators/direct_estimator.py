@@ -178,7 +178,7 @@ class DirectEstimator(RollDecay):
             X['phi_deg'] = np.rad2deg(X['phi'])
             X.plot(y='phi_deg', ax=ax, label='Model test')
 
-        df.plot(y='phi_deg', ax=ax, label=self.__repr__(),**kwargs)
+        df.plot(y='phi_deg', ax=ax, label=self.__repr__(), style='--',**kwargs)
 
         ax.legend()
         ax.set_xlabel('Time [s]')
