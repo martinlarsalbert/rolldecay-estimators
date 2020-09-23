@@ -1,9 +1,8 @@
-import pytest
 from rolldecayestimators import ikeda_speed as ikeda
 from numpy import sqrt, pi
 import numpy as np
 import pandas as pd
-from numpy.testing import assert_almost_equal,assert_allclose
+from numpy.testing import assert_allclose
 import matplotlib.pyplot as plt
 
 ScaleF =  1 #%/29.565;                # Scale Factor [-]
@@ -139,7 +138,3 @@ def test_calculate_B44_speeds():
     result_nondim.plot.area(y = ['B_BK','B_L','B_W','B_F'], ax=ax)
     plt.show()
 
-def test_calculate_sectional_lewis():
-    N=21
-    B=T=S=np.ones(N)
-    a, a_1, a_3, sigma_s, H = ikeda.calculate_sectional_lewis(B=B, T=T, S=S)

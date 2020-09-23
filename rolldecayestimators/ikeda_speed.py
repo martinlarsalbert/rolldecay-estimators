@@ -357,12 +357,13 @@ def eddy(bwl:np.ndarray, a_1:np.ndarray, a_3:np.ndarray, sigma:np.ndarray, xs:np
         Eddy damping at zero speed.
     """
 
+    H0=np.array(H0)/2  # ...strange...
     N=len(bwl)
     M = bwl / (2 * (1 + a_1 + a_3));
 
     fi1 = 0;
     fi2 = 0.5 * arccos(a_1 * (1 + a_3)) / (4 * a_3);
-    rmax_fi1 = M * M*sqrt(((1+a_1)*sin(fi1)-a_3*sin(fi1))**2+((1-a_1)*cos(fi1)-a_3*cos(fi1))**2)
+    rmax_fi1 = M*sqrt(((1+a_1)*sin(fi1)-a_3*sin(fi1))**2+((1-a_1)*cos(fi1)-a_3*cos(fi1))**2)
     rmax_fi2 = M*sqrt(((1+a_1)*sin(fi2)-a_3*sin(fi2))**2+((1-a_1)*cos(fi2)-a_3*cos(fi2))**2)
 
     mask=rmax_fi2 > rmax_fi1
@@ -380,20 +381,27 @@ def eddy(bwl:np.ndarray, a_1:np.ndarray, a_3:np.ndarray, sigma:np.ndarray, xs:np
 
     f3 = 1 + 4 * exp(-1.65 * 10 ** 5 * (1 - sigma) ** 2);
 
-    gamma = sqrt(pi) * f3 * (max(rmax_fi1, rmax_fi2) + 2 * M / H * sqrt(B0 ** 2 * A0 ** 2)) / (
-                2 * Ts * sqrt(H0 * (sigma_p + OG / Ts))); # Journee
+    x_ = np.array([rmax_fi1, rmax_fi2]).transpose()
+    rmax = max(x_, axis=1)
+
+    gamma=sqrt(pi)*f3*(rmax+2*M/H*sqrt(B0**2*A0**2))/(2*Ts*sqrt(H0*(sigma_p+OG/Ts)))
 
     f1 = 0.5 * (1 + tanh(20 * (sigma - 0.7)));
     f2 = 0.5 * (1 - cos(pi * sigma)) - 1.5 * (1 - exp(-5 * (1 - sigma))) * (sin(pi * sigma)) ** 2
 
     Cp = 0.5 * (0.87 * exp(-gamma) - 4 * exp(-0.187 * gamma) + 3);
 
-    Cr = ((1 - f1 * R / d) * (1 - OG / d) + f2 * (H0 - f1 * R / d) ** 2) * Cp * (max(rmax_fi1, rmax_fi2) / d) ** 2
+    Cr = ((1 - f1 * R / d) * (1 - OG / d) + f2 * (H0 - f1 * R / d) ** 2) * Cp * (rmax / d) ** 2
 
+    WE, CR = np.meshgrid(wE, Cr)
 
-    Bp44E0s = 4 * ra * d ** 4 * wE * fi_a * Cr / (3 * pi)
+    #Bp44E0s = 4 * ra * d ** 4 * wE * fi_a * Cr / (3 * pi)
+    Bp44E0s = 4 * ra * d ** 4 * WE * fi_a * CR / (3 * pi)
 
-    Bp44E0 = simps(y=Bp44E0s, x=xs)
+    mask = np.isnan(Bp44E0s)
+    Bp44E0s[mask] = 0
+
+    Bp44E0 = simps(y=Bp44E0s, x=xs, axis=0)
 
     return Bp44E0
 
