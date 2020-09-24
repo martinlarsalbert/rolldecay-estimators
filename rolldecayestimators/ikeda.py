@@ -6,7 +6,8 @@ import pandas as pd
 
 from rolldecayestimators import ikeda_speed
 
-class SectionsError (ValueError): pass
+class SectionsError(ValueError): pass
+class BilgeKeelError(ValueError): pass
 
 
 class Ikeda():
@@ -90,7 +91,7 @@ class Ikeda():
         """
         distance from roll axis (cg) to still water level [m] (positive into water)
         """
-        return self.kg - self.draught
+        return self.draught - self.kg
 
     @property
     def Cb(self):
@@ -197,6 +198,18 @@ class Ikeda():
                 )
         return B_44
 
+    def calculate_Bw_div_Bw0(self):
+        """
+        Calculate Wave damping speed correction
+
+        Returns
+        -------
+        Bw_div_Bw0
+            Bw_div_Bw0 = B_W/B_W0
+        """
+        self.Bw_div_Bw0 = ikeda_speed.B_W_speed_correction_factor_ikeda(w=self.w, V=self.V, d=self.draught, g=self.g)
+        return self.Bw_div_Bw0
+
     def calculate_B_W(self, Bw_div_Bw0_max=np.inf):
         """
         Calculate roll wave damping at speed
@@ -208,7 +221,8 @@ class Ikeda():
 
         """
         B_W0 = self.calculate_B_W0()
-        B_W = ikeda_speed.Bw(w=self.w, V=self.V, d=self.draught, Bw0=B_W0, g=self.g, Bw_div_Bw0_max=Bw_div_Bw0_max)
+        Bw_div_Bw0 = self.calculate_Bw_div_Bw0()
+        B_W = B_W0*Bw_div_Bw0
         return B_W
 
     def calculate_B_W0(self):
@@ -280,13 +294,19 @@ class Ikeda():
             Bilge keel damping [Nm*s/rad]
 
         """
+
+        if self.bBK==0:
+            if not self.lBK==0:
+                raise BilgeKeelError('bBK is 0 but lBK is not!')
+
+            return 0.0
+
         Bp44BK_N0, Bp44BK_H0, B44BK_L, B44BKW0 = ikeda_speed.bilge_keel(w=self.w, fi_a=self.fi_a, V=self.V, B=self.beam,
                                                                         d=self.draught, A=self.A_mid,
                                       bBK=self.bBK, R=self.R, g=self.g, OG=self.OG, Ho=self.Ho, ra=self.rho)
 
         B44BK_N0 = Bp44BK_N0*self.lBK
         B44BK_H0 = Bp44BK_H0*self.lBK
-        B44BK_L = B44BK_L
         B44_BK = B44BK_N0 + B44BK_H0 + B44BK_L
         return B44_BK
 
