@@ -286,19 +286,19 @@ def calculate_B44_series(row, Bw_div_Bw0_max=12):
     return s
 
 
-def calculate_sectional_lewis(B, T, S):
+def calculate_sectional_lewis(B_s, T_s, S_s):
     """
     Lewis form approximation' is obtained.
-    Given the section's area, S, beam B and draught T, the constants a, a a_3 are uniquely defined
+    Given the section's area, S_s, beam B and draught T, the constants a, a a_3 are uniquely defined
     by von Kerczek and Tuck18 as:
 
     Parameters
     ----------
-    B : array_like
+    B_s : array_like
         Sectional beams [m]
-    T : array_like
+    T_s : array_like
         Sectional draughts [m]
-    S : array_like
+    S_s : array_like
         Sectional area [m2]
 
     Returns
@@ -307,12 +307,12 @@ def calculate_sectional_lewis(B, T, S):
         sectional lewis coefficients.
 
     """
-    H = B / (2 * T)
-    sigma_s = S / (B * T)
+    H = B_s / (2 * T_s)
+    sigma_s = S_s / (B_s * T_s)
     C_1 = (3 + 4 * sigma_s / np.pi) + (1 - 4 * sigma_s / np.pi) * ((H - 1) / (H + 1)) ** 2
     a_3 = (-C_1 + 3 + np.sqrt(9 - 2 * C_1)) / C_1
     a_1 = (1 + a_3) * (H - 1) / (H + 1)
-    a = B / (2 * (1 + a_1 + a_3))
+    a = B_s / (2 * (1 + a_1 + a_3))
 
     return a, a_1, a_3, sigma_s, H
 

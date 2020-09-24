@@ -27,7 +27,7 @@ def test_eddy():
     fi_a=np.deg2rad(3)
     xs = np.linspace(0,lpp, N)
     B = T = S = np.ones(N)
-    a, a_1, a_3, sigma_s, H = ikeda.calculate_sectional_lewis(B=B, T=T, S=S)
+    a, a_1, a_3, sigma_s, H = ikeda.calculate_sectional_lewis(B_s=B, T_s=T, S_s=S)
 
     B_E = ikeda.eddy(bwl=B, a_1=a_1, a_3=a_3, sigma=sigma_s, xs=xs, H0=H, Ts=T, OG=OG, R=R, d=d, wE=wE, fi_a=fi_a)
 
@@ -85,4 +85,4 @@ def test_eddy_faust(lewis_coefficients):
 def test_calculate_sectional_lewis():
     N=21
     B=T=S=np.ones(N)
-    a, a_1, a_3, sigma_s, H = ikeda.calculate_sectional_lewis(B=B, T=T, S=S)
+    a, a_1, a_3, sigma_s, H = ikeda.calculate_sectional_lewis(B_s=B, T_s=T, S_s=S)
