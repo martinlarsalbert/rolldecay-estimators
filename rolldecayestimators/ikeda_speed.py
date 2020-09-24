@@ -36,11 +36,104 @@ def Bw_S175(w, V, d, g=9.81):
 
 def Bw_faust(w, V, d, g=9.81):
     Bw0 = Bw0_faust(w)
-    BW44 = Bw(w, V, d, Bw0, g=9.81)
+    BW44 = Bw(w, V, d, Bw0, g=9.81, speed_correction=B_W_speed_correction_factor)
 
     return BW44
 
-def Bw(w, V, d, Bw0, g=9.81, Bw_div_Bw0_max=12):
+def B_W_speed_correction_factor(w, V, d, g=9.81):
+    """
+        Wave damping speed correction
+        Parameters
+        ----------
+        w
+            "omega" frequency of motion [rad/s]
+        V
+            ship speed [m/s]
+        d
+            ship draught [m]
+        g
+            gravity
+
+        Returns
+        -------
+        Bw_div_Bw0
+            Bw_div_Bw0 = B_W/B_W0
+
+        """
+    tau=w*V/g
+    zeta_d=w**2*d/g
+    A1=1+zeta_d**(-1.2)*exp(-2*zeta_d);
+    A2=0.5+zeta_d**(-1)*exp(-2*zeta_d);
+
+    b = 20*0.3  # Unsure about this one...
+    Bw_div_Bw0=0.5*(((A1+1)+(A2-1)*tanh(20*tau-b))
+                    +(2*A1-A2-1)*exp(-150*(tau-0.25)**2))
+
+    return Bw_div_Bw0
+
+def B_W_speed_correction_factor_ikeda(w, V, d, g=9.81):
+    """
+        Wave damping speed correction
+        Parameters
+        ----------
+        w
+            "omega" frequency of motion [rad/s]
+        V
+            ship speed [m/s]
+        d
+            ship draught [m]
+        g
+            gravity
+
+        Returns
+        -------
+        Bw_div_Bw0
+            Bw_div_Bw0 = B_W/B_W0
+
+        """
+    tau=w*V/g
+    zeta_d=w**2*d/g
+    A1=1+zeta_d**(-1.2)*exp(-2*zeta_d);
+    A2=0.5+zeta_d**(-1)*exp(-2*zeta_d);
+
+    b=20*0.3
+    Bw_div_Bw0=0.5*((A2+1)+(A2-1)*tanh(20*tau-b)
+                    +(2*A1-A2-1)*exp(-150*(tau-0.25)**2))
+
+    return Bw_div_Bw0
+
+def B_W_speed_correction_factor_journee(w, V, d, g=9.81):
+    """
+        Wave damping speed correction
+        Parameters
+        ----------
+        w
+            "omega" frequency of motion [rad/s]
+        V
+            ship speed [m/s]
+        d
+            ship draught [m]
+        g
+            gravity
+
+        Returns
+        -------
+        Bw_div_Bw0
+            Bw_div_Bw0 = B_W/B_W0
+
+        """
+    tau=w*V/g
+    zeta_d=w**2*d/g
+    A1=1+zeta_d**(-1.2)*exp(-2*zeta_d);
+    A2=0.5+zeta_d**(-1)*exp(-2*zeta_d);
+
+    Bw_div_Bw0 = 0.5 * (A2 + 1 + (A2 - 1) * tanh(20 * (tau - 0.3))
+                        + (2 * A1 - A2 - 1) * exp(-150 * (w - 0.25) ** 2)) - 1
+
+    return Bw_div_Bw0
+
+
+def Bw(w, V, d, Bw0, g=9.81, Bw_div_Bw0_max=12, speed_correction=B_W_speed_correction_factor_ikeda):
     """
     Wave damping speed correction
     Parameters
@@ -62,13 +155,8 @@ def Bw(w, V, d, Bw0, g=9.81, Bw_div_Bw0_max=12):
         wave roll camping at speed
 
     """
-    OMEGA = w * V / g
-    zeta_d = w ** 2 * d / g
-    A1 = 1 + zeta_d ** (-1.2) * exp(-2 * zeta_d)
-    A2 = 0.5 + zeta_d ** (-1) * exp(-2 * zeta_d)
 
-    Bw_div_Bw0 = 0.5 * (
-            ((A1 + 1) + (A2 - 1) * tanh(20 * (OMEGA - 0.3))) + (2 * A1 - A2 - 1) * exp(-150 * (OMEGA - 0.25) ** 2))
+    Bw_div_Bw0 = speed_correction(w=w, V=V, d=d, g=g)
 
     # Proposing a limit here:
     if Bw_div_Bw0>Bw_div_Bw0_max:

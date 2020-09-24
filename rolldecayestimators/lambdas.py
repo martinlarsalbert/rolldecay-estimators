@@ -9,6 +9,11 @@ B_e_hat_lambda = lambdify(sp.solve(equations.B_e_hat_equation, symbols.B_e_hat)[
 B_2_hat_lambda = lambdify(sp.solve(equations.B_2_hat_equation, symbols.B_2_hat)[0])
 
 omega0_lambda = lambdify(sp.solve(equations.omega0_hat_equation,symbols.omega_hat)[0])
+
+omega = lambdify(sp.solve(equations.omega0_hat_equation,symbols.omega0)[0])
+omega_hat = lambdify(sp.solve(equations.omega0_hat_equation,symbols.omega0)[0])
+
+
 B_e_lambda = lambdify(sp.solve(equations.B_e_equation, symbols.B_e)[0])
 B_e_lambda_cubic = lambdify(sp.solve(equations.B_e_equation_cubic, symbols.B_e)[0])
 
