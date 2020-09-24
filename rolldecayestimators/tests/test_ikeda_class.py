@@ -1,9 +1,12 @@
 import pytest
 import pandas as pd
 import numpy as np
+from numpy import pi, sqrt
+import os
 from numpy.testing import assert_almost_equal
 
 from rolldecayestimators.ikeda import Ikeda
+import rolldecayestimators
 
 
 @pytest.fixture
@@ -39,9 +42,64 @@ def ikeda():
 
     yield i
 
+@pytest.fixture
+def ikeda_faust():
+    # this is indata from Carl-Johans matlab example for ship: Faust.
+
+    ScaleF = 1  # %/29.565;                # Scale Factor [-]
+    visc = 1.15 * 10 ** -6;  # [m2/s], kinematic viscosity
+    Cb = 0.61;  # Block coeff
+    L = 220 * ScaleF;  # Length
+    vcg = 14.4 * ScaleF;  # roll axis (vertical centre of gravity) [m]
+    vcg = 14.9 * ScaleF;  # roll axis (vertical centre of gravity) [m]
+    B = 32.26 * ScaleF;  # Breadth of hull [m]
+    d = 9.5 * ScaleF;  # Draught of hull [m]
+    A = 0.93 * B * d;  # Area of cross section of hull [m2]
+    bBK = 0.4 * ScaleF;  # breadth of Bilge keel [m] !!(=height???)
+    R = 5 * ScaleF;  # Bilge Radis
+    g = 9.81;
+    C_mid = 0.93;
+
+    OG = -1 * (vcg - d)  # *0.8;                    # distance from roll axis to still water level
+    Ho = B / (2 * d);  # half breadth to draft ratio
+    ra = 1025;  # density of water
+
+    # locals
+    LBK = L / 4;  # Approx
+    disp = L * B * d * Cb;  # Displacement
+
+    # variables!!
+    T = 27.6 * sqrt(ScaleF);
+    wE = 2 * pi * 1 / T;  # circular frequency
+    fi_a = 10 * pi / 180;  # roll amplitude !!rad??
+    V = 0;  # Speed
+
+    data_path_faust = os.path.join(rolldecayestimators.path, 'Bw0_faust.csv')
+    data_faust = pd.read_csv(data_path_faust, sep=';')
+    data_faust.set_index('w_vec', inplace=True)
+    B_W0 = data_faust['b44_vec']
+
+    N_sections = 21
+    x_s = np.linspace(0, L, N_sections)
+    data = {
+        'B_s': B * np.ones(N_sections),
+        'T_s': d * np.ones(N_sections),
+        'C_s': C_mid*np.ones(N_sections),
+    }
+    sections = pd.DataFrame(data=data, index=x_s)  # Fake sections (not testing the eddy)
+
+    i = Ikeda(V=V, draught=d, w=wE, B_W0=B_W0, fi_a=fi_a, beam=B, lpp=L, kg=vcg, volume=disp,
+              sections=sections)
+    i.R = R  # Set bilge radius manually
+
+    yield i
+
 def test_R(ikeda):
     assert ikeda.R==2.0
 
 def test_calculate_Ikeda(ikeda):
     B_44=ikeda.calculate_B44()
+
+def test_calculate_Ikeda_faust(ikeda_faust):
+    B_44=ikeda_faust.calculate_B44()
 

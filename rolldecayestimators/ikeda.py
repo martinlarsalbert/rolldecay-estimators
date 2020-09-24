@@ -140,22 +140,22 @@ class Ikeda():
     @property
     def B_s(self):
         # Sectional beam [m] (incl. both sides)
-        return self.sections['B_s']
+        return np.array(self.sections['B_s'])
 
     @property
     def T_s(self):
         # Sectional draught [m]
-        return self.sections['T_s']
+        return np.array(self.sections['T_s'])
 
     @property
     def C_s(self):
         # Sectional area coefficient: C_s = S_s/(B_s*T_s)
-        return self.sections['C_s']
+        return np.array(self.sections['C_s'])
 
     @property
     def x_s(self):
         # Sectional x-coordinate from AP [m]
-        return self.sections.index
+        return np.array(self.sections.index)
 
     def verify_sections(self):
 
