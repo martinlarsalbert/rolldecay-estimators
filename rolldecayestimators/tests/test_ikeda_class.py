@@ -36,7 +36,7 @@ def ikeda():
     }
     sections=pd.DataFrame(data=data, index=x_s)
 
-    i= Ikeda(V=V, draught=draught, w=w, B_W0=B_W0, fi_a=fi_a, beam=beam, lpp=lpp, kg=kg, volume=volume,
+    i= Ikeda(V=V, w=w, B_W0=B_W0, fi_a=fi_a, beam=beam, lpp=lpp, kg=kg, volume=volume,
              sections=sections)
     i.R=2.0  # Set bilge radius manually
 
@@ -88,7 +88,7 @@ def ikeda_faust():
     }
     sections = pd.DataFrame(data=data, index=x_s)  # Fake sections (not testing the eddy)
 
-    i = Ikeda(V=V, draught=d, w=wE, B_W0=B_W0, fi_a=fi_a, beam=B, lpp=L, kg=vcg, volume=disp,
+    i = Ikeda(V=V, w=wE, B_W0=B_W0, fi_a=fi_a, beam=B, lpp=L, kg=vcg, volume=disp,
               sections=sections, bBK=bBK, lBK=LBK)
     i.R = R  # Set bilge radius manually
 

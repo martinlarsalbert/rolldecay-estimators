@@ -18,9 +18,7 @@ class Ikeda():
 
 
     """
-
-
-    def __init__(self, V:np.ndarray, draught:float, w:np.ndarray, fi_a:float, B_W0:pd.Series, beam:float, lpp:float,
+    def __init__(self, V:np.ndarray, w:np.ndarray, fi_a:float, B_W0:pd.Series, beam:float, lpp:float,
                  kg:float, volume:float, sections:pd.DataFrame, lBK=0.0, bBK=0.0,
                  g=9.81, rho=1000.0, visc =1.15*10**-6, **kwargs):
         """
@@ -32,8 +30,6 @@ class Ikeda():
         ----------
         V
             ship speed [m/s]
-        draught
-            ship draught [m]
         w
             roll frequency [rad/s]
         fi_a
@@ -71,7 +67,6 @@ class Ikeda():
         None
         """
         self.V = V
-        self.draught = draught
         self.g = g
         self.w = w
         self.fi_a = fi_a
@@ -85,6 +80,43 @@ class Ikeda():
         self.bBK=bBK
         self.rho=rho
         self.visc=visc
+
+    @classmethod
+    def load_scoresII(cls, V:np.ndarray, w:np.ndarray, fi_a:float, indata,
+                      output_file, lBK=0.0, bBK=0.0, g=9.81, rho=1000.0, visc =1.15*10**-6,
+                      **kwargs):
+        """
+
+        Parameters
+        ----------
+        V
+        w
+        fi_a
+        indata : pyscores2.indata.Indata
+            Indata to ScoresII program
+        output_file :pyscores2.output.OutputFile
+            Outdata from ScoresII program
+        lBK
+        bBK
+        g
+        rho
+        visc
+        kwargs
+
+        Returns
+        -------
+
+        """
+
+
+        ws, data = output_file.calculate_B_W0()
+        B_W0 = pd.Series(data=data, index=ws)
+
+        #return cls(V=V, draught=draught, w=w, fi_a=fi_a, B_W0=B_W0, beam=beam, lpp=lpp, kg=kg, volume=volume,
+        #           sections=sections, lBK=lBK, bBK=bBK, g=g, rho=rho, visc=visc)
+
+
+
 
     @property
     def OG(self):
@@ -147,6 +179,11 @@ class Ikeda():
     def T_s(self):
         # Sectional draught [m]
         return np.array(self.sections['T_s'])
+
+    @property
+    def draught(self):
+        # draught ship draught [m]
+        return np.max(self.T_s)
 
     @property
     def C_s(self):
