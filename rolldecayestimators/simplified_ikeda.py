@@ -186,7 +186,7 @@ def _calculate_roll_damping(LPP, BRTH, CB, CMID, OGD, PHI, LBKL, BBKB, OMEGA,
     """
 
     # *** Frictional Component ***
-    BFHAT = calculate_B_F(BD, BRTH, CB, DRAFT, KVC, LPP, OGD, OMEGA, PHI, TW)
+    BFHAT = calculate_B_F(BD, BRTH, CB, DRAFT, KVC, LPP, OGD, OMEGA, PHI)
 
     #*** Wave Component ***
     BWHAT = calculate_B_W0(BD, CB, CMID, OGD, OMEGAHAT)
@@ -204,6 +204,20 @@ def _calculate_roll_damping(LPP, BRTH, CB, CMID, OGD, PHI, LBKL, BBKB, OMEGA,
 
 
 def calculate_B_BK(BBKB, BD, CB, CMID, LBKL, OGD, OMEGAHAT, PHI):
+    """
+    Bilge keel damping
+
+    :param BBKB : bBK/Beam
+    :param BD: Beam/DRAFT
+    :param CB: Block coefficient [-]
+    :param CMID: Middship coefficient (A_m/(B*d) [-]
+    :param LBKL: lBK/LPP
+    :param OGD: OG/DRAFT
+    :param OMEGAHAT:
+    :param PHI: Roll angle [deg]
+    :return: BBKHAT
+    """
+
     if (LBKL == 0):
         BBKHAT = 0.0
     else:
@@ -220,6 +234,19 @@ def calculate_B_BK(BBKB, BD, CB, CMID, LBKL, OGD, OMEGAHAT, PHI):
 
 
 def calculate_B_E(BD, CB, CMID, OGD, OMEGAHAT, PHI):
+    """
+    Eddy damping B_E
+
+    :param BD: Beam/DRAFT
+    :param CB: Block coefficient [-]
+    :param CMID: Middship coefficient (A_m/(B*d) [-]
+    :param OGD: OG/DRAFT
+    :param OMEGAHAT:
+    :param PHI: Roll angle [deg]
+
+    :return: BEHAT
+    """
+
     FE1 = (-0.0182 * CB + 0.0155) * (BD - 1.8) ** 3
     FE2 = -79.414 * CB ** 4 + 215.695 * CB ** 3 - 215.883 * CB ** 2 + 93.894 * CB - 14.848
     AE = FE1 + FE2
@@ -233,6 +260,19 @@ def calculate_B_E(BD, CB, CMID, OGD, OMEGAHAT, PHI):
 
 
 def calculate_B_W0(BD, CB, CMID, OGD, OMEGAHAT):
+    """
+    Wave roll damping at zero speed B_W0
+
+    :param BD: Beam/DRAFT
+    :param CB: Block coefficient [-]
+    :param CMID: Middship coefficient (A_m/(B*d) [-]
+    :param OGD: OG/DRAFT
+    :param OMEGAHAT:
+
+    :return:B_W0
+
+    """
+
     X1 = BD;
     X2 = CB;
     X3 = CMID
@@ -282,10 +322,28 @@ def calculate_B_W0(BD, CB, CMID, OGD, OMEGAHAT):
     return BWHAT
 
 
-def calculate_B_F(BD, BRTH, CB, DRAFT, KVC, LPP, OGD, OMEGA, PHI, TW):
+def calculate_B_F(BD, BRTH, CB, DRAFT, KVC, LPP, OGD, OMEGA, PHI):
+    """
+    Skin friction damping B_F
+
+    :param BD: Beam/DRAFT
+    :param BRTH: Beam [m]
+    :param CB: Block coefficient [-]
+    :param DRAFT: DRAFT : ship draught [m]
+    :param KVC = 1.14e-6  # Kinematic Viscosity Coefficient
+    :param LPP: [m]
+    :param OGD: OG/DRAFT
+    :param OMEGA: Frequency of motion [rad/s]
+    :param PHI: Roll angle [deg]
+    :param CMID: Middship coefficient (A_m/(B*d) [-]
+
+    :return: B_F
+    """
+
     # There must be a typo in the original fortran code it was 102 instead of 1025!?
     RO = 1025  # Density of water
 
+    TW = 2 * PI / OMEGA
     RF = DRAFT * ((0.887 + 0.145 * CB) * (1.7 + CB * BD) - 2.0 * OGD) / PI
     SF = LPP * (1.75 * DRAFT + CB * BRTH)
     CF = 1.328 * ((3.22 * RF ** 2 * (PHI * PI / 180) ** 2) / (TW * KVC)) ** -0.5

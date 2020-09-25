@@ -5,6 +5,7 @@ import numpy as np
 import pandas as pd
 
 from rolldecayestimators import ikeda_speed
+from rolldecayestimators import lambdas
 
 class SectionsError(ValueError): pass
 class BilgeKeelError(ValueError): pass
@@ -194,6 +195,11 @@ class Ikeda():
     def x_s(self):
         # Sectional x-coordinate from AP [m]
         return np.array(self.sections.index)
+
+    @property
+    def w_hat(self):
+        return lambdas.omega_hat(beam=self.beam, g=self.g, omega0=self.w)
+
 
     def verify_sections(self):
 

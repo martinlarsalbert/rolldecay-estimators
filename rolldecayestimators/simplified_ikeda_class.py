@@ -2,7 +2,7 @@ import numpy as np
 import pandas as pd
 
 from rolldecayestimators.ikeda import Ikeda
-from rolldecayestimators.simplified_ikeda import calculate_roll_damping
+import rolldecayestimators.simplified_ikeda as si
 
 
 class SimplifiedIkeda(Ikeda):
@@ -79,20 +79,25 @@ class SimplifiedIkeda(Ikeda):
 
         #B_W0: pd.Series
 
+    @property
+    def BD(self):
+        return self.beam/self.draught
+
+    @property
+    def OGD(self):
+        return self.OG/self.draught
+
+
+
     def calculate_B44(self):
         """
         Calculate total roll damping
 
         Returns
         -------
-        B_44 : ndarray
-            Total roll damping [Nm*s/rad]
+        B_44_hat : ndarray
+            Nondimensioal total roll damping [-]
         """
-
-        B44HAT, BFHAT, BWHAT, BEHAT, BBKHAT, BLHAT = calculate_roll_damping(LPP=self.lpp, CB=self.Cb, CMID=self.A0,
-                                                                            OG=self.OG, PHI=np.rad2deg(self.phi_a),
-                                                                            lBK=self.lBK, bBK=self.bBK, OMEGA=self.w,
-                                                                            DRAFT=self.draught, V=self.V)
 
         B_44 = (self.calculate_B_W() +
                 self.calculate_B_F() +
@@ -108,11 +113,12 @@ class SimplifiedIkeda(Ikeda):
 
         Returns
         -------
-        B_W0 : ndarray
-            Roll wave damping at zero speed [Nm*s/rad]
+        B_W0_hat : ndarray
+            Nondimensional roll wave damping at zero speed [-]
 
         """
-
+        B_W0_hat =  si.calculate_B_W0(BD=self.BD, CB=self.Cb, CMID=self.A0, OGD=self.OGD, OMEGAHAT=self.w_hat)
+        return B_W0_hat
 
     def calculate_B_W(self, Bw_div_Bw0_max=np.inf):
         """
@@ -120,12 +126,54 @@ class SimplifiedIkeda(Ikeda):
 
         Returns
         -------
-        B_W : ndarray
-            Roll wave damping at speed [Nm*s/rad]
+        B_W_hat : ndarray
+            Nondimensional roll wave damping at speed [-]
 
         """
-        B_W0 = self.calculate_B_W0()
+        B_W0_hat = self.calculate_B_W0()
         Bw_div_Bw0 = self.calculate_Bw_div_Bw0()
-        B_W = B_W0*Bw_div_Bw0
-        return B_W
+        B_W_hat = B_W0_hat*Bw_div_Bw0
+        return B_W_hat
+
+    def calculate_B_F(self):
+        """
+        Calculate skin friction damping
+
+        Returns
+        -------
+        B_F_hat : ndarray
+            Nondimensional skin friction damping [-]
+
+        """
+        B_F_hat = si.calculate_B_F(BD=self.BD, BRTH=self.beam, CB=self.Cb, DRAFT=self.draught, KVC=self.visc,
+                                   LPP=self.lpp, OGD=self.OGD, OMEGA=self.w, PHI=np.rad2deg(self.fi_a))
+        return B_F_hat
+
+    def calculate_B_E(self):
+        """
+        Calculate bilge eddy damping
+
+        Returns
+        -------
+        B_E_hat : ndarray
+            Nondimensional eddy damping [-]
+
+        """
+        B_E_hat = si.calculate_B_E(BD=self.BD, CB=self.Cb, CMID=self.A0, OGD=self.OGD, OMEGAHAT=self.w_hat,
+                                   PHI=np.rad2deg(self.fi_a))
+        return B_E_hat
+
+    def calculate_B_BK(self):
+        """
+        Calculate bilge keel damping
+
+        Returns
+        -------
+        B_BK_hat : ndarray
+            Nondimensional bilge keel damping [-]
+        """
+        B_BK_hat = si.calculate_B_BK(BBKB=self.bBK/self.beam, BD=self.BD, CB=self.Cb, CMID=self.A0, LBKL=self.lBK/self.lpp, OGD=self.OGD,
+                                     OMEGAHAT=self.w_hat, PHI=np.rad2deg(self.fi_a))
+        return B_BK_hat
+
 
