@@ -6,8 +6,11 @@ import os
 from numpy.testing import assert_almost_equal, assert_allclose
 
 from rolldecayestimators.ikeda import Ikeda
+from rolldecayestimators import lambdas
 import rolldecayestimators
-
+import pyscores2.test
+import pyscores2.indata
+import pyscores2.output
 
 @pytest.fixture
 def ikeda():
@@ -105,14 +108,14 @@ def test_calculate_Ikeda_faust(ikeda_faust):
 
 def test_Bw0(ikeda_faust):
     Bw0=ikeda_faust.calculate_B_W0()
-    assert_allclose(Bw0, 1895860.700098, rtol=0.001)
+    assert_allclose(Bw0, ikeda_faust.B_hat(1895860.700098), rtol=0.001)
 
 
 def test_bw44_V0(ikeda_faust):
 
     ikeda_faust.V = 0  ## Ship speed
     bw44 = ikeda_faust.calculate_B_W()
-    assert_allclose(bw44, 1895860.700098, rtol=0.01)
+    assert_allclose(bw44, ikeda_faust.B_hat(1895860.700098), rtol=0.01)
 
 
 def test_bilge_keel(ikeda_faust):
@@ -124,7 +127,7 @@ def test_bilge_keel(ikeda_faust):
 
     B_BK = ikeda_faust.calculate_B_BK()
 
-    assert_allclose(B_BK, 75841485, rtol=0.01)
+    assert_allclose(B_BK, ikeda_faust.B_hat(75841485), rtol=0.01)
 
 def test_friction(ikeda_faust):
     ikeda_faust.V = 0  ## Ship speed
@@ -134,12 +137,32 @@ def test_friction(ikeda_faust):
 
     B44F = ikeda_faust.calculate_B_F()
 
-    assert_allclose(B44F, 5652721, rtol=0.001)
+    assert_allclose(B44F, ikeda_faust.B_hat(5652721), rtol=0.001)
 
 
 def test_hull_lift(ikeda_faust):
 
     ikeda_faust.V = 10  ## Ship speed
     B44L = ikeda_faust.calculate_B_L()
-    assert_allclose(B44L, 1.692159e+08, rtol=0.001)
+    assert_allclose(B44L, ikeda_faust.B_hat(1.692159e+08), rtol=0.001)
 
+@pytest.fixture
+def indata():
+    indata=pyscores2.indata.Indata()
+    indata.open(indataPath=pyscores2.test.indata_path)
+    yield indata
+
+@pytest.fixture
+def output():
+    output=pyscores2.output.OutputFile(filePath=pyscores2.test.outdata_path)
+    yield output
+
+def test_load_scoresII(indata, output):
+
+    V = 5
+    w = 0.2
+    fi_a = np.deg2rad(10)
+
+    ikeda = Ikeda.load_scoresII(indata=indata, output_file=output, V=V, w=w, fi_a=fi_a)
+    ikeda.R = 2.0  # Set bilge radius manually
+    B_44_hat = ikeda.calculate_B44()

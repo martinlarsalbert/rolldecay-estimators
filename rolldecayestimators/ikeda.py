@@ -10,6 +10,8 @@ from rolldecayestimators import lambdas
 class SectionsError(ValueError): pass
 class BilgeKeelError(ValueError): pass
 
+import pyscores2.indata
+import pyscores2.output
 
 class Ikeda():
     """
@@ -83,10 +85,11 @@ class Ikeda():
         self.visc=visc
 
     @classmethod
-    def load_scoresII(cls, V:np.ndarray, w:np.ndarray, fi_a:float, indata,
-                      output_file, lBK=0.0, bBK=0.0, g=9.81, rho=1000.0, visc =1.15*10**-6,
+    def load_scoresII(cls, V:np.ndarray, w:np.ndarray, fi_a:float, indata:pyscores2.indata.Indata,
+                      output_file:pyscores2.output.OutputFile, lBK=0.0, bBK=0.0, g=9.81, rho=1000.0, visc =1.15*10**-6,
                       **kwargs):
         """
+        Creaate a object from indata and output from ScoresII
 
         Parameters
         ----------
@@ -108,16 +111,24 @@ class Ikeda():
         -------
 
         """
-
-
         ws, data = output_file.calculate_B_W0()
         B_W0 = pd.Series(data=data, index=ws)
 
-        #return cls(V=V, draught=draught, w=w, fi_a=fi_a, B_W0=B_W0, beam=beam, lpp=lpp, kg=kg, volume=volume,
-        #           sections=sections, lBK=lBK, bBK=bBK, g=g, rho=rho, visc=visc)
+        N_sections = len(indata.bs)
+        x_s = np.linspace(0, indata.lpp, N_sections)
+        data = {
+            'B_s': indata.bs,
+            'T_s': indata.ts,
+            'C_s': indata.cScores,
+        }
+        sections = pd.DataFrame(data=data, index=x_s)
+        beam=sections['B_s'].max()
+        lpp=indata.lpp
+        volume=indata.displacement
+        kg=indata.zcg
 
-
-
+        return cls(V=V, w=w, fi_a=fi_a, B_W0=B_W0, beam=beam, lpp=lpp, kg=kg, volume=volume,
+                   sections=sections, lBK=lBK, bBK=bBK, g=g, rho=rho, visc=visc)
 
     @property
     def OG(self):
@@ -208,6 +219,21 @@ class Ikeda():
             if not hasattr(self,mandatory):
                 raise SectionsError('You need to specify sections for this ship')
 
+    def B_hat(self,B):
+        """
+        Nondimensionalize the damping
+        Parameters
+        ----------
+        B
+            damping [Nm*rad/s]
+
+        Returns
+        -------
+        B_hat
+            Nondimensional damping coefficient
+        """
+        return lambdas.B_hat_lambda(B=B, Disp=self.volume, beam=self.beam, g=self.g, rho=self.rho)
+
     def calculate_sectional_lewis_coefficients(self):
         """
         Lewis form approximation' is obtained.
@@ -230,16 +256,16 @@ class Ikeda():
 
         Returns
         -------
-        B_44 : ndarray
-            Total roll damping [Nm*s/rad]
+        B_44_hat : ndarray
+            Total roll damping [-]
         """
-        B_44 = (self.calculate_B_W() +
+        B_44_hat = (self.calculate_B_W() +
                 self.calculate_B_F() +
                 self.calculate_B_E() +
                 self.calculate_B_L() +
                 self.calculate_B_BK()
                 )
-        return B_44
+        return B_44_hat
 
     def calculate_Bw_div_Bw0(self):
         """
@@ -259,8 +285,8 @@ class Ikeda():
 
         Returns
         -------
-        B_W : ndarray
-            Roll wave damping at speed [Nm*s/rad]
+        B_W_hat : ndarray
+            Roll wave damping at speed [-]
 
         """
         B_W0 = self.calculate_B_W0()
@@ -274,13 +300,15 @@ class Ikeda():
 
         Returns
         -------
-        B_W0 : ndarray
-            Roll wave damping at zero speed [Nm*s/rad]
+        B_W0_hat : ndarray
+            Roll wave damping at zero speed [-]
 
         """
 
         w = self.B_W0.index
-        return np.interp(self.w, w, self.B_W0)  # Zero speed wave damping [Nm*s/rad]
+        B_W0 = np.interp(self.w, w, self.B_W0)  # Zero speed wave damping [Nm*s/rad]
+        B_W0_hat = self.B_hat(B_W0)
+        return B_W0_hat
 
     def calculate_B_F(self):
         """
@@ -288,13 +316,14 @@ class Ikeda():
 
         Returns
         -------
-        B_F : ndarray
-            Skin friction damping [Nm*s/rad]
+        B_F_hat : ndarray
+            Skin friction damping [-]
 
         """
 
-        return ikeda_speed.frictional(w=self.w, fi_a=self.fi_a, V=self.V, B=self.beam, d=self.draught, OG=self.OG,
+        B_F = ikeda_speed.frictional(w=self.w, fi_a=self.fi_a, V=self.V, B=self.beam, d=self.draught, OG=self.OG,
                                       ra=self.rho, Cb=self.Cb,L=self.lpp, visc=self.visc)
+        return self.B_hat(B_F)
 
     def calculate_B_E(self):
         """
@@ -302,8 +331,8 @@ class Ikeda():
 
         Returns
         -------
-        B_E : ndarray
-            eddy damping [Nm*s/rad]
+        B_E_hat : ndarray
+            eddy damping [-]
 
         """
         a, a_1, a_3, sigma_s, H = self.calculate_sectional_lewis_coefficients()
@@ -311,8 +340,7 @@ class Ikeda():
 
         B_E = ikeda_speed.eddy(bwl=self.B_s, a_1=a_1, a_3=a_3, sigma=sigma_s, xs=self.x_s, H0=H, Ts=self.T_s, OG=self.OG,
                                R=self.R, d=self.draught, wE=self.w, fi_a=self.fi_a)
-
-        return B_E
+        return self.B_hat(B_E)
 
     def calculate_B_L(self):
         """
@@ -320,12 +348,13 @@ class Ikeda():
 
         Returns
         -------
-        B_L : ndarray
-            HUl lift damping [Nm*s/rad]
+        B_L_hat : ndarray
+            HUl lift damping [-]
 
         """
-        return ikeda_speed.hull_lift(V=self.V, d=self.draught, OG=self.OG, L=self.lpp, A=self.A_mid, ra=self.rho,
+        B_L = ikeda_speed.hull_lift(V=self.V, d=self.draught, OG=self.OG, L=self.lpp, A=self.A_mid, ra=self.rho,
                                      B=self.beam)
+        return self.B_hat(B_L)
 
     def calculate_B_BK(self):
         """
@@ -333,8 +362,8 @@ class Ikeda():
 
         Returns
         -------
-        B_BK : ndarray
-            Bilge keel damping [Nm*s/rad]
+        B_BK_hat : ndarray
+            Bilge keel damping [-]
 
         """
 
@@ -351,5 +380,6 @@ class Ikeda():
         B44BK_N0 = Bp44BK_N0*self.lBK
         B44BK_H0 = Bp44BK_H0*self.lBK
         B44_BK = B44BK_N0 + B44BK_H0 + B44BK_L
-        return B44_BK
+        return self.B_hat(B44_BK)
+
 

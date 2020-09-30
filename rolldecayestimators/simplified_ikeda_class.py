@@ -3,7 +3,7 @@ import pandas as pd
 
 from rolldecayestimators.ikeda import Ikeda
 import rolldecayestimators.simplified_ikeda as si
-
+from rolldecayestimators import ikeda_speed
 
 class SimplifiedIkeda(Ikeda):
     """
@@ -67,17 +67,20 @@ class SimplifiedIkeda(Ikeda):
         self.rho = rho
         self.visc = visc
 
+        self._A0=A0
+        self._draught=draught
 
-        N_sections = 21
-        x_s = np.linspace(0, lpp, N_sections)
-        data = {
-            'B_s': beam * np.ones(N_sections),
-            'T_s': draught * np.ones(N_sections),
-            'C_s': A0 * np.ones(N_sections),
-        }
-        self.sections = pd.DataFrame(data=data, index=x_s)
+
 
         #B_W0: pd.Series
+
+    @property
+    def A0(self):
+        return self._A0
+
+    @property
+    def draught(self):
+        return self._draught
 
     @property
     def BD(self):
@@ -176,4 +179,63 @@ class SimplifiedIkeda(Ikeda):
                                      OMEGAHAT=self.w_hat, PHI=np.rad2deg(self.fi_a))
         return B_BK_hat
 
+class SimplifiedIkedaABS(SimplifiedIkeda):
 
+    def calculate_B_W0(self):
+        """
+        Calculate roll wave damping at zero speed
+
+        Returns
+        -------
+        B_W0_hat : ndarray
+            Nondimensional roll wave damping at zero speed [-]
+
+        """
+        return np.abs(super().calculate_B_W0())
+
+    def calculate_B_W(self, Bw_div_Bw0_max=np.inf):
+        """
+        Calculate roll wave damping at speed
+
+        Returns
+        -------
+        B_W_hat : ndarray
+            Nondimensional roll wave damping at speed [-]
+
+        """
+        return np.abs(super().calculate_B_W())
+
+    def calculate_B_F(self):
+        """
+        Calculate skin friction damping
+
+        Returns
+        -------
+        B_F_hat : ndarray
+            Nondimensional skin friction damping [-]
+
+        """
+        return np.abs(super().calculate_B_F())
+
+    def calculate_B_E(self):
+        """
+        Calculate bilge eddy damping
+
+        Returns
+        -------
+        B_E_hat : ndarray
+            Nondimensional eddy damping [-]
+
+        """
+        return np.abs(super().calculate_B_E())
+
+    def calculate_B_BK(self):
+        """
+        Calculate bilge keel damping
+
+        Returns
+        -------
+        B_BK_hat : ndarray
+            Nondimensional bilge keel damping [-]
+        """
+        return np.abs(super().calculate_B_BK())

@@ -218,18 +218,23 @@ def calculate_B_BK(BBKB, BD, CB, CMID, LBKL, OGD, OMEGAHAT, PHI):
     :return: BBKHAT
     """
 
-    if (LBKL == 0):
-        BBKHAT = 0.0
-    else:
-        FBK1 = (-0.3651 * CB + 0.3907) * (BD - 2.83) ** 2 - 2.21 * CB + 2.632
-        FBK2 = 0.00255 * PHI ** 2 + 0.122 * PHI + 0.4794
-        FBK3 = (-0.8913 * BBKB ** 2 - 0.0733 * BBKB) * LBKL ** 2 + (
-                    5.2857 * BBKB ** 2 - 0.01185 * BBKB + 0.00189) * LBKL
-        ABK = FBK1 * FBK2 * FBK3
-        BBK1 = (5.0 * BBKB + 0.3 * BD - 0.2 * LBKL + 0.00125 * PHI ** 2 - 0.0425 * PHI - 1.86) * OGD
-        BBK2 = -15.0 * BBKB + 1.2 * CB - 0.1 * BD - 0.0657 * OGD ** 2 + 0.0586 * OGD + 1.6164
-        BBK3 = 2.5 * OGD + 15.75
-        BBKHAT = ABK * EXP(BBK1 + BBK2 * CMID ** BBK3) * OMEGAHAT
+
+    FBK1 = (-0.3651 * CB + 0.3907) * (BD - 2.83) ** 2 - 2.21 * CB + 2.632
+    FBK2 = 0.00255 * PHI ** 2 + 0.122 * PHI + 0.4794
+    FBK3 = (-0.8913 * BBKB ** 2 - 0.0733 * BBKB) * LBKL ** 2 + (
+                5.2857 * BBKB ** 2 - 0.01185 * BBKB + 0.00189) * LBKL
+    ABK = FBK1 * FBK2 * FBK3
+    BBK1 = (5.0 * BBKB + 0.3 * BD - 0.2 * LBKL + 0.00125 * PHI ** 2 - 0.0425 * PHI - 1.86) * OGD
+    BBK2 = -15.0 * BBKB + 1.2 * CB - 0.1 * BD - 0.0657 * OGD ** 2 + 0.0586 * OGD + 1.6164
+    BBK3 = 2.5 * OGD + 15.75
+    BBKHAT = ABK * EXP(BBK1 + BBK2 * CMID ** BBK3) * OMEGAHAT
+
+    LBKL = np.array(LBKL)
+    BBKHAT = np.array(BBKHAT)
+
+    mask = LBKL == 0
+    BBKHAT[mask]=0
+
     return BBKHAT
 
 
