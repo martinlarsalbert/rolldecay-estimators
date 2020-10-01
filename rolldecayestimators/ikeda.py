@@ -400,6 +400,10 @@ class Ikeda():
 
         """
         a, a_1, a_3, sigma_s, H = self.calculate_sectional_lewis_coefficients()
+
+        mask=sigma_s>1
+        sigma_s[mask]=0.99  # Do avoid negative value in sqrt
+        mask=H<0
         R_b = 2*self.draught*np.sqrt(H*(sigma_s-1)/(np.pi-4))
 
         mask = (H>=1) & (R_b/self.draught>1)
@@ -439,9 +443,15 @@ class Ikeda():
             raise BilgeKeelError('bBK is 0 but lBK is not!')
             return 0.0
 
+        if isinstance(self.R, np.ndarray):
+            index=int(len(self.R)/2)  # Somewhere in the middle of the ship
+            R = self.R[index]
+        else:
+            R = self.R
+
         Bp44BK_N0, Bp44BK_H0, B44BK_L, B44BKW0 = ikeda_speed.bilge_keel(w=self.w, fi_a=self.fi_a, V=self.V, B=self.beam,
                                                                         d=self.draught, A=self.A_mid,
-                                      bBK=self.bBK, R=self.R, g=self.g, OG=self.OG, Ho=self.Ho, ra=self.rho)
+                                      bBK=self.bBK, R=R, g=self.g, OG=self.OG, Ho=self.Ho, ra=self.rho)
 
         B44BK_N0 = Bp44BK_N0*self.lBK
         B44BK_H0 = Bp44BK_H0*self.lBK
