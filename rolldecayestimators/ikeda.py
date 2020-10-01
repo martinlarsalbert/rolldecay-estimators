@@ -71,7 +71,7 @@ class Ikeda():
         -------
         None
         """
-        self.V = V
+        self.V = np.array(V, dtype=float)
         self.g = g
         self.w = w
         self.fi_a = fi_a
@@ -201,12 +201,18 @@ class Ikeda():
     @property
     def B_s(self):
         # Sectional beam [m] (incl. both sides)
-        return np.array(self.sections['B_s'])
+        B_s = np.array(self.sections['B_s'])
+        mask=B_s==0
+        B_s[mask]=0.000001*np.max(B_s) # Putin a very small value
+        return B_s
 
     @property
     def T_s(self):
         # Sectional draught [m]
-        return np.array(self.sections['T_s'])
+        T_s = np.array(self.sections['T_s'])
+        mask = T_s == 0
+        T_s[mask] = 0.000001*np.max(T_s)  # Putin a very small value
+        return T_s
 
     @property
     def draught(self):
@@ -216,7 +222,10 @@ class Ikeda():
     @property
     def C_s(self):
         # Sectional area coefficient: C_s = S_s/(B_s*T_s)
-        return np.array(self.sections['C_s'])
+        C_s = np.array(self.sections['C_s'])
+        #mask = C_s == 0
+        #C_s[mask] = 0.000001 * np.max(C_s)  # Putin a very small value
+        return C_s
 
     @property
     def x_s(self):
@@ -226,6 +235,14 @@ class Ikeda():
     @property
     def w_hat(self):
         return lambdas.omega_hat(beam=self.beam, g=self.g, omega0=self.w)
+
+    @property
+    def BD(self):
+        return self.beam / self.draught
+
+    @property
+    def OGD(self):
+        return self.OG / self.draught
 
     def verify_sections(self):
 
@@ -258,7 +275,7 @@ class Ikeda():
 
         Returns
         -------
-        a, a_1, a_3 : array_like
+        a, a_1, a_3, sigma, H0 : array_like
             sectional lewis coefficients.
         """
         self.verify_sections()
@@ -340,9 +357,25 @@ class Ikeda():
                                       ra=self.rho, Cb=self.Cb,L=self.lpp, visc=self.visc)
         return self.B_hat(B_F)
 
+    def calculate_B_E0(self):
+        """
+        Calculate bilge eddy damping at zero speed
+
+        Returns
+        -------
+        B_E0_hat : ndarray
+            eddy damping [-]
+
+        """
+        a, a_1, a_3, sigma_s, H = self.calculate_sectional_lewis_coefficients()
+
+        B_E0 = ikeda_speed.eddy(bwl=self.B_s, a_1=a_1, a_3=a_3, sigma=sigma_s, xs=self.x_s, H0=H, Ts=self.T_s, OG=self.OG,
+                               R=self.R, d=self.draught, wE=self.w, fi_a=self.fi_a)
+        return self.B_hat(B_E0)
+
     def calculate_B_E(self):
         """
-        Calculate bilge eddy damping
+        Calculate bilge eddy damping at speed
 
         Returns
         -------
@@ -350,12 +383,12 @@ class Ikeda():
             eddy damping [-]
 
         """
-        a, a_1, a_3, sigma_s, H = self.calculate_sectional_lewis_coefficients()
+        B_E0_hat = self.calculate_B_E0()
+        #factor=(0.04*self.w*self.lpp/self.V)**2
+        factor = np.divide(0.04 * self.w * self.lpp, self.V, out=np.zeros_like(self.V), where=(self.V!=0))**2
 
-
-        B_E = ikeda_speed.eddy(bwl=self.B_s, a_1=a_1, a_3=a_3, sigma=sigma_s, xs=self.x_s, H0=H, Ts=self.T_s, OG=self.OG,
-                               R=self.R, d=self.draught, wE=self.w, fi_a=self.fi_a)
-        return self.B_hat(B_E)
+        B_E_hat=B_E0_hat*(factor)/(1+factor)
+        return B_E_hat
 
     def calculate_R_b(self):
         """
@@ -429,4 +462,27 @@ class IkedaR(Ikeda):
             return self._R
         else:
             return self.calculate_R_b()
+
+class IkedaCarlJohan(Ikeda):
+    """
+       Same as Ikeda class but with different kind of eddy damping
+    """
+
+    def calculate_B_E0(self):
+        """
+        Calculate bilge eddy damping at zero speed
+
+        Returns
+        -------
+        B_E0_hat : ndarray
+            eddy damping [-]
+
+        """
+        a, a_1, a_3, sigma_s, H = self.calculate_sectional_lewis_coefficients()
+
+        B_E0 = ikeda_speed.eddy(bwl=self.B_s, a_1=a_1, a_3=a_3, sigma=sigma_s, xs=self.x_s, H0=H, Ts=self.T_s, OG=self.OG,
+                               R=self.R, d=self.draught, wE=self.w, fi_a=self.fi_a)
+        return self.B_hat(B_E0)
+
+
 

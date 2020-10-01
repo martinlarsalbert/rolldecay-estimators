@@ -394,12 +394,17 @@ def calculate_sectional_lewis(B_s, T_s, S_s):
         sectional lewis coefficients.
 
     """
-    H = B_s / (2 * T_s)
-    sigma_s = S_s / (B_s * T_s)
+    #H = B_s / (2 * T_s)
+    H = np.divide(B_s, (2 * T_s), out=np.zeros_like(B_s), where=(2 * T_s)!=0)
+
+    #sigma_s = S_s / (B_s * T_s)
+    sigma_s = np.divide(S_s, (B_s * T_s), out=np.zeros_like(S_s), where=(B_s * T_s)!=0)
+
     C_1 = (3 + 4 * sigma_s / np.pi) + (1 - 4 * sigma_s / np.pi) * ((H - 1) / (H + 1)) ** 2
     a_3 = (-C_1 + 3 + np.sqrt(9 - 2 * C_1)) / C_1
     a_1 = (1 + a_3) * (H - 1) / (H + 1)
-    a = B_s / (2 * (1 + a_1 + a_3))
+    #a = B_s / (2 * (1 + a_1 + a_3))
+    a = np.divide(B_s, (2 * (1 + a_1 + a_3)), out=np.zeros_like(B_s), where=(2 * (1 + a_1 + a_3))!=0)
 
     return a, a_1, a_3, sigma_s, H
 
@@ -446,10 +451,12 @@ def eddy(bwl:np.ndarray, a_1:np.ndarray, a_3:np.ndarray, sigma:np.ndarray, xs:np
 
     H0=np.array(H0)/2  # ...strange...
     N=len(bwl)
-    M = bwl / (2 * (1 + a_1 + a_3));
+    #M = bwl / (2 * (1 + a_1 + a_3));
+    M = np.divide(bwl, (2 * (1 + a_1 + a_3)), out=np.zeros_like(bwl), where=(2 * (1 + a_1 + a_3))!=0)
 
     fi1 = 0;
-    fi2 = 0.5 * arccos(a_1 * (1 + a_3)) / (4 * a_3);
+    #fi2 = 0.5 * arccos(a_1 * (1 + a_3)) / (4 * a_3);
+    fi2 = np.divide(0.5 * arccos(a_1 * (1 + a_3)), (4 * a_3), out=np.zeros_like(a_1), where=(4 * a_3)!=0)
     rmax_fi1 = M*sqrt(((1+a_1)*sin(fi1)-a_3*sin(fi1))**2+((1-a_1)*cos(fi1)-a_3*cos(fi1))**2)
     rmax_fi2 = M*sqrt(((1+a_1)*sin(fi2)-a_3*sin(fi2))**2+((1-a_1)*cos(fi2)-a_3*cos(fi2))**2)
 
@@ -460,18 +467,20 @@ def eddy(bwl:np.ndarray, a_1:np.ndarray, a_3:np.ndarray, sigma:np.ndarray, xs:np
 
     B0 = -2 * a_3 * sin(5 * fi) + a_1 * (1 - a_3) * sin(3 * fi) + (
                 (6 + 3 * a_1) * a_3 ** 2 + (3 * a_1 + a_1 ** 2) * a_3 + a_1 ** 2) * sin(fi)
+
     A0 = -2 * a_3 * cos(5 * fi) + a_1 * (1 - a_3) * cos(3 * fi) + (
                 (6 - 3 * a_1) * a_3 ** 2 + (a_1 ** 2 - 3 * a_1) * a_3 + a_1 ** 2) * cos(fi)
     H = 1 + a_1 ** 2 + 9 * a_3 ** 2 + 2 * a_1 * (1 - 3 * a_3) * cos(2 * fi) - 6 * a_3 * cos(4 * fi)
-
-    sigma_p = sigma
 
     f3 = 1 + 4 * exp(-1.65 * 10 ** 5 * (1 - sigma) ** 2);
 
     x_ = np.array([rmax_fi1, rmax_fi2]).transpose()
     rmax = max(x_, axis=1)
 
-    gamma=sqrt(pi)*f3*(rmax+2*M/H*sqrt(B0**2*A0**2))/(2*Ts*sqrt(H0*(sigma_p+OG/Ts)))
+    gamma=sqrt(pi)*\
+          f3*(rmax+2*M/H*sqrt(B0**2*A0**2))/\
+          (2*Ts*sqrt(H0*(sigma-OG/Ts)))
+
 
     f1 = 0.5 * (1 + tanh(20 * (sigma - 0.7)));
     f2 = 0.5 * (1 - cos(pi * sigma)) - 1.5 * (1 - exp(-5 * (1 - sigma))) * (sin(pi * sigma)) ** 2

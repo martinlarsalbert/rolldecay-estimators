@@ -82,16 +82,6 @@ class SimplifiedIkeda(Ikeda):
     def draught(self):
         return self._draught
 
-    @property
-    def BD(self):
-        return self.beam/self.draught
-
-    @property
-    def OGD(self):
-        return self.OG/self.draught
-
-
-
     def calculate_B44(self):
         """
         Calculate total roll damping

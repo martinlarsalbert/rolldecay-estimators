@@ -55,7 +55,7 @@ def test_eddy_faust(lewis_coefficients):
     B_E = ikeda.eddy(bwl=lc['bwl'], a_1=lc['a1'], a_3=lc['a3'], sigma=lc['sigma'], xs=lc['x'], H0=lc['H'], Ts=lc['Ts'],
                      OG=OG, R=R, d=d, wE=wE, fi_a=fi_a)
 
-    assert_almost_equal(actual=B_E, desired=20379336.60249776)
+    assert_almost_equal(actual=B_E, desired=1175062.2691943)
 
     ScaleF =  1#/29.565                  # Scale Factor [-]
     Cb   =   0.61                        # Block coeff
