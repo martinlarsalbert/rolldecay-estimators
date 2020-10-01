@@ -1,3 +1,4 @@
+import pytest
 import numpy as np
 from numpy.testing import assert_almost_equal, assert_array_almost_equal_nulp
 
@@ -48,6 +49,39 @@ def test_simplified_ikeda():
     assert_almost_equal(BBKHAT, BBKHAT1, decimal=decimal)
     assert_almost_equal(BLHAT, BLHAT1, decimal=decimal)
     assert_almost_equal(B44HAT, B44HAT1, decimal=decimal)
+
+
+def test_simplified_ikeda_scale():
+
+    V = 10
+
+    si = SimplifiedIkeda(V=V, w=OMEGA, fi_a=np.deg2rad(PHI), beam=Beam, lpp=LPP, kg=kg, volume=volume, draught=DRAFT, A0=CMID,
+                    lBK=lBK, bBK=bBK, visc=1.14e-6)
+
+    scale_factor = 100
+    V_m = V/np.sqrt(scale_factor)
+    w_m= OMEGA*np.sqrt(scale_factor)
+    beam_m = Beam/scale_factor
+    lpp_m = LPP/scale_factor
+    kg_m = kg/scale_factor
+    draught_m = DRAFT/scale_factor
+    lBK_m = lBK/scale_factor
+    bBK_m = bBK/scale_factor
+    volume_m = volume/(scale_factor**3)
+
+    si_model = SimplifiedIkeda(V=V_m, w=w_m, fi_a=np.deg2rad(PHI), beam=beam_m, lpp=lpp_m, kg=kg_m, volume=volume_m, draught=draught_m,
+                         A0=CMID,
+                         lBK=lBK_m, bBK=bBK_m, visc=1.14e-6)
+
+    assert_almost_equal(si.calculate_B_W(), si_model.calculate_B_W(), decimal=decimal)
+    assert_almost_equal(si.calculate_B_BK(), si_model.calculate_B_BK(), decimal=decimal)
+    assert_almost_equal(si.calculate_B_E(), si_model.calculate_B_E(), decimal=decimal)
+    assert_almost_equal(si.calculate_B_L(), si_model.calculate_B_L(), decimal=decimal)
+
+    # The friction is not froude scaled:
+    with pytest.raises(AssertionError):
+        assert_almost_equal(si.calculate_B_F(), si_model.calculate_B_F(), decimal=decimal)
+
 
 def test_simplified_ikeda_vector():
 

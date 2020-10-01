@@ -21,9 +21,9 @@ class Ikeda():
 
 
     """
-    def __init__(self, V:np.ndarray, w:np.ndarray, fi_a:float, B_W0:pd.Series, beam:float, lpp:float,
+    def __init__(self, V:np.ndarray, w:np.ndarray, fi_a:float, B_W0_hat:pd.Series, beam:float, lpp:float,
                  kg:float, volume:float, sections:pd.DataFrame, lBK=0.0, bBK=0.0,
-                 g=9.81, rho=1000.0, visc =1.15*10**-6, **kwargs):
+                 g=9.81, rho=1000.0, visc =1.15*10**-6, scale_factor=1.0, **kwargs):
         """
         Manually specify the inputs to the calculations.
         Note: Some inputs need to be specified here, but others can be defined in other ways
@@ -37,9 +37,9 @@ class Ikeda():
             roll frequency [rad/s]
         fi_a
             roll amplitude [rad]
-        B_W0 : pd.Series
-            values : wave roll damping for various frequencies [Nm*s/rad]
-            index: frequencies [rad/s]
+        B_W0_hat : pd.Series
+            values : wave roll damping for various frequencies [-]
+            index: frequencies hat [-]
         beam
             ship beam [m]
         lpp
@@ -59,6 +59,8 @@ class Ikeda():
             length bilge keel [m] (=0 --> no bilge keel)
         bBK
             height bilge keel [m] (=0 --> no bilge keel)
+        scale_factor : float
+            scale factor is used to calculate the wetted surface in the skin friction damping B_F
         g
             gravity [m/s2]
         rho
@@ -73,7 +75,7 @@ class Ikeda():
         self.g = g
         self.w = w
         self.fi_a = fi_a
-        self.B_W0=B_W0
+        self.B_W0_hat=B_W0_hat
         self.beam=beam
         self.lpp=lpp
         self.kg=kg
@@ -83,10 +85,12 @@ class Ikeda():
         self.bBK=bBK
         self.rho=rho
         self.visc=visc
+        self.scale_factor=scale_factor
 
     @classmethod
     def load_scoresII(cls, V:np.ndarray, w:np.ndarray, fi_a:float, indata:pyscores2.indata.Indata,
-                      output_file:pyscores2.output.OutputFile, lBK=0.0, bBK=0.0, g=9.81, rho=1000.0, visc =1.15*10**-6,
+                      output_file:pyscores2.output.OutputFile, lBK: float, bBK :float, g=9.81, rho=1000.0, visc =1.15*10**-6,
+                      scale_factor=1.0,
                       **kwargs):
         """
         Creaate a object from indata and output from ScoresII
@@ -101,34 +105,46 @@ class Ikeda():
         output_file :pyscores2.output.OutputFile
             Outdata from ScoresII program
         lBK
+            bilge keel length [m]
         bBK
+            bilge keel height [m]
         g
         rho
         visc
         kwargs
-
+        scale_factor : float
+            scale factor is used to calculate the wetted surface in the skin friction damping B_F
         Returns
         -------
 
         """
-        ws, data = output_file.calculate_B_W0()
-        B_W0 = pd.Series(data=data, index=ws)
 
         N_sections = len(indata.bs)
-        x_s = np.linspace(0, indata.lpp, N_sections)
+        lpp = indata.lpp/scale_factor
+        x_s = np.linspace(0, lpp, N_sections)
         data = {
             'B_s': indata.bs,
             'T_s': indata.ts,
             'C_s': indata.cScores,
         }
         sections = pd.DataFrame(data=data, index=x_s)
+        sections['B_s']/=scale_factor
+        sections['T_s'] /= scale_factor
         beam=sections['B_s'].max()
-        lpp=indata.lpp
-        volume=indata.displacement
-        kg=indata.zcg
+        volume=indata.displacement/(scale_factor**3)
+        draught=sections['T_s'].max()
+        zcg=indata.zcg/scale_factor
+        kg=(zcg+draught)
 
-        return cls(V=V, w=w, fi_a=fi_a, B_W0=B_W0, beam=beam, lpp=lpp, kg=kg, volume=volume,
-                   sections=sections, lBK=lBK, bBK=bBK, g=g, rho=rho, visc=visc)
+        ws, data = output_file.calculate_B_W0()  # Full scale values
+        beam_fullscale=beam*scale_factor
+        volume_fullscale=volume*scale_factor**3
+        ws_hat = lambdas.omega_hat(beam=beam_fullscale, g=g, omega0=ws)
+        B_W0_hat_ = lambdas.B_hat_lambda(B=data, Disp=volume_fullscale, beam=beam_fullscale, g=g, rho=rho)
+        B_W0_hat = pd.Series(data=B_W0_hat_, index=ws_hat)
+
+        return cls(V=V, w=w, fi_a=fi_a, B_W0_hat=B_W0_hat, beam=beam, lpp=lpp, kg=kg, volume=volume,
+                   sections=sections, lBK=lBK, bBK=bBK, g=g, rho=rho, visc=visc, scale_factor=scale_factor)
 
     @property
     def OG(self):
@@ -164,7 +180,7 @@ class Ikeda():
         if hasattr(self,'_R'):
             return self._R
         else:
-            ValueError('please set the Bilge radius "R"')
+            raise ValueError('please set the Bilge radius "R"')
 
     @R.setter
     def R(self, value):
@@ -210,7 +226,6 @@ class Ikeda():
     @property
     def w_hat(self):
         return lambdas.omega_hat(beam=self.beam, g=self.g, omega0=self.w)
-
 
     def verify_sections(self):
 
@@ -289,10 +304,10 @@ class Ikeda():
             Roll wave damping at speed [-]
 
         """
-        B_W0 = self.calculate_B_W0()
+        B_W0_hat = self.calculate_B_W0()
         Bw_div_Bw0 = self.calculate_Bw_div_Bw0()
-        B_W = B_W0*Bw_div_Bw0
-        return B_W
+        B_W_hat = B_W0_hat*Bw_div_Bw0
+        return B_W_hat
 
     def calculate_B_W0(self):
         """
@@ -305,9 +320,9 @@ class Ikeda():
 
         """
 
-        w = self.B_W0.index
-        B_W0 = np.interp(self.w, w, self.B_W0)  # Zero speed wave damping [Nm*s/rad]
-        B_W0_hat = self.B_hat(B_W0)
+        w_hat = self.B_W0_hat.index
+        B_W0_hat = np.interp(self.w_hat, w_hat, self.B_W0_hat)  # Zero speed wave damping [Nm*s/rad]
+
         return B_W0_hat
 
     def calculate_B_F(self):
@@ -342,6 +357,26 @@ class Ikeda():
                                R=self.R, d=self.draught, wE=self.w, fi_a=self.fi_a)
         return self.B_hat(B_E)
 
+    def calculate_R_b(self):
+        """
+        Calculate bilge radius with Ikedas empirical formula:
+        Returns
+        -------
+        R_b : ndarray
+            Bilge radius [m]
+
+        """
+        a, a_1, a_3, sigma_s, H = self.calculate_sectional_lewis_coefficients()
+        R_b = 2*self.draught*np.sqrt(H*(sigma_s-1)/(np.pi-4))
+
+        mask = (H>=1) & (R_b/self.draught>1)
+        R_b[mask]=self.draught
+
+        mask = (H < 1) & (R_b / self.draught > H)
+        R_b[mask] = self.beam/2
+
+        return R_b
+
     def calculate_B_L(self):
         """
         Calculate hull lift damping
@@ -367,10 +402,8 @@ class Ikeda():
 
         """
 
-        if self.bBK==0:
-            if not self.lBK==0:
-                raise BilgeKeelError('bBK is 0 but lBK is not!')
-
+        if np.any(~(self.bBK==0) & (self.lBK==0)):
+            raise BilgeKeelError('bBK is 0 but lBK is not!')
             return 0.0
 
         Bp44BK_N0, Bp44BK_H0, B44BK_L, B44BKW0 = ikeda_speed.bilge_keel(w=self.w, fi_a=self.fi_a, V=self.V, B=self.beam,
@@ -382,4 +415,18 @@ class Ikeda():
         B44_BK = B44BK_N0 + B44BK_H0 + B44BK_L
         return self.B_hat(B44_BK)
 
+class IkedaR(Ikeda):
+    """
+    Same as Ikeda class but with bilge radius estimation
+    """
+
+    @property
+    def R(self):
+        """
+        Bilge radius [m]
+        """
+        if hasattr(self, '_R'):
+            return self._R
+        else:
+            return self.calculate_R_b()
 

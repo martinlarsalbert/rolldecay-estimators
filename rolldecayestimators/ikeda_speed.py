@@ -194,15 +194,14 @@ def bilge_keel(w, fi_a, V, B, d, A, bBK, R, g, OG, Ho, ra):
     m5 = (0.414 * Ho + 0.0651 * m1 ** 2 - (0.382 * Ho + 0.0106) * m1) / ((Ho - 0.215 * m1) * (1 - 0.215 * m1));
     m6 = (0.414 * Ho + 0.0651 * m1 ** 2 - (0.382 + 0.0106 * Ho) * m1) / ((Ho - 0.215 * m1) * (1 - 0.215 * m1));
 
-    if So > 0.25 * pi * R:
-        m7 = So / d - 0.25 * pi * m1;
-    else:
-        m7 = 0;
 
-    if So > 0.25 * pi * R:
-        m8 = m7 + 0.414 * m1;
-    else:
-        m8 = m7 + 1.414 * m1 * (1 - cos(So / R));
+    m7 = np.where(So > 0.25 * pi * R,
+                  So / d - 0.25 * pi * m1,
+                  0)
+
+    m8 = np.where(So > 0.25 * pi * R,
+                  m7 + 0.414 * m1,
+                  m7 + 1.414 * m1 * (1 - cos(So / R)))
 
     Ao = (m3 + m4) * m8 - m7 ** 3;
     Bo = m2 ** 2 / (3 * (Ho - 0.215 / m1)) + (1 - m1) ** 2 * (2 * m3 - m2) / (6 * (1 - 0.215 * m1)) + m1 * (
@@ -481,10 +480,26 @@ def eddy(bwl:np.ndarray, a_1:np.ndarray, a_3:np.ndarray, sigma:np.ndarray, xs:np
 
     Cr = ((1 - f1 * R / d) * (1 - OG / d) + f2 * (H0 - f1 * R / d) ** 2) * Cp * (rmax / d) ** 2
 
-    WE, CR = np.meshgrid(wE, Cr)
+    #WE, CR = np.meshgrid(wE, Cr)
+    Cr=np.array(Cr)
+    wE=np.array(wE)
+
+    try:
+        len_Cr = len(Cr)
+    except TypeError:
+        len_Cr = 1
+
+    try:
+        len_wE = len(wE)
+    except TypeError:
+        len_wE = 1
+
+    WE=np.tile(wE, (len_Cr, 1))
+    FI_a=np.tile(fi_a, (len_Cr, 1))
+    CR = np.tile(Cr, (len_wE, 1)).transpose()
 
     #Bp44E0s = 4 * ra * d ** 4 * wE * fi_a * Cr / (3 * pi)
-    Bp44E0s = 4 * ra * d ** 4 * WE * fi_a * CR / (3 * pi)
+    Bp44E0s = 4 * ra * d ** 4 * WE * FI_a * CR / (3 * pi)
 
     mask = np.isnan(Bp44E0s)
     Bp44E0s[mask] = 0

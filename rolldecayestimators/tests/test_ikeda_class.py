@@ -5,7 +5,7 @@ from numpy import pi, sqrt
 import os
 from numpy.testing import assert_almost_equal, assert_allclose
 
-from rolldecayestimators.ikeda import Ikeda
+from rolldecayestimators.ikeda import Ikeda, IkedaR
 from rolldecayestimators import lambdas
 import rolldecayestimators
 import pyscores2.test
@@ -17,8 +17,8 @@ def ikeda():
 
     N=10
     data = np.zeros(N)
-    w=np.linspace(0.1,1, N)
-    B_W0 = pd.Series(data=data, index=w)
+    w_hat=np.linspace(0.1,1, N)
+    B_W0_hat = pd.Series(data=data, index=w_hat)
     fi_a = np.deg2rad(10)
     beam=10
     lpp=100
@@ -39,7 +39,7 @@ def ikeda():
     }
     sections=pd.DataFrame(data=data, index=x_s)
 
-    i= Ikeda(V=V, w=w, B_W0=B_W0, fi_a=fi_a, beam=beam, lpp=lpp, kg=kg, volume=volume,
+    i= Ikeda(V=V, w=w, B_W0_hat=B_W0_hat, fi_a=fi_a, beam=beam, lpp=lpp, kg=kg, volume=volume,
              sections=sections)
     i.R=2.0  # Set bilge radius manually
 
@@ -79,8 +79,12 @@ def ikeda_faust():
 
     data_path_faust = os.path.join(rolldecayestimators.path, 'Bw0_faust.csv')
     data_faust = pd.read_csv(data_path_faust, sep=';')
-    data_faust.set_index('w_vec', inplace=True)
-    B_W0 = data_faust['b44_vec']
+    data_faust['w_hat'] = lambdas.omega_hat(beam=B, g=g, omega0=data_faust['w_vec'])
+    data_faust['B_W0_hat'] = lambdas.B_hat_lambda(B=data_faust['b44_vec'], Disp=disp, beam=B, g=g, rho=ra)
+
+    data_faust.set_index('w_hat', inplace=True)
+    B_W0_hat = data_faust['B_W0_hat']
+
 
     N_sections = 21
     x_s = np.linspace(0, L, N_sections)
@@ -91,7 +95,7 @@ def ikeda_faust():
     }
     sections = pd.DataFrame(data=data, index=x_s)  # Fake sections (not testing the eddy)
 
-    i = Ikeda(V=V, w=wE, B_W0=B_W0, fi_a=fi_a, beam=B, lpp=L, kg=vcg, volume=disp,
+    i = Ikeda(V=V, w=wE, B_W0_hat=B_W0_hat, fi_a=fi_a, beam=B, lpp=L, kg=vcg, volume=disp,
               sections=sections, bBK=bBK, lBK=LBK)
     i.R = R  # Set bilge radius manually
 
@@ -108,14 +112,14 @@ def test_calculate_Ikeda_faust(ikeda_faust):
 
 def test_Bw0(ikeda_faust):
     Bw0=ikeda_faust.calculate_B_W0()
-    assert_allclose(Bw0, ikeda_faust.B_hat(1895860.700098), rtol=0.001)
+    assert_allclose(Bw0, 5.541101e-05, rtol=0.001)
 
 
 def test_bw44_V0(ikeda_faust):
 
     ikeda_faust.V = 0  ## Ship speed
     bw44 = ikeda_faust.calculate_B_W()
-    assert_allclose(bw44, ikeda_faust.B_hat(1895860.700098), rtol=0.01)
+    assert_allclose(bw44, 5.541101e-05, rtol=0.01)
 
 
 def test_bilge_keel(ikeda_faust):
@@ -163,6 +167,49 @@ def test_load_scoresII(indata, output):
     w = 0.2
     fi_a = np.deg2rad(10)
 
-    ikeda = Ikeda.load_scoresII(indata=indata, output_file=output, V=V, w=w, fi_a=fi_a)
+    ikeda = Ikeda.load_scoresII(indata=indata, output_file=output, V=V, w=w, fi_a=fi_a, bBK=0, lBK=0)
     ikeda.R = 2.0  # Set bilge radius manually
     B_44_hat = ikeda.calculate_B44()
+
+def test_calculate_R_b(indata, output):
+
+    V = 5
+    w = 0.2
+    fi_a = np.deg2rad(10)
+
+    ikeda = Ikeda.load_scoresII(indata=indata, output_file=output, V=V, w=w, fi_a=fi_a, bBK=0, lBK=0)
+    R_b = ikeda.calculate_R_b()
+
+
+def test_load_scoresII_R_b(indata, output):
+
+    V = 5
+    w = 0.2
+    fi_a = np.deg2rad(10)
+
+    # Here R does not need to be specified:
+    ikeda = IkedaR.load_scoresII(indata=indata, output_file=output, V=V, w=w, fi_a=fi_a, bBK=0, lBK=0)
+    B_44_hat = ikeda.calculate_B44()
+
+def test_load_scoresII_scale(indata, output):
+
+    V = 5
+    w = 0.2
+    fi_a = np.deg2rad(10)
+    R=2.0
+
+    ikeda = Ikeda.load_scoresII(indata=indata, output_file=output, V=V, w=w, fi_a=fi_a, bBK=0, lBK=0)
+    ikeda.R = R  # Set bilge radius manually
+
+    scale_factor=50
+    V_m=V/np.sqrt(scale_factor)
+    w_m=w*np.sqrt(scale_factor)
+
+    ikeda_model = Ikeda.load_scoresII(indata=indata, output_file=output, V=V_m, w=w_m, fi_a=fi_a,  bBK=0, lBK=0,
+                                      scale_factor=scale_factor)
+    ikeda_model.R = R/scale_factor  # Set bilge radius manually
+
+    assert_almost_equal(ikeda.calculate_B_W(),  ikeda_model.calculate_B_W() )
+    assert_almost_equal(ikeda.calculate_B_BK(), ikeda_model.calculate_B_BK())
+    assert_almost_equal(ikeda.calculate_B_E(),  ikeda_model.calculate_B_E() )
+    assert_almost_equal(ikeda.calculate_B_L(),  ikeda_model.calculate_B_L() )
