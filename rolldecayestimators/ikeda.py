@@ -309,7 +309,7 @@ class Ikeda():
             Bw_div_Bw0 = B_W/B_W0
         """
         self.Bw_div_Bw0 = ikeda_speed.B_W_speed_correction_factor_ikeda(w=self.w, V=self.V, d=self.draught, g=self.g)
-        return self.Bw_div_Bw0
+        return array(self.Bw_div_Bw0)
 
     def calculate_B_W(self, Bw_div_Bw0_max=np.inf):
         """
@@ -324,7 +324,9 @@ class Ikeda():
         B_W0_hat = self.calculate_B_W0()
         Bw_div_Bw0 = self.calculate_Bw_div_Bw0()
         B_W_hat = B_W0_hat*Bw_div_Bw0
-        return B_W_hat
+
+
+        return array(B_W_hat)
 
     def calculate_B_W0(self):
         """
@@ -340,7 +342,7 @@ class Ikeda():
         w_hat = self.B_W0_hat.index
         B_W0_hat = np.interp(self.w_hat, w_hat, self.B_W0_hat)  # Zero speed wave damping [Nm*s/rad]
 
-        return B_W0_hat
+        return array(B_W0_hat)
 
     def calculate_B_F(self):
         """
@@ -355,7 +357,7 @@ class Ikeda():
 
         B_F = ikeda_speed.frictional(w=self.w, fi_a=self.fi_a, V=self.V, B=self.beam, d=self.draught, OG=self.OG,
                                       ra=self.rho, Cb=self.Cb,L=self.lpp, visc=self.visc)
-        return self.B_hat(B_F)
+        return array(self.B_hat(B_F))
 
     def calculate_B_E0(self):
         """
@@ -371,7 +373,7 @@ class Ikeda():
 
         B_E0 = ikeda_speed.eddy(bwl=self.B_s, a_1=a_1, a_3=a_3, sigma=sigma_s, xs=self.x_s, H0=H, Ts=self.T_s, OG=self.OG,
                                R=self.R, d=self.draught, wE=self.w, fi_a=self.fi_a)
-        return self.B_hat(B_E0)
+        return array(self.B_hat(B_E0))
 
     def calculate_B_E(self):
         """
@@ -386,9 +388,15 @@ class Ikeda():
         B_E0_hat = self.calculate_B_E0()
         #factor=(0.04*self.w*self.lpp/self.V)**2
         factor = np.divide(0.04 * self.w * self.lpp, self.V, out=np.zeros_like(self.V), where=(self.V!=0))**2
+        if isinstance(factor,float):
+            factor = np.array([factor])
 
-        B_E_hat=B_E0_hat*(factor)/(1+factor)
-        return B_E_hat
+        factor_total = (factor)/(1+factor)
+        mask=factor==0
+        factor_total[mask]=1.0
+
+        B_E_hat=B_E0_hat*factor_total
+        return array(B_E_hat)
 
     def calculate_R_b(self):
         """
@@ -426,7 +434,7 @@ class Ikeda():
         """
         B_L = ikeda_speed.hull_lift(V=self.V, d=self.draught, OG=self.OG, L=self.lpp, A=self.A_mid, ra=self.rho,
                                      B=self.beam)
-        return self.B_hat(B_L)
+        return array(self.B_hat(B_L))
 
     def calculate_B_BK(self):
         """
@@ -456,7 +464,13 @@ class Ikeda():
         B44BK_N0 = Bp44BK_N0*self.lBK
         B44BK_H0 = Bp44BK_H0*self.lBK
         B44_BK = B44BK_N0 + B44BK_H0 + B44BK_L
-        return self.B_hat(B44_BK)
+        return array(self.B_hat(B44_BK))
+
+def array(value):
+    if isinstance(value,float):
+        return np.array([value])
+    else:
+        return value
 
 class IkedaR(Ikeda):
     """
