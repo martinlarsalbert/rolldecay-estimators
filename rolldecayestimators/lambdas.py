@@ -19,3 +19,6 @@ B_e_lambda_cubic = lambdify(sp.solve(equations.B_e_equation_cubic, symbols.B_e)[
 
 B44_hat_equation = equations.B44_hat_equation.subs(symbols.B_44,symbols.B)
 B_hat_lambda=lambdify(sp.solve(B44_hat_equation,symbols.B_44_hat)[0])
+B_to_hat_lambda=lambdify(sp.solve(B44_hat_equation,symbols.B_44_hat)[0])
+B_from_hat_lambda=lambdify(sp.solve(B44_hat_equation,symbols.B_44)[0])
+
