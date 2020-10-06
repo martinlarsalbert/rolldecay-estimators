@@ -105,10 +105,9 @@ def calculate_roll_damping(LPP,Beam,CB,CMID,OG,PHI,lBK,bBK,OMEGA,
     BRTH = Beam
     #OMEGA/= 2  # Magic factor!??? This value seemt o give better results..?
     OMEGAHAT = OMEGA * SQRT(BRTH / 2 / 9.81)
-    TW = 2 * PI / OMEGA
 
     B44HAT, BFHAT, BWHAT, BEHAT, BBKHAT = _calculate_roll_damping(LPP=LPP,BRTH=BRTH, CB=CB, CMID=CMID, OGD=OGD, PHI=PHI, LBKL=LBKL, BBKB=BBKB,
-                                   OMEGA=OMEGA, DRAFT=DRAFT, BD=BD, OMEGAHAT=OMEGAHAT, TW=TW, KVC=KVC)
+                                   OMEGA=OMEGA, DRAFT=DRAFT, BD=BD, OMEGAHAT=OMEGAHAT, KVC=KVC)
 
     # Speed dependance:
     # Hull lift:
@@ -156,7 +155,7 @@ def calculate_roll_damping(LPP,Beam,CB,CMID,OG,PHI,lBK,bBK,OMEGA,
     return B44HAT, BFHAT, BWHAT, BEHAT, BBKHAT, BLHAT
 
 def _calculate_roll_damping(LPP, BRTH, CB, CMID, OGD, PHI, LBKL, BBKB, OMEGA,
-                           DRAFT, BD, OMEGAHAT, TW, KVC = 1.14e-6):
+                           DRAFT, BD, OMEGAHAT, KVC = 1.14e-6):
     """
     ********************************************************************
     *** Calculation of roll damping by the proposed predition method ***
