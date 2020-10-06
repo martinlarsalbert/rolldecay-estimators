@@ -54,7 +54,7 @@ def test_calculate_roll_damping_subfunction():
 
     B44HAT, BFHAT, BWHAT, BEHAT, BBKHAT, BLHAT = calculate_roll_damping(LPP,Beam,CB,CMID,OG,PHI,lBK,bBK,OMEGA,DRAFT)
     B44HAT2, BFHAT2, BWHAT2, BEHAT2, BBKHAT2 = _calculate_roll_damping(LPP, BRTH, CB, CMID, OGD, PHI, LBKL, BBKB, OMEGA,
-                           DRAFT, BD, OMEGAHAT, TW)
+                           DRAFT, BD, OMEGAHAT)
 
     assert B44HAT==B44HAT2
     assert BFHAT == BFHAT2

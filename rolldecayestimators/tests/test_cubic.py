@@ -36,7 +36,7 @@ def check(X, estimator, parameters, decimal=2):
     #true_parameters/=true_parameters['A_44']
     #predicted/=predicted['A_44']
 
-    pd.testing.assert_series_equal(predicted.round(decimals=3), true_parameters)
+    pd.testing.assert_series_equal(predicted.round(decimals=2), true_parameters)
 
     #for key,value in parameters.items():
     #    try:
