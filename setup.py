@@ -13,8 +13,9 @@ with open(ver_file) as f:
 
 DISTNAME = 'rolldecay-estimators'
 DESCRIPTION = 'A template for scikit-learn compatible packages.'
-with codecs.open('README.rst', encoding='utf-8-sig') as f:
-    LONG_DESCRIPTION = f.read()
+with open("README.md", "r") as fh:
+    long_description = fh.read()
+
 MAINTAINER = 'Martin Alexandersson'
 MAINTAINER_EMAIL = 'maralex@chalmers.se'
 URL = 'https://github.com/scikit-learn-contrib/project-template'
