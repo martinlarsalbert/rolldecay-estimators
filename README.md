@@ -1,4 +1,3 @@
-
 # Rolldecay-estimators Package
 - Transformers and estimators for scikit-learn
 rolldecay-estimators is a scikit-learn compatible extension.

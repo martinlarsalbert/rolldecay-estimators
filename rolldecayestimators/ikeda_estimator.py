@@ -234,14 +234,14 @@ class IkedaQuadraticEstimator(IkedaEstimator):
 
         if self.two_point_regression:
             B_1,B_2 = self.calculate_two_point_regression(**kwargs)
+            self.result['B_1'] = B_1['B_44']
+            self.result['B_2'] = B_2['B_44']
+
             B_1_, B_2_ = self.fit_Bs()  # Not used...
         else:
             B_1, B_2 = self.fit_Bs()
-
-
-
-        self.result['B_1'] = B_1
-        self.result['B_2'] = B_2
+            self.result['B_1'] = B_1
+            self.result['B_2'] = B_2
 
         zeta, d = self.Bs_to_zeta_d(B_1=B_1, B_2=B_2)
         factor = 1.0  # Factor
@@ -277,11 +277,22 @@ class IkedaQuadraticEstimator(IkedaEstimator):
         row2 = pd.Series(data)
         s1 = calculate(row1, verify_input=self.verify_input, limit_inputs=self.limit_inputs, **kwargs)
         s2 = calculate(row2, verify_input=self.verify_input, limit_inputs=self.limit_inputs, **kwargs)
-        s1['B_44'] = self.B44_lambda(B_44_hat=s1.B44HAT, Disp=row1.Volume, beam=row1.beam, g=self.g, rho=self.rho)
-        s2['B_44'] = self.B44_lambda(B_44_hat=s2.B44HAT, Disp=row2.Volume, beam=row2.beam, g=self.g, rho=self.rho)
+
+        s1 = self.B44_lambda(B_44_hat=s1, Disp=row1.Volume, beam=row1.beam, g=self.g, rho=self.rho)
+        s2 = self.B44_lambda(B_44_hat=s2, Disp=row2.Volume, beam=row2.beam, g=self.g, rho=self.rho)
+
         x = np.deg2rad([row1.phi_max, row2.phi_max]) * 8 * row1.omega0 / (3 * np.pi)
-        B_2 = (s2['B_44'] - s1['B_44']) / (x[1] - x[0])
-        B_1 = s1['B_44'] - B_2 * x[0]
+        B_2 = (s2 - s1) / (x[1] - x[0])
+        B_1 = s1 - B_2 * x[0]
+
+        # Save all of the component as one linear term: _1 and a quadratic term: _2
+        for key in s1:
+            new_name_1 = '%s_1' % (key)
+            self.result[new_name_1] = s1[key]
+
+            new_name_2 = '%s_2' % (key)
+            self.result[new_name_2] = s2[key]
+
         return B_1,B_2
 
     def calculate_phi_a_variation(self):

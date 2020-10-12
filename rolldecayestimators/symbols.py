@@ -39,7 +39,7 @@ T_F = ss.Symbol(name='T_F',description='Draught forward',unit='m')
 T_A = ss.Symbol(name='T_A',description='Draught aft',unit='m')
 T = ss.Symbol(name='T',description='Mean draught',unit='m')
 V = ss.Symbol(name='V',description='Ship speed',unit='m/s')
-OG = ss.Symbol(name='OG',description='Distance from roll axis to still water level',unit='m')
+OG = ss.Symbol(name='OG',description='Distance into water from still water to centre of gravity',unit='m')
 
 
 
