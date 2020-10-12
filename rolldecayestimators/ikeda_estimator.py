@@ -233,9 +233,9 @@ class IkedaQuadraticEstimator(IkedaEstimator):
         self.result_variation=self.calculate_phi_a_variation()
 
         if self.two_point_regression:
-            B_1,B_2 = self.calculate_two_point_regression(**kwargs)
-            self.result['B_1'] = B_1['B_44']
-            self.result['B_2'] = B_2['B_44']
+            B_1_,B_2_ = self.calculate_two_point_regression(**kwargs)
+            self.result['B_1'] = B_1 = B_1_['B44']
+            self.result['B_2'] = B_2 = B_2_['B44']
 
             B_1_, B_2_ = self.fit_Bs()  # Not used...
         else:
@@ -275,22 +275,29 @@ class IkedaQuadraticEstimator(IkedaEstimator):
         row1 = pd.Series(data)
         row1.phi_max *= 0.5
         row2 = pd.Series(data)
-        s1 = calculate(row1, verify_input=self.verify_input, limit_inputs=self.limit_inputs, **kwargs)
-        s2 = calculate(row2, verify_input=self.verify_input, limit_inputs=self.limit_inputs, **kwargs)
+        s1_hat = calculate(row1, verify_input=self.verify_input, limit_inputs=self.limit_inputs, **kwargs)
+        s2_hat = calculate(row2, verify_input=self.verify_input, limit_inputs=self.limit_inputs, **kwargs)
 
-        s1 = self.B44_lambda(B_44_hat=s1, Disp=row1.Volume, beam=row1.beam, g=self.g, rho=self.rho)
-        s2 = self.B44_lambda(B_44_hat=s2, Disp=row2.Volume, beam=row2.beam, g=self.g, rho=self.rho)
+        s1_hat = self.B44_lambda(B_44_hat=s1_hat, Disp=row1.Volume, beam=row1.beam, g=self.g, rho=self.rho)
+        s2_hat = self.B44_lambda(B_44_hat=s2_hat, Disp=row2.Volume, beam=row2.beam, g=self.g, rho=self.rho)
+
+        s1=pd.Series()
+        s2=pd.Series()
+        for key,value in s1_hat.items():
+            new_key = key.replace('HAT','')
+            s1[new_key]=s1_hat[key]
+            s2[new_key] = s2_hat[key]
 
         x = np.deg2rad([row1.phi_max, row2.phi_max]) * 8 * row1.omega0 / (3 * np.pi)
         B_2 = (s2 - s1) / (x[1] - x[0])
         B_1 = s1 - B_2 * x[0]
 
         # Save all of the component as one linear term: _1 and a quadratic term: _2
-        for key in s1:
-            new_name_1 = '%s_1' % (key)
+        for key in s1.index:
+            new_name_1 = '%s_1' % key
             self.result[new_name_1] = s1[key]
 
-            new_name_2 = '%s_2' % (key)
+            new_name_2 = '%s_2' % key
             self.result[new_name_2] = s2[key]
 
         return B_1,B_2
