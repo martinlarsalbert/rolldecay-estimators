@@ -83,7 +83,6 @@ class DirectEstimator(RollDecay):
         T0 = 2*self.X_amplitudes.index
         self.X_amplitudes['omega0'] = 2 * np.pi/T0
 
-
     @staticmethod
     def calculate_damping(X_amplitudes):
 
