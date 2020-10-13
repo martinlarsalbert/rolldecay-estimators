@@ -169,20 +169,23 @@ class EstimatorQuadraticB(EstimatorCubic):
     functions['acceleration'] = lambdify(acceleration)
 
 
-    def simulate(self, t :np.ndarray, phi0 :float, phi1d0 :float, B_1, B_2, C_1)->pd.DataFrame:
+    def simulate(self, t :np.ndarray, phi0 :float, phi1d0 :float, B_1A, B_2A, C_1A)->pd.DataFrame:
         """
         Simulate a roll decay test using the quadratic method.
         :param t: time vector to be simulated [s]
         :param phi0: initial roll angle [rad]
         :param phi1d0: initial roll speed [rad/s]
         :param omega0: roll natural frequency[rad/s]
-        :param zeta:linear roll damping [-]
+            A44:total roll inertia
+        :param B_1A: B_1/A44 : linear damping / total roll inertia
+        :param B_2A: B_2/A44 : quadratic damping / total roll inertia
+        :param C_1A: C_1/A44 : roll stiffness / total roll inertia
         :return: pandas data frame with time series of 'phi' and 'phi1d'
         """
         parameters={
-            'B_1':B_1,
-            'B_2':B_2,
-            'C_1':C_1,
+            'B_1A':B_1A,
+            'B_2A':B_2A,
+            'C_1A':C_1A,
         }
         return self._simulate(t=t, phi0=phi0, phi1d0=phi1d0, parameters=parameters)
 
@@ -227,10 +230,10 @@ class EstimatorQuadraticBandC(EstimatorCubic):
         :return: pandas data frame with time series of 'phi' and 'phi1d'
         """
         parameters={
-            'B_1':B_1,
-            'B_2':B_2,
-            'C_1':C_1,
-            'C_3':C_3,
+            'B_1A':B_1,
+            'B_2A':B_2,
+            'C_1A':C_1,
+            'C_3A':C_3,
         }
         return self._simulate(t=t, phi0=phi0, phi1d0=phi1d0, parameters=parameters)
 

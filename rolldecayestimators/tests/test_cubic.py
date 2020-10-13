@@ -258,6 +258,20 @@ def test_fit_simualtion_full_cubic():
     X['phi2d'] = np.gradient(X['phi1d'].values, X.index.values)
     check(X=X, estimator=direct_estimator, parameters=parameters)
 
+
+def test_simulation_quadratic():
+
+    direct_estimator = EstimatorQuadraticB()
+    B_1A=100
+    B_2A = 20
+    C_1A = 100
+
+    phi0 = np.deg2rad(20)
+    phi1d0 = 0
+    t = np.arange(0, 10, 0.01)
+
+    direct_estimator.simulate(t=t, phi0=phi0, phi1d0=phi1d0, B_1A=B_1A, B_2A=B_2A, C_1A=C_1A)
+
 def test_fit_simulation_quadratic():
 
     parameters={
