@@ -114,21 +114,21 @@ class RollDecay(BaseEstimator):
 
 
     def estimator(self, x, xs):
-        parameters = {key: x for key, x in zip(self.parameter_names, x)}
+        self.parameters = {key: x for key, x in zip(self.parameter_names, x)}
 
         if not self.omega_regression:
-            parameters['omega0'] = self.omega0
+            self.parameters['omega0'] = self.omega0
 
         if self.fit_method=='derivation':
-            parameters['phi'] = xs[self.phi_key]
-            parameters['phi1d'] = xs[self.phi1d_key]
-            return self.estimator_acceleration(parameters=parameters)
+            self.parameters['phi'] = xs[self.phi_key]
+            self.parameters['phi1d'] = xs[self.phi1d_key]
+            return self.estimator_acceleration(parameters=self.parameters)
         elif self.fit_method=='integration':
             t = xs.index
             phi0=xs.iloc[0][self.phi_key]
             phi1d0 = xs.iloc[0][self.phi1d_key]
 
-            return self.estimator_integration(t=t, phi0=phi0, phi1d0=phi1d0, parameters=parameters)
+            return self.estimator_integration(t=t, phi0=phi0, phi1d0=phi1d0)
         else:
             raise ValueError('Unknown fit_mehod:%s' % self.fit_method)
 
@@ -136,11 +136,10 @@ class RollDecay(BaseEstimator):
         acceleration = self.calculate_acceleration(**parameters)
         return acceleration
 
-    def estimator_integration(self, t, phi0, phi1d0, parameters):
-        parameters=dict(parameters)
+    def estimator_integration(self, t, phi0, phi1d0):
 
         try:
-            df = self._simulate(t=t,phi0=phi0, phi1d0=phi1d0,parameters=parameters )
+            df = self.simulate(t=t, phi0=phi0, phi1d0=phi1d0)
         except:
             df = pd.DataFrame(index=t)
             df['phi']=np.inf
@@ -168,23 +167,7 @@ class RollDecay(BaseEstimator):
 
         self.is_fitted_ = True
 
-    def simulate(self, t :np.ndarray, phi0 :float, phi1d0 :float,omega0:float, zeta:float)->pd.DataFrame:
-        """
-        Simulate a roll decay test using the quadratic method.
-        :param t: time vector to be simulated [s]
-        :param phi0: initial roll angle [rad]
-        :param phi1d0: initial roll speed [rad/s]
-        :param omega0: roll natural frequency[rad/s]
-        :param zeta:linear roll damping [-]
-        :return: pandas data frame with time series of 'phi' and 'phi1d'
-        """
-        parameters={
-            'omega0':omega0,
-            'zeta':zeta,
-        }
-        return self._simulate(t=t, phi0=phi0, phi1d0=phi1d0, parameters=parameters)
-
-    def _simulate(self,t,phi0, phi1d0, parameters:dict)->pd.DataFrame:
+    def simulate(self, t, phi0, phi1d0)->pd.DataFrame:
 
         states0 = [phi0, phi1d0]
 
@@ -195,7 +178,7 @@ class RollDecay(BaseEstimator):
         t_ = t-t[0]
         t_span = [t_[0], t_[-1]]
         self.simulation_result = solve_ivp(fun=self.roll_decay_time_step, t_span=t_span, y0=states0, t_eval=t_,
-                                           args=(parameters,))
+                                           )
         if not self.simulation_result['success']:
             raise ValueError('Simulation failed')
 
@@ -204,11 +187,11 @@ class RollDecay(BaseEstimator):
         df[self.phi1d_key] = self.simulation_result.y[1, :]
         p_old = df[self.phi1d_key]
         phi_old = df[self.phi_key]
-        df[self.phi2d_key] = self.calculate_acceleration(phi1d=p_old, phi=phi_old, **parameters)
+        df[self.phi2d_key] = self.calculate_acceleration(phi1d=p_old, phi=phi_old, **self.parameters)
 
         return df
 
-    def roll_decay_time_step(self,t,states,parameters):
+    def roll_decay_time_step(self,t,states):
         # states:
         # [phi,phi1d]
 
@@ -217,7 +200,7 @@ class RollDecay(BaseEstimator):
 
         phi1d = p_old
         calculate_acceleration = self.calculate_acceleration
-        phi2d = calculate_acceleration(phi1d=p_old, phi=phi_old, **parameters)
+        phi2d = calculate_acceleration(phi1d=p_old, phi=phi_old, **self.parameters)
 
         d_states_dt = np.array([phi1d, phi2d])
 
@@ -230,7 +213,7 @@ class RollDecay(BaseEstimator):
         phi0 = X[self.phi_key].iloc[0]
         phi1d0 = X[self.phi1d_key].iloc[0]
         t = np.array(X.index)
-        return self._simulate(t=t, phi0=phi0, phi1d0=phi1d0, parameters=self.parameters)
+        return self.simulate(t=t, phi0=phi0, phi1d0=phi1d0)
 
 
     def score(self, X=None, y=None, sample_weight=None):

@@ -7,10 +7,12 @@ from rolldecayestimators.direct_estimator_cubic import EstimatorCubic, Estimator
 import matplotlib.pyplot as plt
 from rolldecayestimators.estimator import FitError
 
-def simulate(t, phi0, phi1d0, B_1A, B_2A, B_3A, C_1A, C_3A, C_5A):
+def simulate(t, phi0, phi1d0, **kwargs):
 
     estimator = EstimatorCubic()
-    return estimator.simulate(t=t,phi0=phi0, phi1d0=phi1d0,B_1A=B_1A,B_2A=B_2A,B_3A=B_3A,C_1A=C_1A,C_3A=C_3A,C_5A=C_5A)
+    estimator.parameters=kwargs
+
+    return estimator.simulate(t=t,phi0=phi0, phi1d0=phi1d0)
 
 def check(X, estimator, parameters, decimal=2):
 
@@ -262,15 +264,18 @@ def test_fit_simualtion_full_cubic():
 def test_simulation_quadratic():
 
     direct_estimator = EstimatorQuadraticB()
-    B_1A=100
-    B_2A = 20
-    C_1A = 100
+    direct_estimator.parameters={
+        'B_1A' : 100,
+        'B_2A' : 20,
+        'C_1A' : 100,
+
+    }
 
     phi0 = np.deg2rad(20)
     phi1d0 = 0
     t = np.arange(0, 10, 0.01)
 
-    direct_estimator.simulate(t=t, phi0=phi0, phi1d0=phi1d0, B_1A=B_1A, B_2A=B_2A, C_1A=C_1A)
+    direct_estimator.simulate(t=t, phi0=phi0, phi1d0=phi1d0)
 
 def test_fit_simulation_quadratic():
 
@@ -304,6 +309,7 @@ def test_fit_simulation_linear():
     }
 
     direct_estimator = EstimatorLinear(fit_method='integration')
+    direct_estimator.parameters=parameters
     phi0 = np.deg2rad(20)
     phi1d0 = 0
     t = np.arange(0, 10, 0.01)

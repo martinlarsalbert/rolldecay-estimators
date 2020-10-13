@@ -70,25 +70,6 @@ class EstimatorCubic(DirectEstimator):
 
         super().__init__(maxfev=maxfev, bounds=bounds, ftol=ftol, p0=p0, fit_method=fit_method, omega_regression=True)
 
-    def simulate(self, t :np.ndarray, phi0 :float, phi1d0 :float, B_1A, B_2A, B_3A, C_1A, C_3A, C_5A,)->pd.DataFrame:
-        """
-        Simulate a roll decay test using the quadratic method.
-        :param t: time vector to be simulated [s]
-        :param phi0: initial roll angle [rad]
-        :param phi1d0: initial roll speed [rad/s]
-        :param omega0: roll natural frequency[rad/s]
-        :param zeta:linear roll damping [-]
-        :return: pandas data frame with time series of 'phi' and 'phi1d'
-        """
-        parameters={
-            'B_1A':B_1A,
-            'B_2A':B_2A,
-            'B_3A':B_3A,
-            'C_1A':C_1A,
-            'C_3A':C_3A,
-            'C_5A':C_5A,
-        }
-        return self._simulate(t=t, phi0=phi0, phi1d0=phi1d0, parameters=parameters)
 
     def calculate_additional_parameters(self, A44):
         check_is_fitted(self, 'is_fitted_')
@@ -169,26 +150,6 @@ class EstimatorQuadraticB(EstimatorCubic):
     functions['acceleration'] = lambdify(acceleration)
 
 
-    def simulate(self, t :np.ndarray, phi0 :float, phi1d0 :float, B_1A, B_2A, C_1A)->pd.DataFrame:
-        """
-        Simulate a roll decay test using the quadratic method.
-        :param t: time vector to be simulated [s]
-        :param phi0: initial roll angle [rad]
-        :param phi1d0: initial roll speed [rad/s]
-        :param omega0: roll natural frequency[rad/s]
-            A44:total roll inertia
-        :param B_1A: B_1/A44 : linear damping / total roll inertia
-        :param B_2A: B_2/A44 : quadratic damping / total roll inertia
-        :param C_1A: C_1/A44 : roll stiffness / total roll inertia
-        :return: pandas data frame with time series of 'phi' and 'phi1d'
-        """
-        parameters={
-            'B_1A':B_1A,
-            'B_2A':B_2A,
-            'C_1A':C_1A,
-        }
-        return self._simulate(t=t, phi0=phi0, phi1d0=phi1d0, parameters=parameters)
-
 class EstimatorQuadraticBandC(EstimatorCubic):
     """ A template estimator to be used as a reference implementation.
 
@@ -217,25 +178,6 @@ class EstimatorQuadraticBandC(EstimatorCubic):
     acceleration = sp.solve(roll_decay_equation_A, phi_dot_dot)[0]
     functions = dict(EstimatorCubic.functions)
     functions['acceleration'] = lambdify(acceleration)
-
-
-    def simulate(self, t :np.ndarray, phi0 :float, phi1d0 :float, B_1, B_2, C_1, C_3)->pd.DataFrame:
-        """
-        Simulate a roll decay test using the quadratic method.
-        :param t: time vector to be simulated [s]
-        :param phi0: initial roll angle [rad]
-        :param phi1d0: initial roll speed [rad/s]
-        :param omega0: roll natural frequency[rad/s]
-        :param zeta:linear roll damping [-]
-        :return: pandas data frame with time series of 'phi' and 'phi1d'
-        """
-        parameters={
-            'B_1A':B_1,
-            'B_2A':B_2,
-            'C_1A':C_1,
-            'C_3A':C_3,
-        }
-        return self._simulate(t=t, phi0=phi0, phi1d0=phi1d0, parameters=parameters)
 
 class EstimatorLinear(EstimatorCubic):
     """ A template estimator to be used as a reference implementation.
@@ -267,19 +209,4 @@ class EstimatorLinear(EstimatorCubic):
     functions = dict(EstimatorCubic.functions)
     functions['acceleration'] = lambdify(acceleration)
 
-    def simulate(self, t :np.ndarray, phi0 :float, phi1d0 :float, B_1, C_1)->pd.DataFrame:
-        """
-        Simulate a roll decay test using the quadratic method.
-        :param t: time vector to be simulated [s]
-        :param phi0: initial roll angle [rad]
-        :param phi1d0: initial roll speed [rad/s]
-        :param omega0: roll natural frequency[rad/s]
-        :param zeta:linear roll damping [-]
-        :return: pandas data frame with time series of 'phi' and 'phi1d'
-        """
-        parameters={
-            'B_1':B_1,
-            'C_1':C_1,
-        }
-        return self._simulate(t=t, phi0=phi0, phi1d0=phi1d0, parameters=parameters)
 

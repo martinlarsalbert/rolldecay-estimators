@@ -48,24 +48,32 @@ class DirectEstimator(RollDecay):
     acceleration = sp.Eq(lhs=phi, rhs=sp.solve(roll_diff_equation, phi.diff().diff())[0])
     functions = {'acceleration':lambdify(acceleration.rhs)}
 
-    def simulate(self, t :np.ndarray, phi0 :float, phi1d0 :float,omega0:float, zeta:float, d:float)->pd.DataFrame:
+    @classmethod
+    def load(cls, omega0:float, d:float, zeta:float, X=None):
         """
-        Simulate a roll decay test using the quadratic method.
-        :param t: time vector to be simulated [s]
-        :param phi0: initial roll angle [rad]
-        :param phi1d0: initial roll speed [rad/s]
-        :param omega0: roll natural frequency[rad/s]
-        :param zeta:linear roll damping [-]
-        :param d:quadratic roll damping [-]
-        :return: pandas data frame with time series of 'phi' and 'phi1d'
-        """
-        parameters={
-            'omega0':omega0,
-            'zeta':zeta,
-            'd':d,
-        }
-        return self._simulate(t=t, phi0=phi0, phi1d0=phi1d0, parameters=parameters)
+        Load data and parameters from an existing fitted estimator
 
+        Parameters
+        ----------
+        omega0 :
+            roll frequency [rad/s]
+        d : nondimensional linear damping
+        zeta :
+            nondimensional quadratic damping
+        X : pd.DataFrame
+            DataFrame containing the measurement that this estimator fits (optional).
+        Returns
+        -------
+        estimator
+            Loaded with parameters from data and maybe also a loaded measurement X
+        """
+        data={
+            'd':d,
+            'zeta':zeta,
+            'omega0':omega0,
+        }
+
+        return super(cls, cls).load(data=data, X=X)
 
     def calculate_amplitudes_and_damping(self):
         X_interpolated = measure.sample_increase(X=self.X)

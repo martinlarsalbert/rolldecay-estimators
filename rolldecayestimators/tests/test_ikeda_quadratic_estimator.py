@@ -30,7 +30,13 @@ def df_roll_decay():
     phi1d0 = 0
     t = np.arange(0, 120, 0.01)
     estimator = IkedaQuadraticEstimator(lpp=lpp, TA=TA, TF=TF, beam=beam, BKL=BKL, BKB=BKB, A0=A0, kg=kg, Volume=Volume, gm=gm, V=0)
-    yield estimator.simulate(t=t, phi0=phi0, phi1d0=phi1d0, omega0=omega0, zeta=zeta, d=d)
+    estimator.parameters={
+        'omega0':omega0,
+        'zeta':zeta,
+        'd' : d,
+    }
+
+    yield estimator.simulate(t=t, phi0=phi0, phi1d0=phi1d0)
 
 def check(X, estimator, omega0, d, zeta, decimal=4):
     estimator.fit(X=X)

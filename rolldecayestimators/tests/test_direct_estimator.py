@@ -26,8 +26,9 @@ def df_roll_decay(omega0, d, zeta):
     phi0 = np.deg2rad(2)
     phi1d0 = 0
     t = np.arange(0, 120, 0.01)
-    estimator = DirectEstimator()
-    yield estimator.simulate(t=t, phi0=phi0, phi1d0=phi1d0, omega0=omega0, d=d, zeta=zeta)
+    estimator = DirectEstimator.load(omega0=omega0, d=d, zeta=zeta)
+
+    yield estimator.simulate(t=t, phi0=phi0, phi1d0=phi1d0)
 
 @pytest.fixture
 def df_roll_decay_negative(omega0, d, zeta):
@@ -35,8 +36,8 @@ def df_roll_decay_negative(omega0, d, zeta):
     phi0 = -np.deg2rad(2)
     phi1d0 = 0
     t = np.arange(0, 120, 0.01)
-    estimator = DirectEstimator()
-    yield estimator.simulate(t=t, phi0=phi0, phi1d0=phi1d0, omega0=omega0, d=d, zeta=zeta)
+    estimator = DirectEstimator.load(omega0=omega0, d=d, zeta=zeta)
+    yield estimator.simulate(t=t, phi0=phi0, phi1d0=phi1d0)
 
 def check(X, estimator, omega0, d, zeta, decimal=4):
     estimator.fit(X=X)

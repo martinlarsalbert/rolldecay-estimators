@@ -27,7 +27,13 @@ def df_roll_decay(omega0, d, zeta):
     phi1d0 = 0
     t = np.arange(0, 120, 0.01)
     estimator = DirectEstimator()
-    yield estimator.simulate(t=t, phi0=phi0, phi1d0=phi1d0, omega0=omega0, d=d, zeta=zeta)
+    estimator.parameters = {
+        'omega0':omega0,
+        'd':d,
+        'zeta':zeta,
+    }
+
+    yield estimator.simulate(t=t, phi0=phi0, phi1d0=phi1d0)
 
 
 def test_cutter(df_roll_decay):

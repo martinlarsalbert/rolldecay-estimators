@@ -13,26 +13,49 @@ def simulator(estimator):
     phi0 = np.deg2rad(2)
     phi1d0 = 0
     t = np.arange(0, 120, 0.01)
-    return estimator.simulate(t=t, phi0=phi0, phi1d0=phi1d0, omega0=omega0, zeta=zeta)
+
+    estimator.parameters = {
+         'omega0':omega0,
+         'zeta': zeta,
+    }
+
+    return estimator.simulate(t=t, phi0 = phi0, phi1d0 = phi1d0,)
 
 def simulator_negative(estimator):
     phi0 = -np.deg2rad(2)
     phi1d0 = 0
     t = np.arange(0, 120, 0.01)
-    return estimator.simulate(t=t, phi0=phi0, phi1d0=phi1d0, omega0=omega0, zeta=zeta)
+
+    estimator.parameters = {
+        'omega0': omega0,
+        'zeta': zeta,
+    }
+
+    return estimator.simulate(t=t, phi0=phi0, phi1d0=phi1d0)
 
 def simulator_sparse(estimator):
     phi0 = np.deg2rad(2)
     phi1d0 = 0
     t = np.arange(0, 120, 10)
-    df = estimator.simulate(t=t, phi0=phi0, phi1d0=phi1d0, omega0=omega0, zeta=zeta)
+
+    estimator.parameters = {
+        'omega0': omega0,
+        'zeta': zeta,
+    }
+
+    df = estimator.simulate(t=t, phi0=phi0, phi1d0=phi1d0)
     return df
 
 def simulator_noise(estimator):
     phi0 = np.deg2rad(2)
     phi1d0 = 0
     t = np.arange(0, 120, 0.1)
-    df = estimator.simulate(t=t, phi0=phi0, phi1d0=phi1d0, omega0=omega0, zeta=zeta)
+    estimator.parameters = {
+        'omega0': omega0,
+        'zeta': zeta,
+    }
+
+    df = estimator.simulate(t=t, phi0=phi0, phi1d0=phi1d0)
     np.random.seed(0)
     std = np.deg2rad(0.1)
     noise = np.random.normal(loc=0.0, scale=std, size=len(t))

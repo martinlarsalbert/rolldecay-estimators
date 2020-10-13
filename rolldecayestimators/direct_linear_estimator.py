@@ -49,4 +49,4 @@ class DirectLinearEstimator(DirectEstimator):
             'omega0':omega0,
             'zeta':zeta,
         }
-        return self._simulate(t=t, phi0=phi0, phi1d0=phi1d0, parameters=parameters)
+        return self.simulate(t=t, phi0=phi0, phi1d0=phi1d0, parameters=parameters)
