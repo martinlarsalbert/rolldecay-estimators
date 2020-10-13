@@ -73,7 +73,7 @@ class DirectEstimator(RollDecay):
             'omega0':omega0,
         }
 
-        return super(cls, cls).load(data=data, X=X)
+        return super(cls, cls)._load(data=data, X=X)
 
     def calculate_amplitudes_and_damping(self):
         X_interpolated = measure.sample_increase(X=self.X)

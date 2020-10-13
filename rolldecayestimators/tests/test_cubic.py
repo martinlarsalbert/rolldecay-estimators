@@ -9,8 +9,7 @@ from rolldecayestimators.estimator import FitError
 
 def simulate(t, phi0, phi1d0, **kwargs):
 
-    estimator = EstimatorCubic()
-    estimator.parameters=kwargs
+    estimator = EstimatorCubic.load(**kwargs)
 
     return estimator.simulate(t=t,phi0=phi0, phi1d0=phi1d0)
 
@@ -62,8 +61,9 @@ def test_simulation():
     phi1d0 = 0
     t = np.arange(0, 10, 0.1)
     X = simulate(t=t, phi0=phi0, phi1d0=phi1d0, **parameters)
-    direct_estimator = EstimatorCubic()
-    direct_estimator.parameters=parameters
+
+    direct_estimator = EstimatorCubic.load(**parameters)
+
     direct_estimator.is_fitted_=True
     X_pred = direct_estimator.predict(X=X)
     assert_almost_equal(X['phi'].values, X_pred['phi'].values)
@@ -263,13 +263,15 @@ def test_fit_simualtion_full_cubic():
 
 def test_simulation_quadratic():
 
-    direct_estimator = EstimatorQuadraticB()
-    direct_estimator.parameters={
-        'B_1A' : 100,
-        'B_2A' : 20,
-        'C_1A' : 100,
+    parameters = {
+        'B_1A': 100,
+        'B_2A': 20,
+        'C_1A': 100,
 
     }
+
+    direct_estimator = EstimatorQuadraticB.load(**parameters)
+
 
     phi0 = np.deg2rad(20)
     phi1d0 = 0
@@ -297,6 +299,23 @@ def test_fit_simulation_quadratic():
     X['phi2d'] = np.gradient(X['phi1d'].values, X.index.values)
     check(X=X, estimator=direct_estimator, parameters=parameters)
 
+def test_simulation_linear():
+
+    parameters = {
+        'B_1A': 100,
+        'C_1A': 100,
+
+    }
+
+    direct_estimator = EstimatorLinear.load(**parameters)
+
+
+    phi0 = np.deg2rad(20)
+    phi1d0 = 0
+    t = np.arange(0, 10, 0.01)
+
+    direct_estimator.simulate(t=t, phi0=phi0, phi1d0=phi1d0)
+
 def test_fit_simulation_linear():
 
     parameters={
@@ -309,7 +328,7 @@ def test_fit_simulation_linear():
     }
 
     direct_estimator = EstimatorLinear(fit_method='integration')
-    direct_estimator.parameters=parameters
+
     phi0 = np.deg2rad(20)
     phi1d0 = 0
     t = np.arange(0, 10, 0.01)

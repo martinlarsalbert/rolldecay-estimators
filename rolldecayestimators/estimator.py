@@ -57,6 +57,24 @@ class RollDecay(BaseEstimator):
         estimator
             Loaded with parameters from data and maybe also a loaded measurement X
         """
+        return cls._load(data=data, X=X)
+
+    @classmethod
+    def _load(cls,data:{}, X=None):
+        """
+        Load data and parameters from an existing fitted estimator
+
+        Parameters
+        ----------
+        data : dict
+            Dict containing data for this estimator such as parameters
+        X : pd.DataFrame
+            DataFrame containing the measurement that this estimator fits (optional).
+        Returns
+        -------
+        estimator
+            Loaded with parameters from data and maybe also a loaded measurement X
+        """
         estimator = cls()
         estimator.load_data(data=data)
         estimator.load_X(X=X)

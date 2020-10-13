@@ -6,7 +6,7 @@ from rolldecayestimators.symbols import *
 from rolldecayestimators import equations, symbols
 from rolldecayestimators.substitute_dynamic_symbols import lambdify, run
 from sklearn.utils.validation import check_is_fitted
-
+from rolldecayestimators.estimator import RollDecay
 
 
 
@@ -69,6 +69,47 @@ class EstimatorCubic(DirectEstimator):
         bounds=new_bounds
 
         super().__init__(maxfev=maxfev, bounds=bounds, ftol=ftol, p0=p0, fit_method=fit_method, omega_regression=True)
+
+
+    @classmethod
+    def load(cls, B_1A:float, B_2A:float, B_3A:float, C_1A:float, C_3A:float, C_5A:float, X=None):
+        """
+        Load data and parameters from an existing fitted estimator
+
+        A_44 is total roll intertia [kg*m**2] (including added mass)
+
+        Parameters
+        ----------
+        B_1A
+            B_1/A_44 : linear damping
+        B_2A
+            B_2/A_44 : quadratic damping
+        B_3A
+            B_3/A_44 : cubic damping
+        C_1A
+            C_1/A_44 : linear stiffness
+        C_3A
+            C_3/A_44 : cubic stiffness
+        C_5A
+            C_5/A_44 : pentatonic stiffness
+
+        X : pd.DataFrame
+            DataFrame containing the measurement that this estimator fits (optional).
+        Returns
+        -------
+        estimator
+            Loaded with parameters from data and maybe also a loaded measurement X
+        """
+        data={
+            'B_1A':B_1A,
+            'B_2A':B_2A,
+            'B_3A':B_3A,
+            'C_1A':C_1A,
+            'C_3A':C_3A,
+            'C_5A':C_5A,
+        }
+
+        return super(cls, cls)._load(data=data, X=X)
 
 
     def calculate_additional_parameters(self, A44):
@@ -149,6 +190,37 @@ class EstimatorQuadraticB(EstimatorCubic):
     functions = dict(EstimatorCubic.functions)
     functions['acceleration'] = lambdify(acceleration)
 
+    @classmethod
+    def load(cls, B_1A:float, B_2A:float, C_1A:float, X=None):
+        """
+        Load data and parameters from an existing fitted estimator
+
+        A_44 is total roll intertia [kg*m**2] (including added mass)
+
+        Parameters
+        ----------
+        B_1A
+            B_1/A_44 : linear damping
+        B_2A
+            B_2/A_44 : quadratic damping
+        C_1A
+            C_1/A_44 : linear stiffness
+
+        X : pd.DataFrame
+            DataFrame containing the measurement that this estimator fits (optional).
+        Returns
+        -------
+        estimator
+            Loaded with parameters from data and maybe also a loaded measurement X
+        """
+        data={
+            'B_1A':B_1A,
+            'B_2A':B_2A,
+            'C_1A':C_1A,
+        }
+
+        return super(cls, cls)._load(data=data, X=X)
+
 
 class EstimatorQuadraticBandC(EstimatorCubic):
     """ A template estimator to be used as a reference implementation.
@@ -208,5 +280,33 @@ class EstimatorLinear(EstimatorCubic):
     acceleration = sp.solve(roll_decay_equation_A, phi_dot_dot)[0]
     functions = dict(EstimatorCubic.functions)
     functions['acceleration'] = lambdify(acceleration)
+
+    @classmethod
+    def load(cls, B_1A:float, C_1A:float, X=None):
+        """
+        Load data and parameters from an existing fitted estimator
+
+        A_44 is total roll intertia [kg*m**2] (including added mass)
+
+        Parameters
+        ----------
+        B_1A
+            B_1/A_44 : linear damping
+        C_1A
+            C_1/A_44 : linear stiffness
+
+        X : pd.DataFrame
+            DataFrame containing the measurement that this estimator fits (optional).
+        Returns
+        -------
+        estimator
+            Loaded with parameters from data and maybe also a loaded measurement X
+        """
+        data={
+            'B_1A':B_1A,
+            'C_1A':C_1A,
+        }
+
+        return super(cls, cls)._load(data=data, X=X)
 
 
