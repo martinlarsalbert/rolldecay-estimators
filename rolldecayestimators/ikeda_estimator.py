@@ -24,7 +24,7 @@ class IkedaEstimator(DirectEstimator):
                        lambdify(sp.solve(equations.B44_equation, symbols.B_44)[0]),
                        ]
 
-    def __init__(self, lpp:float, TA, TF, beam, BKL, BKB, A0, kg, Volume, gm, V=0, rho=1000, g=9.81, phi_max=8, omega0=None,
+    def __init__(self, lpp:float, TA, TF, beam, BKL, BKB, A0, kg, Volume, gm, V, rho=1000, g=9.81, phi_max=8, omega0=None,
                  verify_input = True, limit_inputs=False, **kwargs):
         """
         Estimate a roll decay test using the Simplified Ikeda Method to predict roll damping.
