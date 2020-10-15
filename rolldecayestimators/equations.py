@@ -153,6 +153,14 @@ analytical_solution = analytical_solution_general.subs(subs)
 analytical_phi1d = sp.Eq(phi_dot,sp.simplify(analytical_solution.rhs.diff(t)))
 analytical_phi2d = sp.Eq(phi_dot_dot,sp.simplify(analytical_phi1d.rhs.diff(t)))
 
+rhs = analytical_solution.rhs.args[1]*phi_0
+lhs = phi_a
+extinction_equation = sp.Eq(lhs,rhs)
+
+xeta_equation = sp.Eq(zeta,
+      sp.solve(extinction_equation,zeta)[0])
+
+
 ### Simplified Ikeda
 simplified_ikeda_equation = sp.Eq((B_F,
       B_W,

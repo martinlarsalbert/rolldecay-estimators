@@ -33,7 +33,6 @@ def test_cut_transformer_error(data):
         X_diff_size = np.ones((10, X.shape[1] + 1))
         trans.transform(X_diff_size)
 
-
 @pytest.mark.skip('Write a real test later...')
 def test_cut_transformer(data):
     X, y = data
