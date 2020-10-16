@@ -70,10 +70,10 @@ def calculate(row, catch_error=False, limit_inputs=False, verify_input=True, **k
         else:
             raise
 
-    s['B44HAT'] = B44HAT
-    s['BFHAT'] = BFHAT
-    s['BWHAT'] = BWHAT
-    s['BEHAT'] = BEHAT
-    s['BBKHAT'] = BBKHAT
-    s['BLHAT'] = BLHAT
+    s['B_44_hat'] = B44HAT
+    s['B_F_hat'] = BFHAT
+    s['B_W_hat'] = BWHAT
+    s['B_E_hat'] = BEHAT
+    s['B_BK_hat'] = BBKHAT
+    s['B_L_hat'] = BLHAT
     return s

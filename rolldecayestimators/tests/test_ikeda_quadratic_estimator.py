@@ -76,7 +76,7 @@ def test_speed(df_roll_decay):
     estimator_zero_speed.plot_fit(ax=ax)
     estimator_speed.plot_fit(ax=ax, model_test=False)
 
-    assert estimator_zero_speed.result['B_44_HAT'] != estimator_speed.result['B_44_HAT']
+    assert estimator_zero_speed.result['B_44_1'] != estimator_speed.result['B_44_1']
     assert estimator_zero_speed.parameters['zeta']!=estimator_speed.parameters['zeta']
     assert estimator_zero_speed.parameters['d'] != estimator_speed.parameters['d']
     assert estimator_zero_speed.parameters['omega0'] == estimator_speed.parameters['omega0']

@@ -227,15 +227,15 @@ class IkedaQuadraticEstimator(IkedaEstimator):
             'limit_inputs': self.limit_inputs,
         }
 
-        self.result=self.calculate(**kwargs)
-
+        #self.result=self.calculate(**kwargs)
+        self.result = {}
 
         self.result_variation=self.calculate_phi_a_variation()
 
         if self.two_point_regression:
             B_1_,B_2_ = self.calculate_two_point_regression(**kwargs)
-            self.result['B_1'] = B_1 = B_1_['B44']
-            self.result['B_2'] = B_2 = B_2_['B44']
+            self.result['B_1'] = B_1 = B_1_['B_44']
+            self.result['B_2'] = B_2 = B_2_['B_44']
 
             B_1_, B_2_ = self.fit_Bs()  # Not used...
         else:
@@ -284,7 +284,7 @@ class IkedaQuadraticEstimator(IkedaEstimator):
         s1=pd.Series()
         s2=pd.Series()
         for key,value in s1_hat.items():
-            new_key = key.replace('HAT','')
+            new_key = key.replace('_hat','')
             s1[new_key]=s1_hat[key]
             s2[new_key] = s2_hat[key]
 
@@ -328,7 +328,7 @@ class IkedaQuadraticEstimator(IkedaEstimator):
         df_variation['rho'] = 1000
         result = pd.concat((result, df_variation), axis=1)
 
-        result['B_44'] = self.B44_lambda(B_44_hat=result.B44HAT, Disp=ship.Volume, beam=ship.beam, g=result.g, rho=result.rho)
+        result['B_44'] = self.B44_lambda(B_44_hat=result.B_44_hat, Disp=ship.Volume, beam=ship.beam, g=result.g, rho=result.rho)
         result.dropna(inplace=True)
         return result
 
@@ -357,7 +357,7 @@ class IkedaQuadraticEstimator(IkedaEstimator):
         if ax is None:
             fig,ax=plt.subplots()
 
-        self.result_variation.plot(y = ['B44HAT'], ax=ax)
+        self.result_variation.plot(y = ['B_44_hat'], ax=ax)
 
     def plot_B_fit(self,ax=None):
 
