@@ -1,5 +1,6 @@
 import numpy as np
 import pandas as pd
+from rolldecayestimators import lambdas
 
 def sample_increase(X, increase=5):
     N = len(X) * increase
@@ -40,12 +41,10 @@ def calculate_amplitudes(X_zerocrossings):
         s2 = X_zerocrossings.iloc[i + 1]
 
         amplitude = (s2 - s1).abs()
-        amplitude.name = s2.name - s1.name
+        amplitude.name = (s1.name + s2.name)/2  # mean time
         X_amplitudes = X_amplitudes.append(amplitude)
 
-    #X_amplitudes = X_zerocrossings.copy()
-    #X_amplitudes['phi']=2*X_zerocrossings['phi'].abs()  # Double amplitude!
-
+    X_amplitudes['phi_a'] = X_amplitudes['phi']/2
     return X_amplitudes
 
 def calculate_amplitudes_and_damping(X:pd.DataFrame):
@@ -55,7 +54,7 @@ def calculate_amplitudes_and_damping(X:pd.DataFrame):
     X_amplitudes = calculate_damping(X_amplitudes=X_amplitudes)
     T0 = 2*X_amplitudes.index
     X_amplitudes['omega0'] = 2 * np.pi/T0
-    X_amplitudes['time'] = np.cumsum(X_amplitudes.index)
+    #X_amplitudes['time'] = np.cumsum(X_amplitudes.index)
     return X_amplitudes
 
 def calculate_damping(X_amplitudes):
@@ -77,8 +76,10 @@ def calculate_damping(X_amplitudes):
     X_amplitudes_new = X_amplitudes.copy()
     X_amplitudes_new = X_amplitudes_new.iloc[0:-1].copy()
     X_amplitudes_new['zeta_n'] = df_decrements['zeta_n'].copy()
+    X_amplitudes_new['B_n'] = 2*X_amplitudes_new['zeta_n']  # [Nm*s]
 
     return X_amplitudes_new
+
 
 def fft_omega0(frequencies, dft):
 
@@ -110,3 +111,133 @@ def fft(series):
     dft = np.abs(np.fft.rfft(signal, n=n))
 
     return frequencies, dft
+
+
+def linearized_matrix(df_rolldecay, df_ikeda, phi_as = np.deg2rad(np.linspace(1,10,10)), g=9.81, rho=1000,
+                      do_hatify=True, suffixes=('','_ikeda')):
+    """
+    Calculate B_e equivalent linearized damping for a range of roll amplitudes for both model tests and simplified ikeda.
+
+    Parameters
+    ----------
+    df_rolldecay
+    df_ikeda
+    phi_as
+
+    Returns
+    -------
+
+    """
+
+
+    df = pd.DataFrame()
+
+    for phi_a in phi_as:
+        df_ = linearize(phi_a=phi_a, df_rolldecay=df_rolldecay, df_ikeda=df_ikeda, g=g, rho=rho, do_hatify=do_hatify,
+                        suffixes=suffixes)
+        df_['phi_a']=phi_a
+        df =df.append(df_, ignore_index=True)
+
+    return df
+
+
+def linearize_si(phi_a, df_ikeda, components = ['B_44', 'B_F', 'B_W', 'B_E', 'B_BK', 'B_L'], do_hatify=True):
+    """
+    Calculate the equivalent linearized damping B_e
+
+    Parameters
+    ----------
+    phi_a
+    df_ikeda
+    g
+    rho
+
+    Returns
+    -------
+
+    """
+
+    df_ikeda = df_ikeda.copy()
+
+    for component in components:
+        new_key = '%s_e' % component
+        B1_key = '%s_1' % component
+        B2_key = '%s_2' % component
+
+        df_ikeda[new_key] = lambdas.B_e_lambda(B_1=df_ikeda[B1_key],
+                                               B_2=df_ikeda[B2_key],
+                                               omega0=df_ikeda['omega0'],
+                                               phi_a=phi_a)
+
+    if do_hatify:
+        df_ikeda['B_e'] = df_ikeda['B_44_e']
+    else:
+        df_ikeda['B_e_hat'] = df_ikeda['B_44_hat_e']
+
+    return df_ikeda
+
+def hatify(df_ikeda, g=9.81, rho=1000, components = ['B','B_44', 'B_F', 'B_W', 'B_E', 'B_BK', 'B_L']):
+
+    df_ikeda=df_ikeda.copy()
+    new_keys = ['%s_e' % key for key in components]
+    new_hat_keys = ['%s_e_hat' % key for key in components]
+
+    Disp = np.tile(df_ikeda['Disp'],[len(components),1]).T
+    beam = np.tile(df_ikeda['beam'],[len(components),1]).T
+
+    df_ikeda[new_hat_keys] = lambdas.B_e_hat_lambda(B_e=df_ikeda[new_keys],
+                                                   Disp=Disp,
+                                                   beam=beam,
+                                                   g=g, rho=rho)
+
+    df_ikeda['B_e_hat'] = df_ikeda['B_44_e_hat']
+
+    return df_ikeda
+
+
+def linearize_model_test(phi_a, df_rolldecay, g=9.81, rho=1000):
+    """
+    Calculate the equivalent linearized damping B_e
+
+    Parameters
+    ----------
+    phi_a
+    df_rolldecay
+    g
+    rho
+
+    Returns
+    -------
+
+    """
+
+    df_rolldecay = df_rolldecay.copy()
+
+    df_rolldecay['B_e'] = lambdas.B_e_lambda(B_1=df_rolldecay['B_1'],
+                                             B_2=df_rolldecay['B_2'],
+                                             omega0=df_rolldecay['omega0'],
+                                             phi_a=phi_a)
+
+    df_rolldecay['B_e_hat'] = lambdas.B_e_hat_lambda(B_e=df_rolldecay['B_e'],
+                                                     Disp=df_rolldecay['Disp'],
+                                                     beam=df_rolldecay['beam'],
+                                                     g=g, rho=rho)
+
+    return df_rolldecay
+
+def linearize(phi_a:float, df_rolldecay:pd.DataFrame, df_ikeda:pd.DataFrame, g=9.81, rho=1000,
+              components = ['B_44', 'B_F', 'B_W', 'B_E', 'B_BK', 'B_L'], do_hatify=True, suffixes=('','_ikeda')):
+
+    if not do_hatify:
+        components = ['%s_hat' % key for key in components]
+
+    df_rolldecay = linearize_model_test(phi_a=phi_a, df_rolldecay=df_rolldecay, g=g, rho=rho)
+    df_ikeda = linearize_si(phi_a=phi_a, df_ikeda=df_ikeda, components=components, do_hatify=do_hatify)
+
+    if do_hatify:
+        df_ikeda = hatify(df_ikeda=df_ikeda,g=g, rho=rho, components=components)
+
+
+    df_compare = pd.merge(left=df_rolldecay, right=df_ikeda, how='inner', left_index=True, right_index=True,
+                          suffixes=suffixes)
+    return df_compare

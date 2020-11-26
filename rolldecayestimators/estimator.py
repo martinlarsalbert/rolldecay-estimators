@@ -25,7 +25,7 @@ class RollDecay(BaseEstimator):
         'acceleration':lambdify(acceleration.rhs)
     }
 
-    def __init__(self, maxfev = 100, bounds={}, ftol=10**-10, p0={}, fit_method='derivation', omega_regression=True, omega0=None):
+    def __init__(self, ftol=1e-09, maxfev=100000, bounds={}, p0={}, fit_method='derivation', omega_regression=True, omega0=None):
         self.is_fitted_ = False
 
         self.phi_key = 'phi'  # Roll angle [rad]

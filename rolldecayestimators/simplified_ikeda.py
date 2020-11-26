@@ -22,8 +22,8 @@ import pandas as pd
 from rolldecayestimators import ikeda_speed
 
 def calculate_roll_damping(LPP,Beam,CB,CMID,OG,PHI,lBK,bBK,OMEGA,
-                           DRAFT, V=0, KVC = 1.14e-6, verify_input=True, limit_inputs=False, Bw_div_Bw0_max=12,
-                           BWHAT_lim=0.005, rho=1000, alternative_bilge_keel=False, RdivB=0.02):
+                           DRAFT, V=0, KVC = 1.14e-6, verify_input=True, limit_inputs=False, Bw_div_Bw0_max=np.inf,
+                           BWHAT_lim=np.inf, rho=1000, alternative_bilge_keel=False, RdivB=0.02):
     """
     ********************************************************************
     *** Calculation of roll damping by the proposed predition method ***

@@ -464,6 +464,15 @@ class Ikeda():
         B44BK_N0 = Bp44BK_N0*self.lBK
         B44BK_H0 = Bp44BK_H0*self.lBK
         B44_BK = B44BK_N0 + B44BK_H0 + B44BK_L
+
+        mask = ((self.lBK == 0) | (pd.isnull(self.lBK)))
+
+        if isinstance(mask,np.ndarray):
+            B44_BK[mask]=0
+        else:
+            if mask:
+                B44_BK = 0
+
         return array(self.B_hat(B44_BK))
 
 def array(value):

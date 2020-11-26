@@ -2,6 +2,7 @@ import numpy as np
 import pandas as pd
 
 from rolldecayestimators.ikeda import Ikeda
+import rolldecayestimators.ikeda
 import rolldecayestimators.simplified_ikeda as si
 from rolldecayestimators import ikeda_speed
 
@@ -168,6 +169,46 @@ class SimplifiedIkeda(Ikeda):
         B_BK_hat = si.calculate_B_BK(BBKB=self.bBK/self.beam, BD=self.BD, CB=self.Cb, CMID=self.A0, LBKL=self.lBK/self.lpp, OGD=self.OGD,
                                      OMEGAHAT=self.w_hat, PHI=np.rad2deg(self.fi_a))
         return B_BK_hat
+
+
+class SimplifiedIkedaBK2(SimplifiedIkeda):
+
+    def calculate_B_BK(self):
+        """
+        Calculate bilge keel damping
+
+        Returns
+        -------
+        B_BK_hat : ndarray
+            Bilge keel damping [-]
+
+        """
+
+        if np.any(~(self.bBK == 0) & (self.lBK == 0)):
+            raise rolldecayestimators.ikeda.BilgeKeelError('bBK is 0 but lBK is not!')
+            return 0.0
+
+        if isinstance(self.R, np.ndarray):
+            index = int(len(self.R) / 2)  # Somewhere in the middle of the ship
+            R = self.R[index]
+        else:
+            R = self.R
+
+        Bp44BK_N0, Bp44BK_H0, B44BK_L, B44BKW0 = ikeda_speed.bilge_keel(w=self.w, fi_a=self.fi_a, V=self.V, B=self.beam,
+                                                                        d=self.draught, A=self.A_mid,
+                                                                        bBK=self.bBK, R=R, g=self.g, OG=self.OG,
+                                                                        Ho=self.Ho, ra=self.rho)
+
+        B44BK_N0 = Bp44BK_N0 * self.lBK
+        B44BK_H0 = Bp44BK_H0 * self.lBK
+        B44_BK = B44BK_N0 + B44BK_H0 + B44BK_L
+
+        B44_BK=rolldecayestimators.ikeda.array(self.B_hat(B44_BK))
+        mask = ((self.lBK == 0) | (pd.isnull(self.lBK)))
+        B44_BK[mask] = 0
+
+        return B44_BK
+
 
 class SimplifiedIkedaABS(SimplifiedIkeda):
 

@@ -76,12 +76,14 @@ class DirectEstimator(RollDecay):
         return super(cls, cls)._load(data=data, X=X)
 
     def calculate_amplitudes_and_damping(self):
-        X_interpolated = measure.sample_increase(X=self.X)
-        self.X_zerocrossings = measure.get_zerocrossings(X=X_interpolated)
-        X_amplitudes = measure.calculate_amplitudes(X_zerocrossings=self.X_zerocrossings)
-        self.X_amplitudes = self.calculate_damping(X_amplitudes=X_amplitudes)
-        T0 = 2*self.X_amplitudes.index
-        self.X_amplitudes['omega0'] = 2 * np.pi/T0
+        if hasattr(self,'X'):
+            if not self.X is None:
+                self.X_amplitudes=measure.calculate_amplitudes_and_damping(X=self.X)
+
+                if self.is_fitted_:
+                    X_pred = self.predict(X=self.X)
+                    self.X_pred_amplitudes = measure.calculate_amplitudes_and_damping(X=X_pred)
+
 
     @staticmethod
     def calculate_damping(X_amplitudes):
@@ -100,9 +102,12 @@ class DirectEstimator(RollDecay):
 
         df_decrements['zeta_n'] *= 2  # !!! # Todo: Where did this one come from?
 
+
+
         X_amplitudes_new = X_amplitudes.copy()
         X_amplitudes_new = X_amplitudes_new.iloc[0:-1].copy()
         X_amplitudes_new['zeta_n'] = df_decrements['zeta_n'].copy()
+        X_amplitudes_new['B_n'] = 2*X_amplitudes_new['zeta_n']  # [Nm*s]
 
         return X_amplitudes_new
 
@@ -183,13 +188,13 @@ class DirectEstimator(RollDecay):
         if model_test:
             X = self.X.copy()
             X['phi_deg'] = np.rad2deg(X['phi'])
-            X.plot(y='phi_deg', ax=ax, label='Model test')
+            X.plot(y=r'phi_deg', ax=ax, label='Model test')
 
-        df.plot(y='phi_deg', ax=ax, label=self.__repr__(), style='--',**kwargs)
+        df.plot(y=r'phi_deg', ax=ax, label='fit', style='--',**kwargs)
 
         ax.legend()
-        ax.set_xlabel('Time [s]')
-        ax.set_ylabel('$\Phi$ [deg]')
+        ax.set_xlabel(r'Time [s]')
+        ax.set_ylabel(r'$\Phi$ [deg]')
 
     def plot_error(self,X=None, ax=None, **kwargs):
         check_is_fitted(self, 'is_fitted_')
@@ -226,19 +231,46 @@ class DirectEstimator(RollDecay):
         ax.plot([np.min(self.X.index), np.max(self.X.index)], [0, 0], 'm-')
         ax.set_title('Velocities')
 
-    def plot_damping(self, ax=None):
-        check_is_fitted(self, 'is_fitted_')
+    def plot_amplitude(self, ax=None, include_model_test=True):
 
         if ax is None:
             fig,ax = plt.subplots()
 
-        df_amplitudes = self.X_amplitudes.copy()
-        df_amplitudes['zeta_n_pred'] = self.linear_regression.predict(X=df_amplitudes[['x']])
-        df_amplitudes.plot(x='x', y='zeta_n_pred', ax=ax, style='-')
-        df_amplitudes.plot(x='x', y='zeta_n', ax=ax, style='.')
-        ax.set_xlabel(r'$2/(3\pi)\Phi_n$', usetex=True)
-        ax.set_ylabel(r'$\zeta_n$', usetex=True)
-        ax.get_yaxis().get_major_formatter().set_useOffset(False)
+        if not hasattr(self,'X_amplitudes'):
+            self.calculate_amplitudes_and_damping()
+
+        if include_model_test:
+            X_amplitudes=self.X_amplitudes.copy()
+            X_amplitudes['phi_a']=np.rad2deg(X_amplitudes['phi_a'])
+            X_amplitudes.plot(y='phi_a', style='o', label='Model test', ax=ax)
+
+        if hasattr(self,'X_pred_amplitudes'):
+            label = self.__repr__()
+            X_pred_amplitudes = self.X_pred_amplitudes.copy()
+            X_pred_amplitudes['phi_a'] = np.rad2deg(X_pred_amplitudes['phi_a'])
+            X_pred_amplitudes.plot(y='phi_a', label=label, ax=ax)
+
+    def plot_damping(self, ax=None, include_model_test=True):
+
+        if ax is None:
+            fig, ax = plt.subplots()
+
+        if not hasattr(self, 'X_amplitudes'):
+            self.calculate_amplitudes_and_damping()
+
+        if include_model_test:
+            X_amplitudes = self.X_amplitudes.copy()
+            X_amplitudes['phi_a'] = np.rad2deg(X_amplitudes['phi_a'])
+            X_amplitudes.plot(x='phi_a', y='B_n', style='o', label='Model test', ax=ax)
+
+        if hasattr(self, 'X_pred_amplitudes'):
+            label = self.__repr__()
+            X_pred_amplitudes = self.X_pred_amplitudes.copy()
+            X_pred_amplitudes['phi_a'] = np.rad2deg(X_pred_amplitudes['phi_a'])
+            X_pred_amplitudes.plot(x='phi_a', y='B_n', label=label, ax=ax)
+
+        ax.set_xlabel(r'$\phi_a$ [deg]')
+        ax.set_ylabel(r'$B$ [Nms]')
 
     def plot_fft(self, ax=None):
         check_is_fitted(self, 'is_fitted_')

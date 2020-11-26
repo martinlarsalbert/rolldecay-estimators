@@ -71,7 +71,7 @@ class EstimatorCubic(DirectEstimator):
 
 
     @classmethod
-    def load(cls, B_1A:float, B_2A:float, B_3A:float, C_1A:float, C_3A:float, C_5A:float, X=None):
+    def load(cls, B_1A:float, B_2A:float, B_3A:float, C_1A:float, C_3A:float, C_5A:float, X=None, **kwargs):
         """
         Load data and parameters from an existing fitted estimator
 
@@ -190,7 +190,7 @@ class EstimatorQuadraticB(EstimatorCubic):
     functions['acceleration'] = lambdify(acceleration)
 
     @classmethod
-    def load(cls, B_1A:float, B_2A:float, C_1A:float, X=None):
+    def load(cls, B_1A:float, B_2A:float, C_1A:float, X=None, **kwargs):
         """
         Load data and parameters from an existing fitted estimator
 
@@ -281,7 +281,7 @@ class EstimatorLinear(EstimatorCubic):
     functions['acceleration'] = lambdify(acceleration)
 
     @classmethod
-    def load(cls, B_1A:float, C_1A:float, X=None):
+    def load(cls, B_1A:float, C_1A:float, X=None, **kwargs):
         """
         Load data and parameters from an existing fitted estimator
 

@@ -60,7 +60,7 @@ B_1 = ss.Symbol(name='B_1',description='Linear damping coefficient',unit='Nm/(ra
 B_2 = ss.Symbol(name='B_2',description='Quadratic damping coefficient',unit='Nm/(rad/s**2')  # Natural roll frequency
 B_3 = ss.Symbol(name='B_3',description='Cubic damping coefficient',unit='Nm/(rad/s)**3')  # Natural roll frequency
 
-C = sp.Symbol(name='C')  # Introducing a helper coefficient C
+C = ss.Symbol(name='C', description='General stiffness coefficient', unit=r'Nm/rad')  # Introducing a helper coefficient C
 
 C_1 = ss.Symbol(name='C_1', description='Linear stiffness coefficient', unit=r'Nm/rad')
 C_3 = ss.Symbol(name='C_3',description='Stiffness coefficient', unit=r'Nm/rad**3')
@@ -73,6 +73,13 @@ B_e_hat = ss.Symbol(name='B_e_hat', description='Nondimensional damping', unit='
 B_e_hat_0 = ss.Symbol(name='B_e_hat_0', description='Nondimensional damping', unit='-')
 B_e_factor = ss.Symbol(name='B_e_factor', description='Nondimensional damping', unit='-')
 
+B_W_e_hat = ss.Symbol(name='B_W_e_hat', description='Nondimensional damping', unit='-')
+B_F_e_hat = ss.Symbol(name='B_F_e_hat', description='Nondimensional damping', unit='-')
+B_BK_e_hat = ss.Symbol(name='B_BK_e_hat', description='Nondimensional damping', unit='-')
+B_E_e_hat = ss.Symbol(name='B_E_e_hat', description='Nondimensional damping', unit='-')
+B_L_e_hat = ss.Symbol(name='B_L_e_hat', description='Nondimensional damping', unit='-')
+
+
 B_1_hat = ss.Symbol(name='B_1_hat', description='Nondimensional damping', unit='-')
 B_2_hat = ss.Symbol(name='B_2_hat', description='Nondimensional damping', unit='-')
 omega_hat = ss.Symbol(name='omega_hat', description='Nondimensional roll frequency', unit='-')
@@ -80,19 +87,19 @@ omega0_hat = ss.Symbol(name='omega0_hat', description='Nondimensional roll frequ
 
 B_1_hat0 = ss.Symbol(name='B_1_hat0', description='Nondimensional damping at zero speed', unit='-')
 
-B_44_ = ss.Symbol(name='B_44', description='Total roll damping', unit='Nm/(rad/s)')
+B_44_ = ss.Symbol(name='B_44', description='Total roll damping at a certain roll amplitude', unit='Nm/(rad/s)')
 B_F = ss.Symbol(name='B_F', description='Friction roll damping', unit='Nm/(rad/s)')
 B_W = ss.Symbol(name='B_W', description='Wave roll damping', unit='Nm/(rad/s)')
 B_E = ss.Symbol(name='B_E', description='Eddy roll damping', unit='Nm/(rad/s)')
 B_BK = ss.Symbol(name='B_{BK}', description='Bilge keel roll damping', unit='Nm/(rad/s)')
 B_L = ss.Symbol(name='B_L', description='Hull lift roll damping', unit='Nm/(rad/s)')
 
-B_44_HAT = ss.Symbol(name='B_44_HAT', description='Total roll damping', unit='-')
-B_F_HAT = ss.Symbol(name='B_F_HAT', description='Friction roll damping', unit='-')
-B_W_HAT = ss.Symbol(name='B_W_HAT', description='Wave roll damping', unit='-')
-B_E_HAT = ss.Symbol(name='B_E_HAT', description='Eddy roll damping', unit='-')
-B_BK_HAT = ss.Symbol(name='B_BK_HAT', description='Bilge keel roll damping', unit='-')
-B_L_HAT = ss.Symbol(name='B_L_HAT', description='Hull lift roll damping', unit='-')
+B_44_HAT =  ss.Symbol(name='B_44_HAT', description='Total roll damping at a certain roll amplitude', unit='-')
+B_F_HAT = B_F_hat = ss.Symbol(name='B_F_HAT', description='Friction roll damping', unit='-')
+B_W_HAT = B_W_hat = ss.Symbol(name='B_W_HAT', description='Wave roll damping', unit='-')
+B_E_HAT = B_E_hat = ss.Symbol(name='B_E_HAT', description='Eddy roll damping', unit='-')
+B_BK_HAT = B_BK_hat = ss.Symbol(name='B_BK_HAT', description='Bilge keel roll damping', unit='-')
+B_L_HAT = B_L_hat = ss.Symbol(name='B_L_HAT', description='Hull lift roll damping', unit='-')
 
 ## Functions:
 GZ = sp.Function('GZ')(phi)
