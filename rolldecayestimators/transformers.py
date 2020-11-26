@@ -112,7 +112,7 @@ class CutTransformer(BaseEstimator, TransformerMixin):
         X_cut = X_cut.loc[index2:].copy()
 
         X_interpolated = measure.sample_increase(X=X_cut, increase=5)
-        X_zerocrossings = measure.get_zerocrossings(X=X_interpolated)
+        X_zerocrossings = measure.get_peaks(X=X_interpolated)
         mask = X_interpolated.index >= X_zerocrossings.index[0]
         X_interpolated = X_interpolated.loc[mask]
 
@@ -447,7 +447,7 @@ class OffsetTransformer(BaseEstimator, TransformerMixin):
         X_offset = X.copy()
 
         X_interpolated = measure.sample_increase(X=X)
-        self.X_zerocrossings = measure.get_zerocrossings(X=X_interpolated)
+        self.X_zerocrossings = measure.get_peaks(X=X_interpolated)
 
         linear_regression = LinearRegression(fit_intercept=False)
         X_ = np.array([self.X_zerocrossings.index.values]).transpose()

@@ -12,13 +12,23 @@ def sample_increase(X, increase=5):
 
     return X_interpolated
 
-def get_zerocrossings(X,key='phi1d'):
+def get_peaks(X:pd.DataFrame, key='phi1d')->pd.DataFrame:
+    """
+    Find the peaks in the signal by finding zero roll angle velocity
+
+    Parameters
+    ----------
+    X
+        DataFrame with roll signal as "phi"
+    key = 'phi1d'
+
+    Returns
+    -------
+    Dataframe with rows from X where phi1d is close to 0.
+
+    """
 
     phi1d = np.array(X[key])
-    #ts = np.mean(np.diff(X.index))
-    #fs = 1/ts
-    #cutoff = fs/1000  # ToDo: Verify this assumption
-    #phi1d = lowpass_filter(data = phi1d, fs=fs, cutoff=cutoff, order=1)  # Run lowpass filter to remove noice
 
     index = np.arange(0, len(X.index))
     index_later = np.roll(index, shift=-1)
@@ -49,11 +59,11 @@ def calculate_amplitudes(X_zerocrossings):
 
 def calculate_amplitudes_and_damping(X:pd.DataFrame):
     X_interpolated = sample_increase(X=X)
-    X_zerocrossings = get_zerocrossings(X=X_interpolated)
+    X_zerocrossings = get_peaks(X=X_interpolated)
     X_amplitudes = calculate_amplitudes(X_zerocrossings=X_zerocrossings)
     X_amplitudes = calculate_damping(X_amplitudes=X_amplitudes)
     T0 = 2*X_amplitudes.index
-    X_amplitudes['omega0'] = 2 * np.pi/T0
+    X_amplitudes['omega0'] = 2 * np.pi/np.gradient(T0)
     #X_amplitudes['time'] = np.cumsum(X_amplitudes.index)
     return X_amplitudes
 
