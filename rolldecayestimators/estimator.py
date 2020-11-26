@@ -172,8 +172,14 @@ class RollDecay(BaseEstimator):
                   'xs': X,
                   'ys': X[self.y_key]}
 
-        self.result = least_squares(fun=self.error, x0=self.initial_guess, kwargs=kwargs, bounds=self.bounds,
-                                    ftol=self.ftol, max_nfev=self.maxfev, loss='soft_l1', f_scale=0.1,)
+
+        if self.fit_method=='integration':
+            self.result = least_squares(fun=self.error, x0=self.initial_guess, kwargs=kwargs, bounds=self.bounds,
+                                    ftol=self.ftol, max_nfev=self.maxfev, loss='soft_l1', f_scale=0.1)
+        else:
+            self.result = least_squares(fun=self.error, x0=self.initial_guess, kwargs=kwargs,
+                                    ftol=self.ftol, max_nfev=self.maxfev, method='lm')
+
         if self.assert_success:
             if not self.result['success']:
                 raise FitError(self.result['message'])
