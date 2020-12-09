@@ -3,6 +3,7 @@ This module contain a class to calculate Ikeda in various ways
 """
 import numpy as np
 import pandas as pd
+from numpy import sqrt as sqrt
 
 from rolldecayestimators import ikeda_speed
 from rolldecayestimators import lambdas
@@ -22,7 +23,7 @@ class Ikeda():
 
     """
     def __init__(self, V:np.ndarray, w:np.ndarray, fi_a:float, B_W0_hat:pd.Series, beam:float, lpp:float,
-                 kg:float, volume:float, sections:pd.DataFrame, lBK=0.0, bBK=0.0,
+                 kg:float, volume:float, sections:pd.DataFrame, BKL, BKB,
                  g=9.81, rho=1000.0, visc =1.15*10**-6, scale_factor=1.0, **kwargs):
         """
         Manually specify the inputs to the calculations.
@@ -55,9 +56,9 @@ class Ikeda():
             sections['T_s'] : sectional draught [m]
             sections['C_s'] :   sectional area coefficient [-]
                                 C_s = S_s/(B_s*T_s)
-        lBK
+        BKL
             length bilge keel [m] (=0 --> no bilge keel)
-        bBK
+        BKB
             height bilge keel [m] (=0 --> no bilge keel)
         scale_factor : float
             scale factor is used to calculate the wetted surface in the skin friction damping B_F
@@ -71,25 +72,42 @@ class Ikeda():
         -------
         None
         """
+        #self.V = np.array(V, dtype=float)
+        #self.g = np.array(g, dtype=float)
+        #self.w =  np.array(w, dtype=float)
+        #self.fi_a =  np.array(fi_a, dtype=float)
+        #self.B_W0_hat= B_W0_hat
+        #self.beam= np.array(beam, dtype=float)
+        #self.lpp= np.array(lpp, dtype=float)
+        #self.kg= np.array(kg, dtype=float)
+        #self.volume =  np.array(volume, dtype=float)
+        #self.sections= sections
+        #self.BKL= np.array(BKL, dtype=float)
+        #self.BKB= np.array(BKB, dtype=float)
+        #self.rho= np.array(rho, dtype=float)
+        #self.visc= np.array(visc, dtype=float)
+        #self.scale_factor= np.array(scale_factor, dtype=float)
+
         self.V = np.array(V, dtype=float)
         self.g = g
-        self.w = w
-        self.fi_a = fi_a
-        self.B_W0_hat=B_W0_hat
-        self.beam=beam
-        self.lpp=lpp
-        self.kg=kg
-        self.volume = volume
-        self.sections=sections
-        self.lBK=lBK
-        self.bBK=bBK
-        self.rho=rho
-        self.visc=visc
-        self.scale_factor=scale_factor
+        self.w =  w
+        self.fi_a =  fi_a
+        self.B_W0_hat= B_W0_hat
+        self.beam= beam
+        self.lpp= lpp
+        self.kg= kg
+        self.volume =  volume
+        self.sections= sections
+        self.lBK= BKL
+        self.bBK= BKB
+        self.rho= rho
+        self.visc= visc
+        self.scale_factor= scale_factor
+
 
     @classmethod
     def load_scoresII(cls, V:np.ndarray, w:np.ndarray, fi_a:float, indata:pyscores2.indata.Indata,
-                      output_file:pyscores2.output.OutputFile, lBK: float, bBK :float, g=9.81, rho=1000.0, visc =1.15*10**-6,
+                      output_file:pyscores2.output.OutputFile, BKL: float, BKB :float, g=9.81, rho=1000.0, visc =1.15 * 10 ** -6,
                       scale_factor=1.0,
                       **kwargs):
         """
@@ -104,9 +122,9 @@ class Ikeda():
             Indata to ScoresII program
         output_file :pyscores2.output.OutputFile
             Outdata from ScoresII program
-        lBK
+        BKL
             bilge keel length [m]
-        bBK
+        BKB
             bilge keel height [m]
         g
         rho
@@ -144,7 +162,7 @@ class Ikeda():
         B_W0_hat = pd.Series(data=B_W0_hat_, index=ws_hat)
 
         return cls(V=V, w=w, fi_a=fi_a, B_W0_hat=B_W0_hat, beam=beam, lpp=lpp, kg=kg, volume=volume,
-                   sections=sections, lBK=lBK, bBK=bBK, g=g, rho=rho, visc=visc, scale_factor=scale_factor)
+                   sections=sections, BKL=BKL, BKB=BKB, g=g, rho=rho, visc=visc, scale_factor=scale_factor)
 
     @property
     def OG(self):
@@ -448,7 +466,7 @@ class Ikeda():
         """
 
         if np.any(~(self.bBK==0) & (self.lBK==0)):
-            raise BilgeKeelError('bBK is 0 but lBK is not!')
+            raise BilgeKeelError('BKB is 0 but BKL is not!')
             return 0.0
 
         if isinstance(self.R, np.ndarray):

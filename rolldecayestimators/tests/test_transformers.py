@@ -1,50 +1,53 @@
 import pytest
 import numpy as np
 
-from sklearn.datasets import load_iris
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_allclose
 
 from rolldecayestimators import DirectEstimator, CutTransformer
-
+from rolldecayestimators.transformers import OffsetTransformer
+from rolldecayestimators.tests.test_cubic import simulate
+import matplotlib.pyplot as plt
 
 @pytest.fixture
 def data():
-    return load_iris(return_X_y=True)
+    parameters = {
+        'B_1A': 0.3,
+        'B_2A': 0.0,
+        'B_3A': 0.0,
+        'C_1A': 10.0,
+        'C_3A': 0.0,
+        'C_5A': 0.0,
+    }
 
-@pytest.mark.skip('Write a real test later...')
-def test_direct_estimator(data):
-    est = DirectEstimator()
-    assert est.demo_param == 'demo_param'
+    phi0 = np.deg2rad(10)
+    phi1d0 = 0
+    t = np.arange(0, 15, 0.1)
+    X = simulate(t=t, phi0=phi0, phi1d0=phi1d0, **parameters)
 
-    est.fit(*data)
-    assert hasattr(est, 'is_fitted_')
+    return X
 
-    X = data[0]
-    y_pred = est.predict(X)
-    assert_array_equal(y_pred, np.ones(X.shape[0], dtype=np.int64))
+def test_offset_transformer(data):
+    X = data
 
-@pytest.mark.skip('Write a real test later...')
-def test_cut_transformer_error(data):
-    X, y = data
-    trans = CutTransformer()
-    trans.fit(X,y)
-    with pytest.raises(ValueError, match="Shape of input is different"):
-        X_diff_size = np.ones((10, X.shape[1] + 1))
-        trans.transform(X_diff_size)
+    X_offset = X.copy()
+    phi_offset = np.deg2rad(1.0)
+    t = X_offset.index
+    delta_t = t[-1] - t[0]
+    d_phi = phi_offset/delta_t
+    X_offset['phi']=X_offset['phi'] + d_phi*t
 
-@pytest.mark.skip('Write a real test later...')
-def test_cut_transformer(data):
-    X, y = data
-    trans = CutTransformer()
-    assert trans.start == 0
-    assert trans.stop == 1
+    trans = OffsetTransformer()
 
-    trans.fit(X,y)
-    assert trans.n_features_ == X.shape[1]
+    trans.fit(X=X)
 
-    X_trans = trans.transform(X)
-    assert_allclose(X_trans, X)
+    X_trans = trans.transform(X=X)
 
-    X_trans = trans.fit_transform(X,y)
-    assert_allclose(X_trans, X)
+    fig,ax=plt.subplots()
+    X.plot(y='phi', ax=ax, label='true')
+    X_offset.plot(y='phi', ax=ax, label='model test')
+    X_trans.plot(y='phi', ax=ax, style='--', label='offset removed')
+    ax.legend()
+    plt.show()
+
+    assert_allclose(X_trans['phi'], X['phi'], atol=0.01)

@@ -446,14 +446,14 @@ class OffsetTransformer(BaseEstimator, TransformerMixin):
 
         X_offset = X.copy()
 
-        X_interpolated = measure.sample_increase(X=X)
-        self.X_zerocrossings = measure.get_peaks(X=X_interpolated)
+        #X_interpolated = measure.sample_increase(X=X)
+        X_zerocrossings = measure.get_peaks(X=X_offset)
 
         linear_regression = LinearRegression(fit_intercept=False)
-        X_ = np.array([self.X_zerocrossings.index.values]).transpose()
-        linear_regression.fit(X=X_, y=self.X_zerocrossings['phi'])
-        self.X_zerocrossings['phi0'] = linear_regression.predict(X=X_)
-        self.X_zerocrossings['phi_'] = self.X_zerocrossings['phi'] - self.X_zerocrossings['phi0']
+        X_ = np.array([X_zerocrossings.index.values]).transpose()
+        linear_regression.fit(X=X_, y=X_zerocrossings['phi'])
+        X_zerocrossings['phi0'] = linear_regression.predict(X=X_)
+        X_zerocrossings['phi_'] = X_zerocrossings['phi'] - X_zerocrossings['phi0']
 
         X_2 = np.array([X_offset.index.values]).transpose()
         X_offset['phi0'] = linear_regression.predict(X=X_2)

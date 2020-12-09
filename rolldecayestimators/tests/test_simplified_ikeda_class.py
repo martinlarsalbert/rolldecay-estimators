@@ -35,7 +35,7 @@ def test_simplified_ikeda():
 
 
     si = SimplifiedIkeda(V=0, w=OMEGA, fi_a=np.deg2rad(PHI), beam=Beam, lpp=LPP, kg=kg, volume=volume, draught=DRAFT, A0=CMID,
-                    lBK=lBK, bBK=bBK, visc=1.14e-6)
+                         BKL=lBK, BKB=bBK, visc=1.14e-6)
 
     B44HAT = si.calculate_B44()
     BFHAT = si.calculate_B_F()
@@ -56,7 +56,7 @@ def test_simplified_ikeda_scale():
     V = 10
 
     si = SimplifiedIkeda(V=V, w=OMEGA, fi_a=np.deg2rad(PHI), beam=Beam, lpp=LPP, kg=kg, volume=volume, draught=DRAFT, A0=CMID,
-                    lBK=lBK, bBK=bBK, visc=1.14e-6)
+                         BKL=lBK, BKB=bBK, visc=1.14e-6)
 
     scale_factor = 100
     V_m = V/np.sqrt(scale_factor)
@@ -70,8 +70,8 @@ def test_simplified_ikeda_scale():
     volume_m = volume/(scale_factor**3)
 
     si_model = SimplifiedIkeda(V=V_m, w=w_m, fi_a=np.deg2rad(PHI), beam=beam_m, lpp=lpp_m, kg=kg_m, volume=volume_m, draught=draught_m,
-                         A0=CMID,
-                         lBK=lBK_m, bBK=bBK_m, visc=1.14e-6)
+                               A0=CMID,
+                               BKL=lBK_m, BKB=bBK_m, visc=1.14e-6)
 
     assert_almost_equal(si.calculate_B_W(), si_model.calculate_B_W(), decimal=decimal)
     assert_almost_equal(si.calculate_B_BK(), si_model.calculate_B_BK(), decimal=decimal)
@@ -88,7 +88,7 @@ def test_simplified_ikeda_vector():
     N=10
     w = np.ones(N)*OMEGA
     si = SimplifiedIkeda(V=0, w=w, fi_a=np.deg2rad(PHI), beam=Beam, lpp=LPP, kg=kg, volume=volume, draught=DRAFT, A0=CMID,
-                    lBK=lBK, bBK=bBK, visc=1.14e-6)
+                         BKL=lBK, BKB=bBK, visc=1.14e-6)
 
     B44HAT = si.calculate_B44()
 
@@ -100,7 +100,7 @@ def test_simplified_ikeda_vector2():
     fi_a = np.deg2rad(np.linspace(1, 15, N))
 
     si = SimplifiedIkeda(V=0, w=OMEGA, fi_a=fi_a, beam=Beam, lpp=LPP, kg=kg, volume=volume, draught=DRAFT, A0=CMID,
-                    lBK=lBK, bBK=bBK, visc=1.14e-6)
+                         BKL=lBK, BKB=bBK, visc=1.14e-6)
 
     B44HAT = si.calculate_B44()
 

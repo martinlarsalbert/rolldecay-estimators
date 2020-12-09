@@ -166,7 +166,7 @@ def calculate_B44(w, V, d, Bw0, fi_a,  B,  A, bBK, R, OG, Ho, ra, Cb, L, LBK, vi
 
 def calculate_B44_series(row):
     s = pd.Series(name=row.name)
-    B_44,B_W,B_BK,B_F,B_L = calculate_B44(w=row['w'], V=row['V'], d=row['d'], Bw0=row['Bw0'], fi_a=row['fi_a'], B=row['B'], A=row['A'], bBK=row['bBK'], R=row['R'],
+    B_44,B_W,B_BK,B_F,B_L = calculate_B44(w=row['w'], V=row['V'], d=row['d'], Bw0=row['Bw0'], fi_a=row['fi_a'], B=row['B'], A=row['A'], bBK=row['BKB'], R=row['R'],
                          OG=row['OG'], Ho=row['Ho'], ra=row['ra'], Cb=row['Cb'], L=row['L'], LBK=row['LBK'], visc=row['visc'], g=row['g'])
     s['B_44']=B_44
     s['B_W']=B_W

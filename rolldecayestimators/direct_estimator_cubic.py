@@ -57,7 +57,7 @@ class EstimatorCubic(DirectEstimator):
     omgea0_equation = sp.Eq(symbols.omega0, sp.solve(eqs, symbols.A_44, symbols.C, symbols.omega0)[0][2])
     functions['omega0'] = lambdify(sp.solve(omgea0_equation,symbols.omega0)[0])
 
-    def __init__(self, maxfev=100, bounds={}, ftol=10 ** -15, p0={}, fit_method='integration'):
+    def __init__(self, maxfev=1000, bounds={}, ftol=10 ** -15, p0={}, fit_method='integration'):
 
         new_bounds={
             'B_1A':(0, np.inf),  # Assuming only positive coefficients

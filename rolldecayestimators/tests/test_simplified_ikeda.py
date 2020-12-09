@@ -10,8 +10,8 @@ B / d = 4.0,
 Cb = 0.65,
 Cm = 0.98,
 φa = 10,
-bBK / B = 0.025
-lBK / Lpp = 0.2
+BKB / B = 0.025
+BKL / Lpp = 0.2
 """
 L_div_B = 6.0
 BD = 4.0
@@ -165,8 +165,8 @@ def random_values():
         'CMID':random_value(limits_kawahara['CMID']),
         'OG':DRAFT*random_value(limits_kawahara[r'OG/d']),
         'PHI':PHI,
-        'lBK':LPP*random_value(limits_kawahara[r'lBk/LPP']),
-        'bBK':Beam*random_value(limits_kawahara[r'bBk/B']),
+        'BKL':LPP*random_value(limits_kawahara[r'lBk/LPP']),
+        'BKB':Beam*random_value(limits_kawahara[r'bBk/B']),
         'OMEGA':random_value(limits_kawahara['OMEGA_hat'])/(np.sqrt(Beam / 2 / 9.81)),
 
     }
@@ -194,9 +194,9 @@ def test_peter_piehl_implementation():
         r2['CB']=r['CB']
         r2['OG']=r['OG']
         r2['PHI']=r['PHI']
-        r2['BKCOMP']=(r['lBK']>0)
-        r2['lBK']=r['lBK']
-        r2['bBK']=r['bBK']
+        r2['BKCOMP']=(r['BKL']>0)
+        r2['BKL']=r['BKL']
+        r2['BKB']=r['BKB']
 
         ikeda.setPara(r2)
         ikeda.ikedaMethod()

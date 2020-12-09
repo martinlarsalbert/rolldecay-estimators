@@ -185,7 +185,7 @@ def bilge_keel(w, fi_a, V, B, d, A, bBK, R, g, OG, Ho, ra):
 
     # #
     # Hull pressure component
-    #So = 0.3 * pi * l * fi_a * f / bBK + 1.95; # S175 implementation
+    #So = 0.3 * pi * l * fi_a * f / BKB + 1.95; # S175 implementation
     So = (0.3 * pi * l * fi_a * f / bBK + 1.95) * bBK;
     m1 = R / d;
     m2 = OG / d;
@@ -229,7 +229,7 @@ def bilge_keel(w, fi_a, V, B, d, A, bBK, R, g, OG, Ho, ra):
     lBK = l - bBK; # needs to be verified!!!!
     fi = fi_a;
 
-    #dBK = lBK * ((2 * d / B) / sqrt(1 + (2 * d / B) ** 2) * cos(fi) - sin(fi) / (1 + (2 * d / B) ** 2));  # S175 implementation
+    #dBK = BKL * ((2 * d / B) / sqrt(1 + (2 * d / B) ** 2) * cos(fi) - sin(fi) / (1 + (2 * d / B) ** 2));  # S175 implementation
     dBK = lBK * ((2 * d / B) / sqrt(1 + (2 * d / B)**2) * cos(fi) - sin(fi) / sqrt((1 + (2 * d / B)**2)));
 
     B44BKW0 = C_BK * exp(-w ** 2 / g * dBK); # non dimensional  wave damping from BK, ITTC
@@ -363,7 +363,7 @@ def calculate_B44(w, V, d, Bw0, fi_a,  B,  A, bBK, R, OG, Ho, ra, Cb, L, LBK, vi
 
 def calculate_B44_series(row, Bw_div_Bw0_max=12):
     s = pd.Series(name=row.name)
-    B_44,B_W,B_BK,B_F,B_L = calculate_B44(w=row['w'], V=row['V'], d=row['d'], Bw0=row['Bw0'], fi_a=row['fi_a'], B=row['B'], A=row['A'], bBK=row['bBK'], R=row['R'],
+    B_44,B_W,B_BK,B_F,B_L = calculate_B44(w=row['w'], V=row['V'], d=row['d'], Bw0=row['Bw0'], fi_a=row['fi_a'], B=row['B'], A=row['A'], bBK=row['BKB'], R=row['R'],
                          OG=row['OG'], Ho=row['Ho'], ra=row['ra'], Cb=row['Cb'], L=row['L'], LBK=row['LBK'], visc=row['visc'], g=row['g'], Bw_div_Bw0_max=Bw_div_Bw0_max)
     s['B_44']=B_44
     s['B_W']=B_W

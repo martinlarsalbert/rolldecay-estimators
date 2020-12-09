@@ -21,7 +21,7 @@ import numpy as np
 import pandas as pd
 from rolldecayestimators import ikeda_speed
 
-def calculate_roll_damping(LPP,Beam,CB,CMID,OG,PHI,lBK,bBK,OMEGA,
+def calculate_roll_damping(LPP, Beam, CB, CMID, OG, PHI, BKL, BKB, OMEGA,
                            DRAFT, V=0, KVC = 1.14e-6, verify_input=True, limit_inputs=False, Bw_div_Bw0_max=np.inf,
                            BWHAT_lim=np.inf, rho=1000, alternative_bilge_keel=False, RdivB=0.02):
     """
@@ -35,8 +35,8 @@ def calculate_roll_damping(LPP,Beam,CB,CMID,OG,PHI,lBK,bBK,OMEGA,
     :param CMID: Middship coefficient (A_m/(B*d) [-]
     :param OG: distance from the still water level O to the roll axis G [m]
     :param PHI: Roll angle [deg]
-    :param lBK: length of bilge keel [m]
-    :param bBK: height of bilge keel [m]
+    :param BKL: length of bilge keel [m]
+    :param BKB: height of bilge keel [m]
     :param OMEGA: Frequency of motion [rad/s]
     :param DRAFT: DRAFT : ship draught [m]
     :param OMEGAHAT:
@@ -69,8 +69,8 @@ def calculate_roll_damping(LPP,Beam,CB,CMID,OG,PHI,lBK,bBK,OMEGA,
         'CMID': CMID,
         'OG': OG,
         'PHI': PHI,
-        'lBK': lBK,
-        'bBK': bBK,
+        'BKL': BKL,
+        'BKB': BKB,
         'OMEGA': OMEGA,
         'DRAFT': DRAFT,
     }
@@ -82,26 +82,26 @@ def calculate_roll_damping(LPP,Beam,CB,CMID,OG,PHI,lBK,bBK,OMEGA,
 
     if limit_inputs:
         # Limit the inputs to not exceed the limits.
-        outputs = _limit_inputs(LPP=LPP,Beam=Beam, CB=CB,CMID=CMID,OG=OG,PHI=PHI,lBK=lBK,bBK=bBK,OMEGA=OMEGA,DRAFT=DRAFT)
+        outputs = _limit_inputs(LPP=LPP, Beam=Beam, CB=CB, CMID=CMID, OG=OG, PHI=PHI, lBK=BKL, bBK=BKB, OMEGA=OMEGA, DRAFT=DRAFT)
         LPP = outputs['LPP']
         Beam = outputs['Beam']
         CB = outputs['CB']
         CMID = outputs['CMID']
         OG = outputs['OG']
         PHI = outputs['PHI']
-        lBK = outputs['lBK']
-        bBK = outputs['bBK']
+        BKL = outputs['BKL']
+        BKB = outputs['BKB']
         OMEGA = outputs['OMEGA']
         DRAFT = outputs['DRAFT']
 
     if verify_input:
-        verify_inputs(LPP,Beam,CB,CMID,OG,PHI,lBK,bBK,OMEGA,
-                           DRAFT)
+        verify_inputs(LPP, Beam, CB, CMID, OG, PHI, BKL, BKB, OMEGA,
+                      DRAFT)
 
-    LBKL=lBK/LPP
+    LBKL= BKL / LPP
     BD = Beam/DRAFT
     OGD = OG/DRAFT
-    BBKB = bBK/Beam
+    BBKB = BKB / Beam
     BRTH = Beam
     #OMEGA/= 2  # Magic factor!??? This value seemt o give better results..?
     OMEGAHAT = OMEGA * SQRT(BRTH / 2 / 9.81)
@@ -135,7 +135,7 @@ def calculate_roll_damping(LPP,Beam,CB,CMID,OG,PHI,lBK,bBK,OMEGA,
         BEHAT*=(factor)/(1+factor)
         B44HAT+=BEHAT
 
-    if alternative_bilge_keel and bBK>0:
+    if alternative_bilge_keel and BKB>0:
 
         B44HAT-=BBKHAT
 
@@ -143,9 +143,9 @@ def calculate_roll_damping(LPP,Beam,CB,CMID,OG,PHI,lBK,bBK,OMEGA,
         g=9.81
         Ho = Beam / (2 * DRAFT)  # half breadth to draft ratio
         R = RdivB*Beam
-        Bp44BK_N0, Bp44BK_H0, B44BK_L, B44BKW0 = ikeda_speed.bilge_keel(w=OMEGA, fi_a=np.deg2rad(PHI), V=V, B=Beam, d=DRAFT, A=A, bBK=bBK, R=R, g=g, OG=OG, Ho=Ho, ra=rho)
-        B44BK_N0 = Bp44BK_N0 * lBK
-        B44BK_H0 = Bp44BK_H0 * lBK
+        Bp44BK_N0, Bp44BK_H0, B44BK_L, B44BKW0 = ikeda_speed.bilge_keel(w=OMEGA, fi_a=np.deg2rad(PHI), V=V, B=Beam, d=DRAFT, A=A, bBK=BKB, R=R, g=g, OG=OG, Ho=Ho, ra=rho)
+        B44BK_N0 = Bp44BK_N0 * BKL
+        B44BK_H0 = Bp44BK_H0 * BKL
         B44BK_L = B44BK_L
         # B44BKW0 = B44BKW0 * dim...
         B44_BK = B44BK_N0 + B44BK_H0 + B44BK_L
@@ -167,8 +167,8 @@ def _calculate_roll_damping(LPP, BRTH, CB, CMID, OGD, PHI, LBKL, BBKB, OMEGA,
     :param CMID: Middship coefficient (A_m/(B*d) [-]
     :param OGD: OG/DRAFT
     :param PHI: Roll angle [deg]
-    :param LBKL: lBK/LPP
-    :param BBKB : bBK/Beam
+    :param LBKL: BKL/LPP
+    :param BBKB : BKB/Beam
     :param OMEGA: Frequency of motion [rad/s]
     :param DRAFT: DRAFT : ship draught [m]
     :param BD: Beam/DRAFT
@@ -206,11 +206,11 @@ def calculate_B_BK(BBKB, BD, CB, CMID, LBKL, OGD, OMEGAHAT, PHI):
     """
     Bilge keel damping
 
-    :param BBKB : bBK/Beam
+    :param BBKB : BKB/Beam
     :param BD: Beam/DRAFT
     :param CB: Block coefficient [-]
     :param CMID: Middship coefficient (A_m/(B*d) [-]
-    :param LBKL: lBK/LPP
+    :param LBKL: BKL/LPP
     :param OGD: OG/DRAFT
     :param OMEGAHAT:
     :param PHI: Roll angle [deg]
@@ -388,8 +388,8 @@ def verify_inputs(LPP,Beam,CB,CMID,OG,PHI,lBK,bBK,OMEGA,
         'CMID': CMID,
         'OG': OG,
         'PHI': PHI,
-        'lBK': lBK,
-        'bBK': bBK,
+        'BKL': lBK,
+        'BKB': bBK,
         'OMEGA': OMEGA,
         'DRAFT': DRAFT,
     }
@@ -406,8 +406,8 @@ def verify_inputs(LPP,Beam,CB,CMID,OG,PHI,lBK,bBK,OMEGA,
         'CMID'  : (0.4,1.0),
         'OG'    : (-np.inf,np.inf),
         'PHI'   : (exclude_zero, np.inf),
-        'lBK'   : (0,np.inf),
-        'bBK'   : (0,np.inf),
+        'BKL'   : (0,np.inf),
+        'BKB'   : (0,np.inf),
         'OMEGA' : (exclude_zero,np.inf),
         'DRAFT' : (exclude_zero,np.inf)
     }
@@ -456,8 +456,8 @@ def _calculate_limit_value(LPP, Beam, DRAFT):
         'CMID': np.array(limits_kawahara['CMID']),
         'Beam': np.array(limits_kawahara['B/d'])*DRAFT,
         'OG': np.array(limits_kawahara[r'OG/d'])*DRAFT,
-        'bBK': np.array(limits_kawahara[r'bBk/B'])*_beam,
-        'lBK': np.array(limits_kawahara[r'lBk/LPP'])*LPP,
+        'BKB': np.array(limits_kawahara[r'bBk/B'])*_beam,
+        'BKL': np.array(limits_kawahara[r'lBk/LPP'])*LPP,
         'OMEGA': np.array(limits_kawahara['OMEGA_hat'])/(SQRT(_beam / 2 / 9.81)),
     }
 
@@ -472,8 +472,8 @@ def _limit_inputs(LPP,Beam,CB,CMID,OG,PHI,lBK,bBK,OMEGA,
         'CMID': CMID,
         'OG': OG,
         'PHI': PHI,
-        'lBK': lBK,
-        'bBK': bBK,
+        'BKL': lBK,
+        'BKB': bBK,
         'OMEGA': OMEGA,
         'DRAFT': DRAFT,
     }
@@ -482,11 +482,11 @@ def _limit_inputs(LPP,Beam,CB,CMID,OG,PHI,lBK,bBK,OMEGA,
 
     if lBK==0:
         # Remove bilge keel limit when the bilge keel is not present:
-        if 'lBK' in limits:
-            limits.pop('lBK')
+        if 'BKL' in limits:
+            limits.pop('BKL')
 
-        if 'bBK' in limits:
-            limits.pop('bBK')
+        if 'BKB' in limits:
+            limits.pop('BKB')
 
     outputs = {}
     for key, value in inputs.items():

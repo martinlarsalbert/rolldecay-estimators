@@ -166,7 +166,7 @@ class RollDecay(BaseEstimator):
         return df[self.y_key]
 
     def fit(self, X, y=None, **kwargs):
-        self.X = X
+        self.X = X.copy()
 
         kwargs = {'self': self,
                   'xs': X,

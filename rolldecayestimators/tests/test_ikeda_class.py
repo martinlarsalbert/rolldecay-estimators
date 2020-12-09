@@ -40,7 +40,7 @@ def ikeda():
     sections=pd.DataFrame(data=data, index=x_s)
 
     i= Ikeda(V=V, w=w, B_W0_hat=B_W0_hat, fi_a=fi_a, beam=beam, lpp=lpp, kg=kg, volume=volume,
-             sections=sections)
+             sections=sections, BKL=0, BKB=0)
     i.R=2.0  # Set bilge radius manually
 
     yield i
@@ -96,7 +96,7 @@ def ikeda_faust():
     sections = pd.DataFrame(data=data, index=x_s)  # Fake sections (not testing the eddy)
 
     i = Ikeda(V=V, w=wE, B_W0_hat=B_W0_hat, fi_a=fi_a, beam=B, lpp=L, kg=vcg, volume=disp,
-              sections=sections, bBK=bBK, lBK=LBK)
+              sections=sections, BKB=bBK, BKL=LBK)
     i.R = R  # Set bilge radius manually
 
     yield i
@@ -167,7 +167,7 @@ def test_load_scoresII(indata, output):
     w = 0.2
     fi_a = np.deg2rad(10)
 
-    ikeda = Ikeda.load_scoresII(indata=indata, output_file=output, V=V, w=w, fi_a=fi_a, bBK=0, lBK=0)
+    ikeda = Ikeda.load_scoresII(indata=indata, output_file=output, V=V, w=w, fi_a=fi_a, BKB=0, BKL=0)
     ikeda.R = 2.0  # Set bilge radius manually
     B_44_hat = ikeda.calculate_B44()
 
@@ -177,7 +177,7 @@ def test_calculate_R_b(indata, output):
     w = 0.2
     fi_a = np.deg2rad(10)
 
-    ikeda = Ikeda.load_scoresII(indata=indata, output_file=output, V=V, w=w, fi_a=fi_a, bBK=0, lBK=0)
+    ikeda = Ikeda.load_scoresII(indata=indata, output_file=output, V=V, w=w, fi_a=fi_a, BKB=0, BKL=0)
     R_b = ikeda.calculate_R_b()
 
 
@@ -188,7 +188,7 @@ def test_load_scoresII_R_b(indata, output):
     fi_a = np.deg2rad(10)
 
     # Here R does not need to be specified:
-    ikeda = IkedaR.load_scoresII(indata=indata, output_file=output, V=V, w=w, fi_a=fi_a, bBK=0, lBK=0)
+    ikeda = IkedaR.load_scoresII(indata=indata, output_file=output, V=V, w=w, fi_a=fi_a, BKB=0, BKL=0)
     B_44_hat = ikeda.calculate_B44()
 
 def test_load_scoresII_scale(indata, output):
@@ -198,14 +198,14 @@ def test_load_scoresII_scale(indata, output):
     fi_a = np.deg2rad(10)
     R=2.0
 
-    ikeda = Ikeda.load_scoresII(indata=indata, output_file=output, V=V, w=w, fi_a=fi_a, bBK=0, lBK=0)
+    ikeda = Ikeda.load_scoresII(indata=indata, output_file=output, V=V, w=w, fi_a=fi_a, BKB=0, BKL=0)
     ikeda.R = R  # Set bilge radius manually
 
     scale_factor=50
     V_m=V/np.sqrt(scale_factor)
     w_m=w*np.sqrt(scale_factor)
 
-    ikeda_model = Ikeda.load_scoresII(indata=indata, output_file=output, V=V_m, w=w_m, fi_a=fi_a,  bBK=0, lBK=0,
+    ikeda_model = Ikeda.load_scoresII(indata=indata, output_file=output, V=V_m, w=w_m, fi_a=fi_a, BKB=0, BKL=0,
                                       scale_factor=scale_factor)
     ikeda_model.R = R/scale_factor  # Set bilge radius manually
 

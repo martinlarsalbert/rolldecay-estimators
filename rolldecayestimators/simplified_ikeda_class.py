@@ -14,7 +14,7 @@ class SimplifiedIkeda(Ikeda):
         """
 
     def __init__(self, V: np.ndarray, w: np.ndarray, fi_a: float, beam: float, lpp: float,
-                 kg: float, volume: float, draught: float, A0: float, lBK=0.0, bBK=0.0,
+                 kg: float, volume: float, draught: float, A0: float, BKL:float, BKB:float,
                  g=9.81, rho=1000.0, visc=1.15 * 10 ** -6, **kwargs):
         """
                 Manually specify the inputs to the calculations.
@@ -41,9 +41,9 @@ class SimplifiedIkeda(Ikeda):
                     ship draught [m]
                 A0
                     mid section coefficient (A0 = A_mid/(B*T))
-                lBK
+                BKL
                     length bilge keel [m] (=0 --> no bilge keel)
-                bBK
+                BKB
                     height bilge keel [m] (=0 --> no bilge keel)
                 g
                     gravity [m/s2]
@@ -63,8 +63,8 @@ class SimplifiedIkeda(Ikeda):
         self.lpp = lpp
         self.kg = kg
         self.volume = volume
-        self.lBK = lBK
-        self.bBK = bBK
+        self.lBK = BKL
+        self.bBK = BKB
         self.rho = rho
         self.visc = visc
 
@@ -185,7 +185,7 @@ class SimplifiedIkedaBK2(SimplifiedIkeda):
         """
 
         if np.any(~(self.bBK == 0) & (self.lBK == 0)):
-            raise rolldecayestimators.ikeda.BilgeKeelError('bBK is 0 but lBK is not!')
+            raise rolldecayestimators.ikeda.BilgeKeelError('BKB is 0 but BKL is not!')
             return 0.0
 
         if isinstance(self.R, np.ndarray):

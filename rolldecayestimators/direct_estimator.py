@@ -175,7 +175,7 @@ class DirectEstimator(RollDecay):
 
         return zeta + 4/(3*np.pi)*d*phi_a
 
-    def plot_fit(self, ax=None, model_test=True,**kwargs):
+    def plot_fit(self, ax=None, model_test=True, label=None, **kwargs):
 
         check_is_fitted(self, 'is_fitted_')
 
@@ -190,7 +190,9 @@ class DirectEstimator(RollDecay):
             X['phi_deg'] = np.rad2deg(X['phi'])
             X.plot(y=r'phi_deg', ax=ax, label='Model test')
 
-        df.plot(y=r'phi_deg', ax=ax, label='fit', style='--',**kwargs)
+        if not label:
+            label = 'fit'
+        df.plot(y=r'phi_deg', ax=ax, label=label, style='--',**kwargs)
 
         ax.legend()
         ax.set_xlabel(r'Time [s]')
@@ -250,7 +252,7 @@ class DirectEstimator(RollDecay):
             X_pred_amplitudes['phi_a'] = np.rad2deg(X_pred_amplitudes['phi_a'])
             X_pred_amplitudes.plot(y='phi_a', label=label, ax=ax)
 
-    def plot_damping(self, ax=None, include_model_test=True):
+    def plot_damping(self, ax=None, include_model_test=True,label=None, **kwargs):
 
         if ax is None:
             fig, ax = plt.subplots()
@@ -258,19 +260,67 @@ class DirectEstimator(RollDecay):
         if not hasattr(self, 'X_amplitudes'):
             self.calculate_amplitudes_and_damping()
 
+        plot = None
         if include_model_test:
             X_amplitudes = self.X_amplitudes.copy()
             X_amplitudes['phi_a'] = np.rad2deg(X_amplitudes['phi_a'])
-            X_amplitudes.plot(x='phi_a', y='B_n', style='o', label='Model test', ax=ax)
+            plot = X_amplitudes.plot(x='phi_a', y='B_n', style='o', label='Model test', ax=ax, **kwargs)
+
 
         if hasattr(self, 'X_pred_amplitudes'):
-            label = self.__repr__()
+            if not label:
+                label = self.__repr__()
             X_pred_amplitudes = self.X_pred_amplitudes.copy()
             X_pred_amplitudes['phi_a'] = np.rad2deg(X_pred_amplitudes['phi_a'])
-            X_pred_amplitudes.plot(x='phi_a', y='B_n', label=label, ax=ax)
+
+            if plot is None:
+                color=None
+            else:
+                line = plot.axes.get_lines()[-1]
+                color = line.get_color()
+
+            x = X_pred_amplitudes['phi_a']
+            y = X_pred_amplitudes['B_n']
+            ax.plot(x, y, color=color, label=label, **kwargs, lw=2)
 
         ax.set_xlabel(r'$\phi_a$ [deg]')
         ax.set_ylabel(r'$B$ [Nms]')
+        ax.legend()
+
+    def plot_omega0(self,ax=None, include_model_test=True, label=None, **kwargs):
+
+        if ax is None:
+            fig,ax = plt.subplots()
+
+        if not hasattr(self, 'X_amplitudes'):
+            self.calculate_amplitudes_and_damping()
+
+        plot = None
+        if include_model_test:
+
+            X_amplitudes = self.X_amplitudes.copy()
+            X_amplitudes['omega0_norm'] = X_amplitudes['omega0']/self.omega0
+            plot = X_amplitudes.plot(x='phi_a', y='omega0_norm', style='o', label='Model test', ax=ax, **kwargs)
+
+        if hasattr(self, 'X_pred_amplitudes'):
+            if not label:
+                label = self.__repr__()
+
+            if plot is None:
+                color = None
+            else:
+                line = plot.axes.get_lines()[-1]
+                color = line.get_color()
+
+            x = self.X_pred_amplitudes['phi_a']
+            y = self.X_pred_amplitudes['omega0']/self.omega0
+
+
+            ax.plot(x, y, color=color, label=label, **kwargs, lw=2)
+
+        ax.set_xlabel(r'$\phi_a$ [deg]')
+        ax.set_ylabel(r'$\frac{\omega_0^N}{\omega_0}$ [-]')
+        ax.legend()
 
     def plot_fft(self, ax=None):
         check_is_fitted(self, 'is_fitted_')

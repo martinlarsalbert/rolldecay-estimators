@@ -40,7 +40,34 @@ def get_peaks(X:pd.DataFrame, key='phi1d')->pd.DataFrame:
              (phi1d[index_later] > 0))
     )
 
-    X_zerocrossings = X.loc[mask].copy()
+    index_first = index[mask]
+    index_second = index[mask] + 1
+
+    # y = m + k*x
+    # k = (y2-y1)/(x2-x1)
+    # m = y1 - k*x1
+    # y = 0 --> x = -m/k
+    X_1 = X.iloc[index_first].copy()
+    X_2 = X.iloc[index_second].copy()
+    rows, cols = X_1.shape
+
+    x1 = np.array(X_1.index)
+    x2 = np.array(X_2.index)
+    y1 = np.array(X_1['phi1d'])
+    y2 = np.array(X_2['phi1d'])
+    k = (y2 - y1) / (x2 - x1)
+    m = y1 - k * x1
+    x = -m / k
+
+    X_1 = np.array(X_1)
+    X_2 = np.array(X_2)
+
+    factor = (x - x1) / (x2 - x1)
+    factor = np.tile(factor, [cols, 1]).T
+    X_zero = X_1 + (X_2 - X_1) * factor
+
+    X_zerocrossings = pd.DataFrame(data=X_zero, columns=X.columns, index=x)
+
     return X_zerocrossings
 
 def calculate_amplitudes(X_zerocrossings):
@@ -71,9 +98,9 @@ def calculate_damping(X_amplitudes):
 
     df_decrements = pd.DataFrame()
 
-    for i in range(len(X_amplitudes) - 1):
+    for i in range(len(X_amplitudes) - 2):
         s1 = X_amplitudes.iloc[i]
-        s2 = X_amplitudes.iloc[i + 1]
+        s2 = X_amplitudes.iloc[i + 2]
 
         decrement = s1 / s2
         decrement.name = s1.name
@@ -81,7 +108,7 @@ def calculate_damping(X_amplitudes):
 
     df_decrements['zeta_n'] = 1 / (2 * np.pi) * np.log(df_decrements['phi'])
 
-    df_decrements['zeta_n'] *= 2  # !!! # Todo: Where did this one come from?
+    #df_decrements['zeta_n'] *= 2  # !!! # Todo: Where did this one come from?
 
     X_amplitudes_new = X_amplitudes.copy()
     X_amplitudes_new = X_amplitudes_new.iloc[0:-1].copy()

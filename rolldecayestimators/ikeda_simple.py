@@ -59,8 +59,8 @@ class Ikeda:
         PHI = self.para['PHI']
         TW = self.para['TW']
         BKCOMP = self.para['BKCOMP']
-        lBK = self.para['lBK']
-        bBK = self.para['bBK']
+        lBK = self.para['BKL']
+        bBK = self.para['BKB']
 
         PI = np.pi
         RO = 102
@@ -248,8 +248,8 @@ class Ikeda:
         print(' MIDSHIP SECTION COEFFICIENT - CM  [ ',self.CMIDmin,' < CM < ',self.CMIDmax,'] : ',self.para['CMID'])
         print(' bilge keel - BKCOMP [True, False] : ',self.para['BKCOMP'])
         if (self.para['BKCOMP']==True):
-            print('     length bilge keel - lBK [m] : ',self.para['lBK'])
-            print('     breadth bilge keel - bBK [m] : ',self.para['bBK'],'\n')  
+            print('     length bilge keel - BKL [m] : ',self.para['BKL'])
+            print('     breadth bilge keel - BKB [m] : ',self.para['BKB'],'\n')
       
 def main():
     
@@ -264,8 +264,8 @@ def main():
             'PHI':20.0,\
             'TW':19.0,\
             'BKCOMP':True,\
-            'lBK':5*14.85,\
-            'bBK':0.6,\
+            'BKL':5*14.85,\
+            'BKB':0.6,\
             }
   
     damp = Ikeda()

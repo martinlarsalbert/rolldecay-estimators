@@ -129,8 +129,8 @@ class IkedaEstimator(DirectEstimator):
             'DRAFT' : DRAFT,
 
             'PHI' : self.phi_max,
-            'lBK' : self.BKL,
-            'bBK' : self.BKB,
+            'BKL' : self.BKL,
+            'BKB' : self.BKB,
             'OMEGA' : omega0,
             'OG' : (-self.kg + DRAFT),
             'CB' : CB,
@@ -216,8 +216,8 @@ class IkedaQuadraticEstimator(IkedaEstimator):
             'DRAFT' : DRAFT,
 
             'PHI' : self.phi_max,
-            'lBK' : self.BKL,
-            'bBK' : self.BKB,
+            'BKL' : self.BKL,
+            'BKB' : self.BKB,
             'OMEGA' : omega0,
             'OG' : (-self.kg + DRAFT),
             'CB' : CB,
