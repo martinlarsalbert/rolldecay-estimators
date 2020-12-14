@@ -140,12 +140,6 @@ class EstimatorCubic(DirectEstimator):
 
         inputs=pd.Series(meta_data)
 
-        if not 'g' in inputs:
-            inputs['g']=9.81
-
-        if not 'rho' in inputs:
-            inputs['rho'] = 1000
-
         inputs['m'] = inputs['Volume']*inputs['rho']
         parameters = pd.Series(self.parameters)
         inputs = parameters.combine_first(inputs)

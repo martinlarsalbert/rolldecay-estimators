@@ -257,20 +257,18 @@ class DirectEstimator(RollDecay):
         if ax is None:
             fig, ax = plt.subplots()
 
-        if not hasattr(self, 'X_amplitudes'):
-            self.calculate_amplitudes_and_damping()
-
         plot = None
         if include_model_test:
-            X_amplitudes = self.X_amplitudes.copy()
+            X_amplitudes = measure.calculate_amplitudes_and_damping(X=self.X)
             X_amplitudes['phi_a'] = np.rad2deg(X_amplitudes['phi_a'])
             plot = X_amplitudes.plot(x='phi_a', y='B_n', style='o', label='Model test', ax=ax, **kwargs)
 
-
-        if hasattr(self, 'X_pred_amplitudes'):
+        if self.is_fitted_:
             if not label:
                 label = self.__repr__()
-            X_pred_amplitudes = self.X_pred_amplitudes.copy()
+
+            X_pred = self.predict(X=self.X)
+            X_pred_amplitudes = measure.calculate_amplitudes_and_damping(X=X_pred)
             X_pred_amplitudes['phi_a'] = np.rad2deg(X_pred_amplitudes['phi_a'])
 
             if plot is None:

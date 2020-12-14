@@ -358,9 +358,12 @@ def test_result_for_database():
     direct_estimator.fit(X=X)
 
     rho=1000
+    g=9.81
     meta_data = {
         'GM':1,
         'Volume':1/rho,
+        'rho':rho,
+        'g':g,
     }
 
     check(X=X, estimator=direct_estimator, parameters=parameters)
