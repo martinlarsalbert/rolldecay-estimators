@@ -2,6 +2,7 @@ import pytest
 import pandas as pd
 import numpy as np
 from numpy import pi, sqrt
+import matplotlib.pyplot as plt
 import os
 from numpy.testing import assert_almost_equal, assert_allclose
 
@@ -213,3 +214,50 @@ def test_load_scoresII_scale(indata, output):
     assert_almost_equal(ikeda.calculate_B_BK(), ikeda_model.calculate_B_BK())
     assert_almost_equal(ikeda.calculate_B_E(),  ikeda_model.calculate_B_E() )
     assert_almost_equal(ikeda.calculate_B_L(),  ikeda_model.calculate_B_L() )
+
+def test_load_scoresII_scale_V_variation(indata, output):
+
+    scale_factor = 68
+    N = 200
+    V = np.linspace(0, 15.5, N) * 1.852 / 3.6 / np.sqrt(scale_factor)
+    kg = 0.2735294117647059
+    w = 2.4755750032144674
+
+    ## Load ScoresII results
+    phi_a_deg = 10
+    phi_a = np.deg2rad(phi_a_deg) * np.ones(N)
+
+    ikeda_estimator = Ikeda.load_scoresII(V=V,
+                                          w=w,
+                                          fi_a=phi_a,
+                                          indata=indata,
+                                          output_file=output,
+                                          scale_factor=scale_factor, BKL=0, BKB=0, kg=kg)
+
+    results = ikeda_estimator.calculate()
+    results['V'] = V
+    results.set_index('V', inplace=True)
+
+    phi_as = np.deg2rad(np.linspace(0, phi_a_deg, N))
+    ikeda_estimator2 = Ikeda.load_scoresII(V=np.max(V),
+                                           w=w,
+                                           fi_a=phi_as,
+                                           indata=indata,
+                                           output_file=output,
+                                           scale_factor=scale_factor, BKL=0, BKB=0, kg=kg)
+
+    results2 = ikeda_estimator2.calculate()
+    results2['phi_a'] = phi_as
+    results2.set_index('phi_a', inplace=True)
+
+    fig,axes=plt.subplots(ncols=2)
+
+    ax=axes[0]
+    results.plot(y='B_44_hat',ax=ax)
+
+    ax = axes[1]
+    results2.plot(y='B_44_hat', ax=ax)
+
+    fig.show()
+
+    assert_almost_equal(results.iloc[-1]['B_44_hat'], results2.iloc[-1]['B_44_hat'])
