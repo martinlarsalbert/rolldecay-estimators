@@ -96,10 +96,10 @@ def test_calculate_B44_speeds():
     inputs['B']=B
     inputs['A']=A
     inputs['BKB']=bBK
-    inputs['R']=R
+    inputs['R_b']=R
     inputs['OG']=OG
     inputs['Ho']=Ho
-    inputs['ra']=ra
+    inputs['rho']=ra
     inputs['Cb']=Cb
     inputs['L']=L
     inputs['LBK']=LBK

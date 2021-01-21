@@ -81,7 +81,9 @@ def calculate_amplitudes(X_zerocrossings):
         amplitude.name = (s1.name + s2.name)/2  # mean time
         X_amplitudes = X_amplitudes.append(amplitude)
 
-    X_amplitudes['phi_a'] = X_amplitudes['phi']/2
+    X_amplitudes['phi']/=2
+    X_amplitudes['phi_a'] = X_amplitudes['phi']
+
     return X_amplitudes
 
 def calculate_amplitudes_and_damping(X:pd.DataFrame):

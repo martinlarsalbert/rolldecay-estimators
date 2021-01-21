@@ -118,13 +118,13 @@ class DirectEstimator(RollDecay):
 
     def score(self, X=None, y=None, sample_weight=None):
         """
-        Return the coefficient of determination R^2 of the prediction.
+        Return the coefficient of determination R_b^2 of the prediction.
 
-        The coefficient R^2 is defined as (1 - u/v), where u is the residual sum of squares
+        The coefficient R_b^2 is defined as (1 - u/v), where u is the residual sum of squares
         ((y_true - y_pred) ** 2).sum() and v is the total sum of squares ((y_true - y_true.mean()) ** 2).sum().
         The best possible score is 1.0 and it can be negative (because the model can be arbitrarily worse).
         A constant model that always predicts the expected value of y, disregarding the input features,
-        would get a R^2 score of 0.0.
+        would get a R_b^2 score of 0.0.
 
         Parameters
         ----------
@@ -140,7 +140,7 @@ class DirectEstimator(RollDecay):
         Returns
         -------
         score : float
-            R^2 of self.predict(X) wrt. y.
+            R_b^2 of self.predict(X) wrt. y.
 
         """
 
@@ -175,7 +175,7 @@ class DirectEstimator(RollDecay):
 
         return zeta + 4/(3*np.pi)*d*phi_a
 
-    def plot_fit(self, ax=None, model_test=True, label=None, **kwargs):
+    def plot_fit(self, ax=None, include_model_test=True, label=None, **kwargs):
 
         check_is_fitted(self, 'is_fitted_')
 
@@ -185,7 +185,7 @@ class DirectEstimator(RollDecay):
         df = self.predict(X=self.X)
         df['phi_deg'] = np.rad2deg(df['phi'])
 
-        if model_test:
+        if include_model_test:
             X = self.X.copy()
             X['phi_deg'] = np.rad2deg(X['phi'])
             X.plot(y=r'phi_deg', ax=ax, label='Model test')
@@ -211,15 +211,17 @@ class DirectEstimator(RollDecay):
         ax.set_xlabel('Time [s]')
         ax.set_ylabel('error: phi_pred - phi_true [rad]')
 
-    def plot_peaks(self, ax=None):
+    def plot_peaks(self, ax=None, **kwargs):
         check_is_fitted(self, 'is_fitted_')
 
         if ax is None:
             fig,ax = plt.subplots()
 
-        self.X.plot(y='phi', ax=ax)
-        self.X_zerocrossings.plot(y='phi', ax=ax, style='r.')
-        ax.plot([np.min(self.X.index),np.max(self.X.index)],[0,0],'m-')
+        #self.X.plot(y='phi', ax=ax)
+
+        self.X_amplitudes.plot(y='phi', ax=ax, **kwargs)
+
+        #ax.plot([np.min(self.X.index),np.max(self.X.index)],[0,0],'m-')
         ax.set_title('Peaks')
 
     def plot_velocity(self, ax=None):
@@ -229,7 +231,7 @@ class DirectEstimator(RollDecay):
             fig,ax = plt.subplots()
 
         self.X.plot(y='phi1d', ax=ax)
-        self.X_zerocrossings.plot(y='phi1d', ax=ax, style='r.')
+        self.X_amplitudes.plot(y='phi1d', ax=ax, style='r.')
         ax.plot([np.min(self.X.index), np.max(self.X.index)], [0, 0], 'm-')
         ax.set_title('Velocities')
 
@@ -298,7 +300,8 @@ class DirectEstimator(RollDecay):
 
             X_amplitudes = self.X_amplitudes.copy()
             X_amplitudes['omega0_norm'] = X_amplitudes['omega0']/self.omega0
-            plot = X_amplitudes.plot(x='phi_a', y='omega0_norm', style='o', label='Model test', ax=ax, **kwargs)
+            X_amplitudes['phi_a_deg'] = np.rad2deg(X_amplitudes['phi_a'])
+            plot = X_amplitudes.plot(x='phi_a_deg', y='omega0_norm', style='o', label='Model test', ax=ax, **kwargs)
 
         if hasattr(self, 'X_pred_amplitudes'):
             if not label:
@@ -310,9 +313,8 @@ class DirectEstimator(RollDecay):
                 line = plot.axes.get_lines()[-1]
                 color = line.get_color()
 
-            x = self.X_pred_amplitudes['phi_a']
+            x = np.rad2deg(self.X_pred_amplitudes['phi_a'])
             y = self.X_pred_amplitudes['omega0']/self.omega0
-
 
             ax.plot(x, y, color=color, label=label, **kwargs, lw=2)
 

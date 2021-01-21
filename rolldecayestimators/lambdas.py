@@ -10,8 +10,8 @@ B_2_hat_lambda = lambdify(sp.solve(equations.B_2_hat_equation, symbols.B_2_hat)[
 
 omega0_lambda = lambdify(sp.solve(equations.omega0_hat_equation,symbols.omega_hat)[0])
 
-omega = lambdify(sp.solve(equations.omega0_hat_equation,symbols.omega0)[0])
-omega_hat = lambdify(sp.solve(equations.omega0_hat_equation,symbols.omega_hat)[0])
+omega = omega_from_hat = lambdify(sp.solve(equations.omega0_hat_equation,symbols.omega0)[0])
+omega_hat = omega_to_hat = lambdify(sp.solve(equations.omega0_hat_equation,symbols.omega_hat)[0])
 
 
 B_e_lambda = lambdify(sp.solve(equations.B_e_equation, symbols.B_e)[0])

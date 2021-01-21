@@ -133,11 +133,12 @@ omega0_hat_equation = omega_hat_equation.subs(omega,omega0)
 
 
 ## Analytical
-diff_eq = sp.Eq(y.diff().diff() + 2*delta*omega0*y.diff() + omega0**2*y,0)
-equation_D = sp.Eq(D,sp.sqrt(1-delta**2))
+diff_eq = sp.Eq(y.diff().diff() + 2 * zeta * omega0 * y.diff() + omega0 ** 2 * y, 0)
+equation_D = sp.Eq(D, sp.sqrt(1 - zeta ** 2))
 
 lhs = y
-rhs = sp.exp(-delta*omega0*t)*(y0*sp.cos(omega0*D*t) + (y0_dot/(omega0*D) + delta*y0/D)*sp.sin(omega0*D*t))
+rhs = sp.exp(-zeta * omega0 * t) * (y0 * sp.cos(omega0 * D * t) + (y0_dot / (omega0 * D) + zeta * y0 / D) * sp.sin(omega0 * D * t))
+
 analytical_solution_general = sp.Eq(lhs,rhs)
 
 subs = [
@@ -146,7 +147,6 @@ subs = [
     (y0_dot, phi_0_dot),
     (y0_dotdot, phi_0_dotdot),
     (D,sp.solve(equation_D,D)[0]),
-    (delta, zeta),
 ]
 
 analytical_solution = analytical_solution_general.subs(subs)

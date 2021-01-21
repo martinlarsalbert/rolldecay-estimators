@@ -242,13 +242,13 @@ class RollDecay(BaseEstimator):
 
     def score(self, X=None, y=None, sample_weight=None):
         """
-        Return the coefficient of determination R^2 of the prediction.
+        Return the coefficient of determination R_b^2 of the prediction.
 
-        The coefficient R^2 is defined as (1 - u/v), where u is the residual sum of squares
+        The coefficient R_b^2 is defined as (1 - u/v), where u is the residual sum of squares
         ((y_true - y_pred) ** 2).sum() and v is the total sum of squares ((y_true - y_true.mean()) ** 2).sum().
         The best possible score is 1.0 and it can be negative (because the model can be arbitrarily worse).
         A constant model that always predicts the expected value of y, disregarding the input features,
-        would get a R^2 score of 0.0.
+        would get a R_b^2 score of 0.0.
 
         Parameters
         ----------
@@ -264,7 +264,7 @@ class RollDecay(BaseEstimator):
         Returns
         -------
         score : float
-            R^2 of self.predict(X) wrt. y.
+            R_b^2 of self.predict(X) wrt. y.
 
         """
 

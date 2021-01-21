@@ -6,6 +6,7 @@ import numpy as np
 from numpy import tanh, exp, sqrt, pi, sin, cos, arccos, min, max
 import pandas as pd
 import scipy.interpolate
+from copy import copy
 import matplotlib.pyplot as plt
 
 dir_path = os.path.dirname(__file__)
@@ -235,7 +236,7 @@ def bilge_keel(w, fi_a, V, B, d, A, bBK, R, g, OG, Ho, ra):
     B44BKW0 = C_BK * exp(-w ** 2 / g * dBK); # non dimensional  wave damping from BK, ITTC
     return Bp44BK_N0, Bp44BK_H0, B44BK_L, B44BKW0
 
-def frictional(w, fi_a, V, B, d, OG, ra, Cb, L, visc =1.15 * 10 ** -6):
+def frictional_carl_johan(w, fi_a, V, B, d, OG, ra, Cb, L, visc =1.15 * 10 ** -6):
     # ITTC
 
     Sf   = L*(1.7*d+Cb*B); # Wetted surface approx
@@ -248,9 +249,57 @@ def frictional(w, fi_a, V, B, d, OG, ra, Cb, L, visc =1.15 * 10 ** -6):
     B44F= B44F0 * 8 / (3*pi) * fi_a * w * (1 + 4.1 * V / (w * L))
     return B44F
 
+def frictional(w, fi_a, V, B, d, OG, ra, Cb, L, visc =1.15 * 10 ** -6, Sf=None):
+    """
+    Frictional damping according to:
+    Falzarano, Jeffrey, Somayajula, Abhilash, Seah, Robert,
+    2015. An overview of the prediction methods for roll damping of ships.
+    Ocean Systems Engineering 5, 55–76. https://doi.org/10.12989/OSE.2015.5.2.055
+
+
+    Parameters
+    ----------
+    w
+    fi_a
+    V
+    B
+    d
+    OG
+    ra
+    Cb
+    L
+    visc
+
+    Returns
+    -------
+    B44F
+
+    """
+
+    if Sf is None:
+        Sf   = L*(1.7*d+Cb*B); # Wetted surface approx
+
+    r_f = 1 / pi * ((0.887 + 0.145 * Cb) * (Sf / L) - 2 * OG)  # (Kato, 1958)
+
+    Rn = 0.512 * r_f**2 * fi_a**2 * w / visc
+
+    Cf = 1.328*sqrt(2*pi*visc/(3.22*r_f**2*fi_a**2*w))
+
+    #B44F0 = 4/(3*pi)*ra*Sf*r_f**3*fi_a*w*Cf
+    B44F0 = 0.787*ra*Sf*r_f**2*sqrt(w*visc)*(1 + 0.00814*(r_f**2*fi_a**2*w/visc)**0.386)
+    B44F= B44F0*(1 + 4.1*V/(w*L))
+
+    return B44F
+
 def hull_lift(V,B, d, OG, L, A, ra=1000):
     """
     Calculate the hull lift force damping
+
+    Journee, J.M.J., Adegeest, L.J.M.,
+    2003. Theoretical Manual of Strip Theory Program &quot;
+    Seaway for Windows&quot; TU Delft, Report 1370.
+
+
     Parameters
     ----------
     V
@@ -279,10 +328,10 @@ def hull_lift(V,B, d, OG, L, A, ra=1000):
     lR   = 0.5*d;
     #K    = 0.1;         #!! depends on CM  # S175
     C_mid = A/(B*d)
-    K = 106 * (C_mid - 0.91)**2 - 700 * (C_mid - 0.91)**3;
+    K = 106 * (C_mid - 0.91)**2 - 700 * (C_mid - 0.91)**3;  # Fit by Journee
 
     kN   = 2*pi*d/L+K*(4.1*B/L-0.045);
-    #B44L = ra/2*V*L*d*kN*lo*lR*(1+1.4*OG/lR+0.7*OG**2/(lo*lR))  # S175
+    #B44L = rho/2*V*L*d*kN*lo*lR*(1+1.4*OG/lR+0.7*OG**2/(lo*lR))  # S175
     B44L = ra / 2 * V * L * d * kN * lo * lR * (1 - 1.4 * (OG) / lR + 0.7 * OG**2 / (lo * lR));
 
     return B44L
@@ -363,8 +412,8 @@ def calculate_B44(w, V, d, Bw0, fi_a,  B,  A, bBK, R, OG, Ho, ra, Cb, L, LBK, vi
 
 def calculate_B44_series(row, Bw_div_Bw0_max=12):
     s = pd.Series(name=row.name)
-    B_44,B_W,B_BK,B_F,B_L = calculate_B44(w=row['w'], V=row['V'], d=row['d'], Bw0=row['Bw0'], fi_a=row['fi_a'], B=row['B'], A=row['A'], bBK=row['BKB'], R=row['R'],
-                         OG=row['OG'], Ho=row['Ho'], ra=row['ra'], Cb=row['Cb'], L=row['L'], LBK=row['LBK'], visc=row['visc'], g=row['g'], Bw_div_Bw0_max=Bw_div_Bw0_max)
+    B_44,B_W,B_BK,B_F,B_L = calculate_B44(w=row['w'], V=row['V'], d=row['d'], Bw0=row['Bw0'], fi_a=row['fi_a'], B=row['B'], A=row['A'], bBK=row['BKB'], R=row['R_b'],
+                         OG=row['OG'], Ho=row['Ho'], ra=row['rho'], Cb=row['Cb'], L=row['L'], LBK=row['LBK'], visc=row['visc'], g=row['g'], Bw_div_Bw0_max=Bw_div_Bw0_max)
     s['B_44']=B_44
     s['B_W']=B_W
     s['B_BK']=B_BK
@@ -373,7 +422,7 @@ def calculate_B44_series(row, Bw_div_Bw0_max=12):
     return s
 
 
-def calculate_sectional_lewis(B_s, T_s, S_s):
+def calculate_sectional_lewis(B_s:np.ndarray, T_s:np.ndarray, S_s:np.ndarray):
     """
     Lewis form approximation' is obtained.
     Given the section's area, S_s, beam B and draught T, the constants a, a a_3 are uniquely defined
@@ -390,10 +439,32 @@ def calculate_sectional_lewis(B_s, T_s, S_s):
 
     Returns
     -------
-    a, a_1, a_3 : array_like
+    a, a_1, a_3, sigma_s, H : array_like
         sectional lewis coefficients.
 
     """
+    B_s=copy(B_s)
+    T_s=copy(T_s)
+    S_s=copy(S_s)
+
+    if isinstance(B_s, int):
+        B_s = float(B_s)
+
+    if isinstance(B_s,float):
+        B_s = np.array([B_s])
+
+    if isinstance(T_s, int):
+        T_s = float(T_s)
+
+    if isinstance(T_s,float):
+        T_s = np.array([T_s])
+
+    if isinstance(S_s, int):
+        S_s = float(S_s)
+
+    if isinstance(S_s,float):
+        S_s = np.array([S_s])
+
     #H = B_s / (2 * T_s)
     H = np.divide(B_s, (2 * T_s), out=np.zeros_like(B_s), where=(2 * T_s)!=0)
 
@@ -409,7 +480,50 @@ def calculate_sectional_lewis(B_s, T_s, S_s):
     return a, a_1, a_3, sigma_s, H
 
 def eddy(bwl:np.ndarray, a_1:np.ndarray, a_3:np.ndarray, sigma:np.ndarray, xs:np.ndarray, H0:np.ndarray, Ts:np.ndarray,
-         OG:float, R:float, d:float, wE:float, fi_a:float, ra=1000.0):
+         OG:float, R:float, wE:float, fi_a:float, ra=1000.0):
+    """
+        Calculation of eddy damping according to Ikeda.
+        This implementation is a translation from Carl-Johans Matlab implementation.
+
+        Parameters
+        ----------
+        bwl
+            sectional beam water line [m]
+        a_1
+            sectional lewis coefficients
+        a_3
+            sectional lewis coefficients
+        sigma
+            sectional coefficient
+        xs
+            sectional x position [m]
+        H0
+            sectional coefficient
+        Ts
+            sectional draft [m]
+        OG
+            vertical distance water line to cg [m]
+        R
+            bilge radius [m]
+        ra
+            water density [kg/m3]
+        wE
+            roll requency [rad/s]
+        fi_a
+            roll amplitude [rad]
+
+        Returns
+        -------
+        B_E0
+            Eddy damping at zero speed.
+        """
+    Bp44E0s = eddy_sections(bwl=bwl, a_1=a_1, a_3=a_3, sigma=sigma, H0=H0, Ts=Ts, OG=OG, R=R, wE=wE, fi_a=fi_a, ra=ra)
+    Bp44E0 = simps(y=Bp44E0s, x=xs, axis=0)
+
+    return Bp44E0
+
+def eddy_sections(bwl:np.ndarray, a_1:np.ndarray, a_3:np.ndarray, sigma:np.ndarray, H0:np.ndarray, Ts:np.ndarray,
+         OG:float, R:float, wE:float, fi_a:float, ra=1000.0):
     """
     Calculation of eddy damping according to Ikeda.
     This implementation is a translation from Carl-Johans Matlab implementation.
@@ -424,8 +538,6 @@ def eddy(bwl:np.ndarray, a_1:np.ndarray, a_3:np.ndarray, sigma:np.ndarray, xs:np
         sectional lewis coefficients
     sigma
         sectional coefficient
-    xs
-        sectional x position [m]
     H0
         sectional coefficient
     Ts
@@ -434,8 +546,6 @@ def eddy(bwl:np.ndarray, a_1:np.ndarray, a_3:np.ndarray, sigma:np.ndarray, xs:np
         vertical distance water line to cg [m]
     R
         bilge radius [m]
-    d
-        ship draft [m]
     ra
         water density [kg/m3]
     wE
@@ -445,11 +555,13 @@ def eddy(bwl:np.ndarray, a_1:np.ndarray, a_3:np.ndarray, sigma:np.ndarray, xs:np
 
     Returns
     -------
-    B_E0
-        Eddy damping at zero speed.
+    Bp44E0s
+        Eddy damping per unit length for the sections at zero speed.
     """
 
-    H0=np.array(H0)/2  # ...strange...
+    #H0=np.array(H0)/2  # ...strange...
+    H0 = np.array(H0) # ...strange...
+
     N=len(bwl)
     #M = bwl / (2 * (1 + a_1 + a_3));
     M = np.divide(bwl, (2 * (1 + a_1 + a_3)), out=np.zeros_like(bwl), where=(2 * (1 + a_1 + a_3))!=0)
@@ -470,6 +582,7 @@ def eddy(bwl:np.ndarray, a_1:np.ndarray, a_3:np.ndarray, sigma:np.ndarray, xs:np
 
     A0 = -2 * a_3 * cos(5 * fi) + a_1 * (1 - a_3) * cos(3 * fi) + (
                 (6 - 3 * a_1) * a_3 ** 2 + (a_1 ** 2 - 3 * a_1) * a_3 + a_1 ** 2) * cos(fi)
+
     H = 1 + a_1 ** 2 + 9 * a_3 ** 2 + 2 * a_1 * (1 - 3 * a_3) * cos(2 * fi) - 6 * a_3 * cos(4 * fi)
 
     f3 = 1 + 4 * exp(-1.65 * 10 ** 5 * (1 - sigma) ** 2);
@@ -477,17 +590,19 @@ def eddy(bwl:np.ndarray, a_1:np.ndarray, a_3:np.ndarray, sigma:np.ndarray, xs:np
     x_ = np.array([rmax_fi1, rmax_fi2]).transpose()
     rmax = max(x_, axis=1)
 
-    gamma=sqrt(pi)*\
-          f3*(rmax+2*M/H*sqrt(B0**2*A0**2))/\
-          (2*Ts*sqrt(H0*(sigma-OG/Ts)))
-
+    H0_prim = H0*Ts/(Ts-OG)
+    sigma_prim = (sigma*Ts-OG)/(Ts-OG)
+    gamma=sqrt(pi)*f3*(rmax+2*M/H*sqrt(B0**2*A0**2))/((2*Ts*(1-OG/Ts)*sqrt(H0_prim*sigma_prim)))
 
     f1 = 0.5 * (1 + tanh(20 * (sigma - 0.7)));
     f2 = 0.5 * (1 - cos(pi * sigma)) - 1.5 * (1 - exp(-5 * (1 - sigma))) * (sin(pi * sigma)) ** 2
 
     Cp = 0.5 * (0.87 * exp(-gamma) - 4 * exp(-0.187 * gamma) + 3);
 
-    Cr = ((1 - f1 * R / d) * (1 - OG / d) + f2 * (H0 - f1 * R / d) ** 2) * Cp * (rmax / d) ** 2
+    M_re = 1 / 2 * ra * rmax ** 2 * Ts ** 2 * Cp * (
+                (1 - f1 * R / Ts) * (1 - OG / Ts - f1 * R / Ts) + f2 * (H0 - f1 * R / Ts) ** 2)
+    Cr = M_re / (1 / 2 * ra * Ts ** 4)
+
 
     #WE, CR = np.meshgrid(wE, Cr)
     Cr=np.array(Cr)
@@ -505,17 +620,16 @@ def eddy(bwl:np.ndarray, a_1:np.ndarray, a_3:np.ndarray, sigma:np.ndarray, xs:np
 
     WE=np.tile(wE, (len_Cr, 1))
     FI_a=np.tile(fi_a, (len_Cr, 1))
+
+    Tss = np.tile(Ts, (len_wE, 1)).transpose()
     CR = np.tile(Cr, (len_wE, 1)).transpose()
 
-    #Bp44E0s = 4 * ra * d ** 4 * wE * fi_a * Cr / (3 * pi)
-    Bp44E0s = 4 * ra * d ** 4 * WE * FI_a * CR / (3 * pi)
+    Bp44E0s = 4 * ra * Tss ** 4 * WE * FI_a * CR / (3 * pi)
 
     mask = np.isnan(Bp44E0s)
     Bp44E0s[mask] = 0
 
-    Bp44E0 = simps(y=Bp44E0s, x=xs, axis=0)
-
-    return Bp44E0
+    return Bp44E0s
 
 
 
