@@ -110,8 +110,6 @@ def calculate_damping(X_amplitudes):
 
     df_decrements['zeta_n'] = 1 / (2 * np.pi) * np.log(df_decrements['phi'])
 
-    #df_decrements['zeta_n'] *= 2  # !!! # Todo: Where did this one come from?
-
     X_amplitudes_new = X_amplitudes.copy()
     X_amplitudes_new = X_amplitudes_new.iloc[0:-1].copy()
     X_amplitudes_new['zeta_n'] = df_decrements['zeta_n'].copy()

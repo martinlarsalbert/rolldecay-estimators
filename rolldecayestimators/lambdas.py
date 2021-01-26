@@ -23,3 +23,6 @@ B_to_hat_lambda=lambdify(sp.solve(B44_hat_equation,symbols.B_44_hat)[0])
 B_from_hat_lambda=lambdify(sp.solve(B44_hat_equation,symbols.B)[0])
 
 A44_lambda = lambdify(equations.A44)
+
+omega0_linear_lambda = lambdify(sp.solve(equations.omega0_eq, symbols.omega0)[0])
+

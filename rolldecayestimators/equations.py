@@ -115,6 +115,16 @@ B_e_equation = sp.Eq(B_e,B_1+8/(3*sp.pi)*omega0*phi_a*B_2)
 B_e_equation_cubic = sp.Eq(B_e,B_1+8/(3*sp.pi)*omega0*phi_a*B_2 + 3/4*omega0**2*phi_a**2*B_3)
 
 
+A_44_eq = sp.Eq(A_44, A44)
+eqs = [
+    A_44_eq,
+    C_equation_linear,
+
+]
+
+omega0_eq = sp.Eq(omega0,sp.solve(eqs, omega0, GM)[1][0])
+omega0_eq = omega0_eq.subs(C,C_1)
+
 ## Nondimensional damping Himeno:
 lhs = B_44_hat
 rhs = B_44/(rho*Disp*beam**2)*sp.sqrt(beam/(2*g))

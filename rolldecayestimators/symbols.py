@@ -41,7 +41,12 @@ T = ss.Symbol(name='T',description='Mean draught',unit='m')
 V = ss.Symbol(name='V',description='Ship speed',unit='m/s')
 OG = ss.Symbol(name='OG',description='Distance into water from still water to centre of gravity',unit='m')
 
+# Sections:
 
+B_E0s = ss.Symbol(name="B'_E0", description='Zero speed sectional eddy damping', unit='Nm*s/(m)')
+T_s = ss.Symbol(name='T_s',description='Section draught',unit='m')
+B_s = ss.Symbol(name='B_s',description='Section beam',unit='m')
+sigma = ss.Symbol(name='sigma',description='Section area coefficient',unit='-')
 
 phi = me.dynamicsymbols('phi')  # Roll angle
 #phi = ss.Symbol(name='phi', description='Roll angle', unit='rad')  # Roll angle
@@ -91,8 +96,12 @@ B_44_ = ss.Symbol(name='B_44', description='Total roll damping at a certain roll
 B_F = ss.Symbol(name='B_F', description='Friction roll damping', unit='Nm/(rad/s)')
 B_W = ss.Symbol(name='B_W', description='Wave roll damping', unit='Nm/(rad/s)')
 B_E = ss.Symbol(name='B_E', description='Eddy roll damping', unit='Nm/(rad/s)')
+B_E0 = ss.Symbol(name='B_E0', description='Zero speed eddy damping ', unit='Nm/(rad/s)')
 B_BK = ss.Symbol(name='B_{BK}', description='Bilge keel roll damping', unit='Nm/(rad/s)')
 B_L = ss.Symbol(name='B_L', description='Hull lift roll damping', unit='Nm/(rad/s)')
+
+
+
 
 B_44_HAT =  ss.Symbol(name='B_44_HAT', description='Total roll damping at a certain roll amplitude', unit='-')
 B_F_HAT = B_F_hat = ss.Symbol(name='B_F_HAT', description='Friction roll damping', unit='-')
@@ -139,3 +148,8 @@ f_1 = ss.Symbol(name='f_1', description='Difference of flow factor', unit='-')
 f_2 = ss.Symbol(name='f_2', description='Modification factor', unit='-')
 H_0 = ss.Symbol(name='H_0', description='Half beam-draft ratio', unit='-')
 B_E_star_hat = ss.Symbol(name='B_E_star_hat', description='Only nonlinear nondimensional damping', unit='-')
+
+## Lewis
+a_1 = ss.Symbol(name='a_1', description='Lewis section coefficient', unit='-')
+a_3 = ss.Symbol(name='a_3', description='Lewis section coefficient', unit='-')
+D_1= ss.Symbol(name='D_1', description='Lewis section coefficient', unit='-')
