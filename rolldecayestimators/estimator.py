@@ -338,6 +338,8 @@ class RollDecay(BaseEstimator):
         if hasattr(self,'omega0'):
             s['omega0_fft'] = self.omega0
 
+        self.results = s  # Store it also
+
         return s
 
 

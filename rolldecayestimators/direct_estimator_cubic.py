@@ -137,7 +137,6 @@ class EstimatorCubic(DirectEstimator):
     def result_for_database(self, meta_data={}):
         s = super().result_for_database(meta_data=meta_data)
 
-
         inputs=pd.Series(meta_data)
 
         inputs['m'] = inputs['Volume']*inputs['rho']
@@ -150,6 +149,8 @@ class EstimatorCubic(DirectEstimator):
 
         inputs['A_44'] = s['A_44']
         s['omega0'] = run(function=self.functions['omega0'], inputs=inputs)
+
+        self.results = s  # Store it also
 
         return s
 

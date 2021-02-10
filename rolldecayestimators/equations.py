@@ -170,6 +170,8 @@ extinction_equation = sp.Eq(lhs,rhs)
 xeta_equation = sp.Eq(zeta,
       sp.solve(extinction_equation,zeta)[0])
 
+B_1_zeta_eq = sp.Eq(B_1, 2*zeta*omega0*A_44)
+B_1_zeta_eq
 
 ### Simplified Ikeda
 simplified_ikeda_equation = sp.Eq((B_F,
