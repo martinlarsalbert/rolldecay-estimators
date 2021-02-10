@@ -69,4 +69,8 @@ setup(name=DISTNAME,
       install_requires=INSTALL_REQUIRES,
       extras_require=EXTRAS_REQUIRE,
       package_data=package_data,
+      author="Martin Alexandersson",
+      author_email='maralex@chalmers.se',
+      python_requires='>=3.5',
+      keywords='rolldecayestimators',
       )
