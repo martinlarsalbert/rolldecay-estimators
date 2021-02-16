@@ -1,4 +1,3 @@
-import rolldecayestimators.special_symbol as ss
 import sympy as sp
 import sympy.physics.mechanics as me
 
@@ -19,6 +18,9 @@ dGM = ss.Symbol(name='dGM', description='metacentric height correction', unit='m
 omega = ss.Symbol(name='omega', description='Angular velocity of external moment', unit='rad/s')
 L_pp = ss.Symbol(name='L_pp',description='ship perpendicular length',unit='m')
 beam = ss.Symbol(name='beam',description='ship beam',unit='m')
+x_s = ss.Symbol(name='x_s',description='section x-coordinate',unit='m')
+AP = ss.Symbol(name='AP',description='ship perpendiculars',unit='-')
+FP = ss.Symbol(name='FP',description='ship perpendiculars',unit='-')
 
 C_p = ss.Symbol(name='C_p',description='Prismatic coefficient',unit='-')
 C_b = ss.Symbol(name='C_b',description='Block coefficient',unit='-')
@@ -52,27 +54,27 @@ phi = me.dynamicsymbols('phi')  # Roll angle
 #phi = ss.Symbol(name='phi', description='Roll angle', unit='rad')  # Roll angle
 phi_dot = phi.diff()
 phi_dot_dot = phi_dot.diff()
-phi_a = ss.Symbol(name='phi_a', description='Initial roll amplitude', unit='rad')
+phi_a = ss.Symbol(name='phi_a', description='roll amplitude', unit='rad')
 
-zeta = sp.Symbol('zeta') # Linear roll damping coefficeint
+zeta = ss.Symbol(name='zeta', description='Damping coefficient', unit = '-') # Linear roll damping coefficeint
 omega0 = ss.Symbol(name='omega0',description='Natural angular velocity',unit='rad/s')  # Natural roll frequency
 
 d = sp.Symbol('d')  # Nonlinear roll damping coefficient
 
 A_44 = ss.Symbol(name='A_44', description='Total mass moment of inertia', unit='kg*m**2')
 
-B_1 = ss.Symbol(name='B_1',description='Linear damping coefficient',unit='Nm/(rad/s)')  # Natural roll frequency
-B_2 = ss.Symbol(name='B_2',description='Quadratic damping coefficient',unit='Nm/(rad/s**2')  # Natural roll frequency
-B_3 = ss.Symbol(name='B_3',description='Cubic damping coefficient',unit='Nm/(rad/s)**3')  # Natural roll frequency
+B_1 = ss.Symbol(name='B_1',description='Linear damping coefficient',unit='Nm*s')  # Natural roll frequency
+B_2 = ss.Symbol(name='B_2',description='Quadratic damping coefficient',unit='Nm*s**2')  # Natural roll frequency
+B_3 = ss.Symbol(name='B_3',description='Cubic damping coefficient',unit='Nm*s**3')  # Natural roll frequency
 
 C = ss.Symbol(name='C', description='General stiffness coefficient', unit=r'Nm/rad')  # Introducing a helper coefficient C
 
-C_1 = ss.Symbol(name='C_1', description='Linear stiffness coefficient', unit=r'Nm/rad')
-C_3 = ss.Symbol(name='C_3',description='Stiffness coefficient', unit=r'Nm/rad**3')
-C_5 = ss.Symbol(name='C_5',description='Stiffness coefficient', unit=r'Nm/rad**5')
+C_1 = ss.Symbol(name='C_1', description='Linear stiffness coefficient', unit=r'Nm')
+C_3 = ss.Symbol(name='C_3',description='Stiffness coefficient', unit=r'Nm')
+C_5 = ss.Symbol(name='C_5',description='Stiffness coefficient', unit=r'Nm')
 
 
-B_e = ss.Symbol(name='B_e', description='Equivalen linearized damping', unit='Nm/(rad/s)')
+B_e = ss.Symbol(name='B_e', description='Equivalen linearized damping', unit='Nm*s')
 B_44_hat = ss.Symbol(name='B_44_hat', description='Nondimensional damping', unit='-')
 B_e_hat = ss.Symbol(name='B_e_hat', description='Nondimensional damping', unit='-')
 B_e_hat_0 = ss.Symbol(name='B_e_hat_0', description='Nondimensional damping', unit='-')
@@ -92,13 +94,13 @@ omega0_hat = ss.Symbol(name='omega0_hat', description='Nondimensional roll frequ
 
 B_1_hat0 = ss.Symbol(name='B_1_hat0', description='Nondimensional damping at zero speed', unit='-')
 
-B_44_ = ss.Symbol(name='B_44', description='Total roll damping at a certain roll amplitude', unit='Nm/(rad/s)')
-B_F = ss.Symbol(name='B_F', description='Friction roll damping', unit='Nm/(rad/s)')
-B_W = ss.Symbol(name='B_W', description='Wave roll damping', unit='Nm/(rad/s)')
-B_E = ss.Symbol(name='B_E', description='Eddy roll damping', unit='Nm/(rad/s)')
-B_E0 = ss.Symbol(name='B_E0', description='Zero speed eddy damping ', unit='Nm/(rad/s)')
-B_BK = ss.Symbol(name='B_{BK}', description='Bilge keel roll damping', unit='Nm/(rad/s)')
-B_L = ss.Symbol(name='B_L', description='Hull lift roll damping', unit='Nm/(rad/s)')
+B_44_ = ss.Symbol(name='B_44', description='Total roll damping at a certain roll amplitude', unit='Nm*s')
+B_F = ss.Symbol(name='B_F', description='Friction roll damping', unit='Nm*s')
+B_W = ss.Symbol(name='B_W', description='Wave roll damping', unit='Nm*s')
+B_E = ss.Symbol(name='B_E', description='Eddy roll damping', unit='Nm*s')
+B_E0 = ss.Symbol(name='B_E0', description='Zero speed eddy damping ', unit='Nm*s')
+B_BK = ss.Symbol(name='B_{BK}', description='Bilge keel roll damping', unit='Nm*s')
+B_L = ss.Symbol(name='B_L', description='Hull lift roll damping', unit='Nm*s')
 
 
 
@@ -118,7 +120,6 @@ C_44 = sp.Function('C_{44}')(phi)
 M_44 = sp.Function('M_{44}')(omega*t)
 
 ## Analytical
-zeta = sp.symbols('zeta')
 y = me.dynamicsymbols('y')
 y0 = me.dynamicsymbols('y0')
 y0_dot = y0.diff()
@@ -147,7 +148,11 @@ R_b = ss.Symbol(name='R_b', description='Bilge radius', unit='m')
 f_1 = ss.Symbol(name='f_1', description='Difference of flow factor', unit='-')
 f_2 = ss.Symbol(name='f_2', description='Modification factor', unit='-')
 H_0 = ss.Symbol(name='H_0', description='Half beam-draft ratio', unit='-')
-B_E_star_hat = ss.Symbol(name='B_E_star_hat', description='Only nonlinear nondimensional damping', unit='-')
+B_E_star_hat = ss.Symbol(name='B_E_star_hat', description='Only nonlinear nondimensional eddy damping', unit='-')
+B_F_star_hat = ss.Symbol(name='B_F_star_hat', description='Only nonlinear nondimensional friction damping', unit='-')
+B_W_star_hat = ss.Symbol(name='B_W_star_hat', description='Only nonlinear nondimensional wave damping', unit='-')
+B_star_hat = ss.Symbol(name='B_star_hat', description='Only nonlinear nondimensional damping', unit='-')
+
 
 ## Lewis
 a_1 = ss.Symbol(name='a_1', description='Lewis section coefficient', unit='-')

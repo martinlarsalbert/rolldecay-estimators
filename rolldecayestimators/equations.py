@@ -1,6 +1,17 @@
 import sympy as sp
 from rolldecayestimators.symbols import *
 
+# Some of the symbols can be nicer displayed using this:
+nicer_LaTeX = [
+        (B_E0_hat, sp.symbols('\hat{B}_{E0}')),
+        (B_E_star_hat, sp.symbols('\hat{B^*}_{E}')),
+        (B_W_star_hat, sp.symbols('\hat{B^*}_{W}')),
+        (B_F_star_hat, sp.symbols('\hat{B^*}_{F}')),
+        (B_star_hat, sp.symbols('\hat{B^*}')),
+        (omega_hat, sp.symbols('\hat{\omega}')),
+                
+    ]
+
 # General roll motion equation according to Himeno:
 lhs = A_44*phi_dot_dot + B_44 + C_44
 rhs = M_44
@@ -98,6 +109,15 @@ normalize_equations = {}
 new_symbols = {}
 subs_normalize = []
 for symbol in normalize_symbols:
+    
+    if 'C' in symbol.name:
+        description = 'Stiffness help coefficients'
+    elif 'B' in symbol.name:
+        description = 'Damping help coefficients'
+    else:
+        description = ' '
+    
+    new_symbol = ss.Symbol(name='%sA' % symbol.name, description=description, unit=' ')
     new_symbol = sp.Symbol('%sA' % symbol.name)
     new_symbols[symbol] = new_symbol
     eq = sp.Eq(new_symbol,symbol/A_44)
