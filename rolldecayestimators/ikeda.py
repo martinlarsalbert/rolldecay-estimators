@@ -31,7 +31,7 @@ class Ikeda():
     """
     def __init__(self, V:np.ndarray, w:np.ndarray, fi_a:float, B_W0_hat:pd.Series, beam:float, lpp:float,
                  kg:float, volume:float, sections:pd.DataFrame, BKL, BKB, R_b=None,
-                 g=9.81, rho=1000.0, visc =1.15*10**-6, scale_factor=1.0, S_f=None, sigma_limit = 0.99, **kwargs):
+                 g=9.81, rho=1000.0, visc =1.15*10**-6, scale_factor=1.0, S_f=None, sigma_limit = 1.00, **kwargs):
         """
         Manually specify the inputs to the calculations.
         Note: Some inputs need to be specified here, but others can be defined in other ways
@@ -115,7 +115,7 @@ class Ikeda():
     @classmethod
     def load_scoresII(cls, V:np.ndarray, w:np.ndarray, fi_a:float, indata:pyscores2.indata.Indata,
                       output_file:pyscores2.output.OutputFile, BKL: float, BKB :float, kg, g=9.81, rho=1000.0, visc =1.15 * 10 ** -6,
-                      scale_factor=1.0, S_f = None, sigma_limit = 0.99, R_b = None,
+                      scale_factor=1.0, S_f = None, sigma_limit = 1.00, R_b = None,
                       **kwargs):
         """
         Creaate a object from indata and output from ScoresII
@@ -614,7 +614,7 @@ class IkedaR(Ikeda):
 
     def __init__(self, V: np.ndarray, w: np.ndarray, fi_a: float, B_W0_hat: pd.Series, beam: float, lpp: float,
                  kg: float, volume: float, sections: pd.DataFrame, BKL, BKB, R_b:float,
-                 g=9.81, rho=1000.0, visc=1.15 * 10 ** -6, scale_factor=1.0, S_f=None, sigma_limit = 0.99, **kwargs):
+                 g=9.81, rho=1000.0, visc=1.15 * 10 ** -6, scale_factor=1.0, S_f=None, sigma_limit = 1.00, **kwargs):
 
         super().__init__(V=V, w=w, fi_a=fi_a, B_W0_hat=B_W0_hat, beam=beam, lpp=lpp,
                                     kg=kg, volume=volume, sections=sections, BKL=BKL, BKB=BKB,
@@ -627,11 +627,11 @@ class IkedaR(Ikeda):
     def load_scoresII(cls, V: np.ndarray, w: np.ndarray, fi_a: float, indata: pyscores2.indata.Indata,
                       output_file: pyscores2.output.OutputFile, BKL: float, BKB: float, kg, R_b:float, g=9.81, rho=1000.0,
                       visc=1.15 * 10 ** -6,
-                      scale_factor=1.0, S_f=None, sigma_limit = 0.99,
+                      scale_factor=1.0, S_f=None, sigma_limit = 1.00,
                       **kwargs):
 
         estimator = super(cls,cls).load_scoresII(V=V, w=w, fi_a=fi_a, indata=indata, output_file=output_file, BKL=BKL, BKB=BKB, kg=kg, g=g, rho=rho, visc=visc,
-                                        scale_factor=scale_factor, R_b=R_b, sigma_limit=sigma_limit, **kwargs)
+                                        scale_factor=scale_factor, R_b=R_b, S_f=S_f, sigma_limit=sigma_limit, **kwargs)
         return estimator
 
 class IkedaBeSimplified(Ikeda):
