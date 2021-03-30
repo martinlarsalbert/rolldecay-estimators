@@ -153,6 +153,13 @@ B_F_star_hat = ss.Symbol(name='B_F_star_hat', description='Only nonlinear nondim
 B_W_star_hat = ss.Symbol(name='B_W_star_hat', description='Only nonlinear nondimensional wave damping', unit='-')
 B_star_hat = ss.Symbol(name='B_star_hat', description='Only nonlinear nondimensional damping', unit='-')
 
+"""[summary]
+Ikeda, Y., Himeno, Y., Tanaka, N., 1978. 
+Components of Roll Damping of Ship at Forward Speed. 
+J. SNAJ, Nihon zousen gakkai ronbunshu 1978, 113–125. https://doi.org/10.2534/jjasnaoe1968.1978.113
+"""
+K = ss.Symbol(name='K', description='Reduced frequency', unit='-')
+alpha = ss.Symbol(name='alpha', description='Eddy damping speed dependancy factor', unit='-')
 
 ## Lewis
 a_1 = ss.Symbol(name='a_1', description='Lewis section coefficient', unit='-')

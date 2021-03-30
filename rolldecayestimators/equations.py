@@ -102,6 +102,14 @@ subs = [
     (C_44,sp.solve(restoring_equation_cubic,C_44)[0])
 ]
 roll_decay_equation_cubic = roll_decay_equation_general_himeno.subs(subs)
+
+## Quadratic model:
+subs = [
+    (B_44,sp.solve(b44_quadratic_equation,B_44)[0]),
+    (C_44,sp.solve(restoring_equation_cubic,C_44)[0])
+]
+roll_decay_equation_quadratic_ = roll_decay_equation_general_himeno.subs(subs)
+
 # But this equation does not have a unique solution, so we devide all witht the interia A_44:
 
 normalize_symbols = [B_1, B_2, B_3, C_1, C_3, C_5]
@@ -129,6 +137,8 @@ for symbol in normalize_symbols:
 lhs = (roll_decay_equation_cubic.lhs/A_44).subs(subs_normalize).simplify()
 roll_decay_equation_cubic_A = sp.Eq(lhs=lhs,rhs=0)
 
+lhs = (roll_decay_equation_quadratic_.lhs/A_44).subs(subs_normalize).simplify()
+roll_decay_equation_quadratic_A = sp.Eq(lhs=lhs,rhs=0)
 
 ## Equivalt linearized damping:
 B_e_equation = sp.Eq(B_e,B_1+8/(3*sp.pi)*omega0*phi_a*B_2)

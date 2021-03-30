@@ -245,6 +245,35 @@ class EstimatorQuadraticBandC(EstimatorCubic):
     functions = dict(EstimatorCubic.functions)
     functions['acceleration'] = lambdify(acceleration)
 
+class EstimatorQuadratic(EstimatorCubic):
+    """ A template estimator to be used as a reference implementation.
+
+    For more information regarding how to build your own estimator, read more
+    in the :ref:`User Guide <user_guide>`.
+
+    Parameters
+    ----------
+    demo_param : str, default='demo_param'
+        A parameter used for demonstation of how to pass and store paramters.
+    """
+
+    ## Quadratic model with Cubic restoring force:
+    b44_quadratic_equation = sp.Eq(B_44, B_1 * phi_dot + B_2 * phi_dot * sp.Abs(phi_dot))
+    restoring_equation_cubic = sp.Eq(C_44, C_1 * phi + C_3 * phi ** 3 + C_5 * phi ** 5)
+
+    subs = [
+        (B_44, sp.solve(b44_quadratic_equation, B_44)[0]),
+        (C_44, sp.solve(restoring_equation_cubic, C_44)[0])
+    ]
+    roll_decay_equation = equations.roll_decay_equation_general_himeno.subs(subs)
+    # Normalizing with A_44:
+    lhs = (roll_decay_equation.lhs / A_44).subs(equations.subs_normalize).simplify()
+    roll_decay_equation_A = sp.Eq(lhs=lhs, rhs=0)
+
+    acceleration = sp.solve(roll_decay_equation_A, phi_dot_dot)[0]
+    functions = dict(EstimatorCubic.functions)
+    functions['acceleration'] = lambdify(acceleration)
+
 class EstimatorLinear(EstimatorCubic):
     """ A template estimator to be used as a reference implementation.
 

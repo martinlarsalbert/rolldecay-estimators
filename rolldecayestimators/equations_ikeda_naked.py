@@ -11,6 +11,11 @@ Published in: Journal of Society of Naval Architects of Japan, Volume 142.
 [2]
 ITTC, 2011. ITTC – Recommended Procedures Numerical Estimation of Roll Damping.
 
+[3]
+Ikeda, Y., Himeno, Y., Tanaka, N., 1978. 
+Components of Roll Damping of Ship at Forward Speed. 
+J. SNAJ, Nihon zousen gakkai ronbunshu 1978, 113–125. https://doi.org/10.2534/jjasnaoe1968.1978.113
+
 
 """
 
@@ -57,6 +62,18 @@ eq_R_b = sp.Eq(R_b,
 
 eq_B_star_hat = sp.Eq(B_star_hat,
                       B_E_star_hat +  B_W_star_hat + B_F_star_hat)
+
+## Speed dependancy
+eq_K = sp.Eq(K,
+             L_pp*omega/V
+             )
+
+
+eq_eddy_speed_general = sp.Eq(B_E/B_E0,
+                     (alpha*K)**2 / ((alpha*K)**2 + 1) 
+                     )
+
+eq_eddy_speed = eq_eddy_speed_general.subs(alpha, 0.04)  ## alpha from Ikeda paper.
 
 ## Lewis:
 eq_D_1 = sp.Eq(D_1,

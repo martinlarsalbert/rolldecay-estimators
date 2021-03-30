@@ -497,6 +497,10 @@ class Ikeda():
         B_E0_hat = self.calculate_B_E0()
         #factor=(0.04*self.w*self.lpp/self.V)**2
         factor = np.divide(0.04 * self.w * self.lpp, self.V, out=np.zeros_like(self.V), where=(self.V!=0))**2
+        #factor = np.divide(0.06 * self.w * self.lpp, self.V, out=np.zeros_like(self.V), where=(self.V!=0))**2
+        
+        #factor = np.divide(0.08 * self.w * self.lpp, self.V, out=np.zeros_like(self.V), where=(self.V!=0))**2
+        
         if isinstance(factor,float):
             factor = np.array([factor])
 
