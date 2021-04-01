@@ -157,16 +157,16 @@ omega0_eq = omega0_eq.subs(C,C_1)
 
 ## Nondimensional damping Himeno:
 lhs = B_44_hat
-rhs = B_44/(rho*Disp*beam**2)*sp.sqrt(beam/(2*g))
+rhs = B_44 / (rho * Disp * b ** 2) * sp.sqrt(b / (2 * g))
 B44_equation = sp.Eq(lhs, rhs)
 omega0_equation_linear = omega0_equation.subs(C,sp.solve(C_equation_linear,C)[0])
 
-omega_hat_equation = sp.Eq(omega_hat,omega*sp.sqrt(beam/(2*g)))
-B44_hat_equation = sp.Eq(B_44_hat, B_44/(rho*Disp*beam**2)*sp.sqrt(beam/(2*g)))
-B_1_hat_equation = sp.Eq(B_1_hat, B_1/(rho*Disp*beam**2)*sp.sqrt(beam/(2*g)))
-B_e_hat_equation = sp.Eq(B_e_hat, B_e/(rho*Disp*beam**2)*sp.sqrt(beam/(2*g)))
+omega_hat_equation = sp.Eq(omega_hat, omega * sp.sqrt(b / (2 * g)))
+B44_hat_equation = sp.Eq(B_44_hat, B_44 / (rho * Disp * b ** 2) * sp.sqrt(b / (2 * g)))
+B_1_hat_equation = sp.Eq(B_1_hat, B_1 / (rho * Disp * b ** 2) * sp.sqrt(b / (2 * g)))
+B_e_hat_equation = sp.Eq(B_e_hat, B_e / (rho * Disp * b ** 2) * sp.sqrt(b / (2 * g)))
 
-B_2_hat_equation = sp.Eq(B_2_hat, B_2/(rho*Disp*beam**2)*sp.sqrt(beam/(2*g))**(0))
+B_2_hat_equation = sp.Eq(B_2_hat, B_2 / (rho * Disp * b ** 2) * sp.sqrt(b / (2 * g)) ** (0))
 
 B44_hat_equation_quadratic = B44_hat_equation.subs(B_44,sp.solve(b44_quadratic_equation,B_44)[0])
 omega0_hat_equation = omega_hat_equation.subs(omega,omega0)

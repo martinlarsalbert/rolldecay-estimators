@@ -28,7 +28,7 @@ eq_B_E_star_hat = sp.Eq(B_E0_hat,
                         )
 
 eq_B_E0_hat = sp.Eq(B_E0_hat,
-                    4*L_pp*T_s**4*omega_hat*phi_a/(3*pi*Disp*beam**2)*C_r  # (6) (part 2)
+                    4 * L_pp * T_s ** 4 * omega_hat * phi_a / (3 * pi * Disp * b ** 2) * C_r  # (6) (part 2)
                     )
 eq_volume = sp.Eq(Disp,
                   T_s*B_s*sigma*L_pp,

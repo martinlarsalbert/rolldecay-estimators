@@ -29,7 +29,7 @@ def test_eddy_sections_1():
     phi_a = 0.175
     w = lambdas.omega_from_hat(beam=B_s, g=g, omega_hat=w_hat)
 
-    #R_b = ikeda_eddy.calculate_R_b(beam=B_s, draught=T_s, H0=H0, sigma=sigma_s)
+    #R_b = ikeda_eddy.calculate_R_b(b=B_s, draught=T_s, H0=H0, sigma=sigma_s)
 
     B_E0_s = ikeda_speed.eddy_sections(bwl=B_s, a_1=a_1, a_3=a_3, sigma=sigma_s, H0=H0, Ts=T_s, OG=OG, R=R_b, wE=w,
                                        fi_a=phi_a, ra=rho)

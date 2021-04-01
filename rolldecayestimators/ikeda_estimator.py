@@ -39,7 +39,7 @@ class IkedaEstimator(DirectEstimator):
         TF
             Draught forward [m]
         beam
-            Ship beam [m]
+            Ship b [m]
         BKL
             Bilge keel length [m]
         BKB
@@ -120,7 +120,7 @@ class IkedaEstimator(DirectEstimator):
         if (self.lpp*self.beam*DRAFT > 0):
             CB = self.Volume / (self.lpp*self.beam*DRAFT)
         else:
-            raise IkedaEstimatorFitError('lpp, beam or DRAFT is zero or nan!')
+            raise IkedaEstimatorFitError('lpp, b or DRAFT is zero or nan!')
 
         self.ikeda_parameters = {
 
@@ -144,7 +144,7 @@ class IkedaEstimator(DirectEstimator):
         self.result=self.calculate()
 
         m = self.Volume * self.rho
-        B_44 = self.B44_lambda(B_44_hat=self.result.B_44_HAT, Disp=self.Volume, beam=self.beam, g=self.g, rho=self.rho)
+        B_44 = self.B44_lambda(B_44_hat=self.result.B_44_HAT, Disp=self.Volume, b=self.beam, g=self.g, rho=self.rho)
         zeta = self.zeta_lambda(B_1=B_44, GM=self.gm, g=self.g, m=m, omega0=omega0)
         self.parameters={
             'zeta':zeta,
@@ -207,7 +207,7 @@ class IkedaQuadraticEstimator(IkedaEstimator):
         if (self.lpp*self.beam*DRAFT > 0):
             CB = self.Volume / (self.lpp*self.beam*DRAFT)
         else:
-            raise IkedaEstimatorFitError('lpp, beam or DRAFT is zero or nan!')
+            raise IkedaEstimatorFitError('lpp, b or DRAFT is zero or nan!')
 
         self.ikeda_parameters = {
 
@@ -260,7 +260,7 @@ class IkedaQuadraticEstimator(IkedaEstimator):
         # Two point regression:
         data = {
             'lpp': self.lpp,
-            'beam': self.beam,
+            'b': self.beam,
             'DRAFT': (self.TA + self.TF) / 2,
             'phi_max': self.phi_max,
             'BKL': self.BKL,
@@ -278,8 +278,8 @@ class IkedaQuadraticEstimator(IkedaEstimator):
         s1_hat = calculate(row1, verify_input=self.verify_input, limit_inputs=self.limit_inputs, **kwargs)
         s2_hat = calculate(row2, verify_input=self.verify_input, limit_inputs=self.limit_inputs, **kwargs)
 
-        s1_hat = self.B44_lambda(B_44_hat=s1_hat, Disp=row1.Volume, beam=row1.beam, g=self.g, rho=self.rho)
-        s2_hat = self.B44_lambda(B_44_hat=s2_hat, Disp=row2.Volume, beam=row2.beam, g=self.g, rho=self.rho)
+        s1_hat = self.B44_lambda(B_44_hat=s1_hat, Disp=row1.Volume, b=row1.b, g=self.g, rho=self.rho)
+        s2_hat = self.B44_lambda(B_44_hat=s2_hat, Disp=row2.Volume, b=row2.b, g=self.g, rho=self.rho)
 
         s1=pd.Series()
         s2=pd.Series()
@@ -306,7 +306,7 @@ class IkedaQuadraticEstimator(IkedaEstimator):
 
         data={
             'lpp':self.lpp,
-            'beam' : self.beam,
+            'b' : self.beam,
             'DRAFT' : (self.TA+self.TF)/2,
             'phi_max' : self.phi_max,
             'BKL' :  self.BKL,
@@ -328,7 +328,7 @@ class IkedaQuadraticEstimator(IkedaEstimator):
         df_variation['rho'] = 1000
         result = pd.concat((result, df_variation), axis=1)
 
-        result['B_44'] = self.B44_lambda(B_44_hat=result.B_44_hat, Disp=ship.Volume, beam=ship.beam, g=result.g, rho=result.rho)
+        result['B_44'] = self.B44_lambda(B_44_hat=result.B_44_hat, Disp=ship.Volume, b=ship.b, g=result.g, rho=result.rho)
         result.dropna(inplace=True)
         return result
 

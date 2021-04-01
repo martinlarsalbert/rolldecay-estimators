@@ -50,7 +50,7 @@ def calculate_roll_damping(LPP, Beam, CB, CMID, OG, PHI, BKL, BKB, OMEGA,
         is a limit. Set it to np.inf to turn it off.
     :param rho, water density
     :param alternative_bilge_keel, if True an alternative bilge keel calculation is used.
-    :RdivB, bilge radius / ship beam (only used if alternative_bilge_keel=True)
+    :RdivB, bilge radius / ship b (only used if alternative_bilge_keel=True)
 
     :return: B44HAT, BFHAT, BWHAT, BEHAT, BBKHAT
      Nondimensional damping:

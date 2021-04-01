@@ -7,6 +7,8 @@ from rolldecayestimators.direct_estimator_cubic import EstimatorCubic, Estimator
 import matplotlib.pyplot as plt
 from rolldecayestimators.estimator import FitError
 
+np.random.seed(42)
+
 def simulate(t, phi0, phi1d0, **kwargs):
 
     estimator = EstimatorCubic.load(**kwargs)

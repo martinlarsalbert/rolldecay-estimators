@@ -18,7 +18,7 @@ def eddy(rho, lpp, d, beam, OG, phi_a, w):
     d
         draught [m]
     beam
-        ship beam [m]
+        ship b [m]
     OG
          distance from the still water level O to the roll axis G [m]
     phi_a

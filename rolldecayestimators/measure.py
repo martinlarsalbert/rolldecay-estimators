@@ -220,7 +220,7 @@ def hatify(df_ikeda, g=9.81, rho=1000, components = ['B','B_44', 'B_F', 'B_W', '
     new_hat_keys = ['%s_e_hat' % key for key in components]
 
     Disp = np.tile(df_ikeda['Disp'],[len(components),1]).T
-    beam = np.tile(df_ikeda['beam'],[len(components),1]).T
+    beam = np.tile(df_ikeda['b'],[len(components),1]).T
 
     df_ikeda[new_hat_keys] = lambdas.B_e_hat_lambda(B_e=df_ikeda[new_keys],
                                                    Disp=Disp,
@@ -257,7 +257,7 @@ def linearize_model_test(phi_a, df_rolldecay, g=9.81, rho=1000):
 
     df_rolldecay['B_e_hat'] = lambdas.B_e_hat_lambda(B_e=df_rolldecay['B_e'],
                                                      Disp=df_rolldecay['Disp'],
-                                                     beam=df_rolldecay['beam'],
+                                                     beam=df_rolldecay['b'],
                                                      g=g, rho=rho)
 
     return df_rolldecay

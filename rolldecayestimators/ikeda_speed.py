@@ -305,7 +305,7 @@ def hull_lift(V,B, d, OG, L, A, ra=1000):
     V
         Ship speed [m/s]
     B
-        Ship beam [m]
+        Ship b [m]
     d
         Ship draught [m]
     OG
@@ -425,7 +425,7 @@ def calculate_B44_series(row, Bw_div_Bw0_max=12):
 def calculate_sectional_lewis(B_s:np.ndarray, T_s:np.ndarray, S_s:np.ndarray):
     """
     Lewis form approximation' is obtained.
-    Given the section's area, S_s, beam B and draught T, the constants a, a a_3 are uniquely defined
+    Given the section's area, S_s, b B and draught T, the constants a, a a_3 are uniquely defined
     by von Kerczek and Tuck18 as:
 
     Parameters
@@ -488,7 +488,7 @@ def eddy(bwl:np.ndarray, a_1:np.ndarray, a_3:np.ndarray, sigma:np.ndarray, xs:np
         Parameters
         ----------
         bwl
-            sectional beam water line [m]
+            sectional b water line [m]
         a_1
             sectional lewis coefficients
         a_3
@@ -531,7 +531,7 @@ def eddy_sections(bwl:np.ndarray, a_1:np.ndarray, a_3:np.ndarray, sigma:np.ndarr
     Parameters
     ----------
     bwl
-        sectional beam water line [m]
+        sectional b water line [m]
     a_1
         sectional lewis coefficients
     a_3

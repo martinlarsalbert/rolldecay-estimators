@@ -5,6 +5,9 @@ import rolldecayestimators.special_symbol as ss
 import sympy as sp
 import sympy.physics.mechanics as me
 
+Fn = ss.Symbol(name='F_n',description='Froude number',unit='-')
+
+
 t = ss.Symbol(name='t',description='time',unit='s')
 I = ss.Symbol(name='I',description='total roll inertia',unit='kg*m**2')
 B = ss.Symbol(name='B',description='total roll damping',unit='kg*m*/s')
@@ -17,7 +20,7 @@ GM = ss.Symbol(name='GM', description='metacentric height', unit='m')
 dGM = ss.Symbol(name='dGM', description='metacentric height correction', unit='m/rad')
 omega = ss.Symbol(name='omega', description='Angular velocity of external moment', unit='rad/s')
 L_pp = ss.Symbol(name='L_pp',description='ship perpendicular length',unit='m')
-beam = ss.Symbol(name='beam',description='ship beam',unit='m')
+b = ss.Symbol(name='b', description='ship b', unit='m')
 x_s = ss.Symbol(name='x_s',description='section x-coordinate',unit='m')
 AP = ss.Symbol(name='AP',description='ship perpendiculars',unit='-')
 FP = ss.Symbol(name='FP',description='ship perpendiculars',unit='-')
@@ -47,7 +50,7 @@ OG = ss.Symbol(name='OG',description='Distance into water from still water to ce
 
 B_E0s = ss.Symbol(name="B'_E0", description='Zero speed sectional eddy damping', unit='Nm*s/(m)')
 T_s = ss.Symbol(name='T_s',description='Section draught',unit='m')
-B_s = ss.Symbol(name='B_s',description='Section beam',unit='m')
+B_s = ss.Symbol(name='B_s',description='Section b',unit='m')
 sigma = ss.Symbol(name='sigma',description='Section area coefficient',unit='-')
 
 phi = me.dynamicsymbols('phi')  # Roll angle
@@ -130,9 +133,9 @@ phi_0 = me.dynamicsymbols('phi_0')
 phi_0_dot = phi_0.diff()
 phi_0_dotdot = phi_0_dot.diff()
 
-ikeda_simplified = sp.Function('f')(L_pp,beam,C_b,A_0,
-                                  OG,phi_a,BK_L,BK_B,omega,
-                                  T, V)
+ikeda_simplified = sp.Function('f')(L_pp, b, C_b, A_0,
+                                    OG, phi_a, BK_L, BK_B, omega,
+                                    T, V)
 
 """
 Ikeda, Y.,
@@ -147,7 +150,7 @@ P_m = ss.Symbol(name='P_m', description='Pressure difference', unit='N/m**2')
 R_b = ss.Symbol(name='R_b', description='Bilge radius', unit='m')
 f_1 = ss.Symbol(name='f_1', description='Difference of flow factor', unit='-')
 f_2 = ss.Symbol(name='f_2', description='Modification factor', unit='-')
-H_0 = ss.Symbol(name='H_0', description='Half beam-draft ratio', unit='-')
+H_0 = ss.Symbol(name='H_0', description='Half b-draft ratio', unit='-')
 B_E_star_hat = ss.Symbol(name='B_E_star_hat', description='Only nonlinear nondimensional eddy damping', unit='-')
 B_F_star_hat = ss.Symbol(name='B_F_star_hat', description='Only nonlinear nondimensional friction damping', unit='-')
 B_W_star_hat = ss.Symbol(name='B_W_star_hat', description='Only nonlinear nondimensional wave damping', unit='-')

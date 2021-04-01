@@ -13,7 +13,7 @@ def eddy_sections(bwl:np.ndarray, a_1:np.ndarray, a_3:np.ndarray, sigma:np.ndarr
     Parameters
     ----------
     bwl
-        sectional beam water line [m]
+        sectional b water line [m]
     a_1
         sectional lewis coefficients
     a_3
@@ -56,7 +56,7 @@ def calculate_C_r(bwl:np.ndarray, a_1:np.ndarray, a_3:np.ndarray, sigma:np.ndarr
         Parameters
     ----------
     bwl
-        sectional beam water line [m]
+        sectional b water line [m]
     a_1
         sectional lewis coefficients
     a_3

@@ -30,7 +30,7 @@ class SimplifiedIkeda(Ikeda):
                 fi_a
                     roll amplitude [rad]
                 beam
-                    ship beam [m]
+                    ship b [m]
                 lpp
                     ship perpedicular length [m]
                 kg

@@ -49,7 +49,7 @@ class Ikeda():
             values : wave roll damping for various frequencies [-]
             index: frequencies hat [-]
         beam
-            ship beam [m]
+            ship b [m]
         lpp
             ship perpedicular length [m]
         kg
@@ -59,7 +59,7 @@ class Ikeda():
         sections
             ship hull geometry sections defined in a pandas data frame:
             sections.index  : section x coordinate measured from AP [m]
-            sections['B_s'] : sectional beam [m] (incl. both sides)
+            sections['B_s'] : sectional b [m] (incl. both sides)
             sections['T_s'] : sectional draught [m]
             sections['C_s'] :   sectional area coefficient [-]
                                 C_s = S_s/(B_s*T_s)
@@ -180,8 +180,8 @@ class Ikeda():
         ws, data = output_file.calculate_B_W0()  # Full scale values
         beam_fullscale=beam*scale_factor
         volume_fullscale=volume*scale_factor**3
-        ws_hat = lambdas.omega_hat(beam=beam_fullscale, g=g, omega0=ws)
-        B_W0_hat_ = lambdas.B_hat_lambda(B=data, Disp=volume_fullscale, beam=beam_fullscale, g=g, rho=rho)
+        ws_hat = lambdas.omega_hat(b=beam_fullscale, g=g, omega0=ws)
+        B_W0_hat_ = lambdas.B_hat_lambda(B=data, Disp=volume_fullscale, b=beam_fullscale, g=g, rho=rho)
         B_W0_hat = pd.Series(data=B_W0_hat_, index=ws_hat)
 
         return cls(V=V, w=w, fi_a=fi_a, B_W0_hat=B_W0_hat, beam=beam, lpp=lpp, kg=kg, volume=volume,
@@ -211,7 +211,7 @@ class Ikeda():
     def Ho(self):
         """
         half breadth to draft ratio
-        H0 = beam/(2*draught)
+        H0 = b/(2*draught)
         """
         return self.beam/(2*self.draught)
 
@@ -243,7 +243,7 @@ class Ikeda():
 
     @property
     def B_s(self):
-        # Sectional beam [m] (incl. both sides)
+        # Sectional b [m] (incl. both sides)
         B_s = np.array(self.sections['B_s'])
         mask=B_s==0
         B_s[mask]=0.000001*np.max(B_s) # Putin a very small value
@@ -280,7 +280,7 @@ class Ikeda():
 
     @property
     def w_hat(self):
-        return lambdas.omega_hat(beam=self.beam, g=self.g, omega0=self.w)
+        return lambdas.omega_hat(b=self.beam, g=self.g, omega0=self.w)
 
     @property
     def BD(self):
@@ -310,12 +310,12 @@ class Ikeda():
         B_hat
             Nondimensional damping coefficient
         """
-        return lambdas.B_hat_lambda(B=B, Disp=self.volume, beam=self.beam, g=self.g, rho=self.rho)
+        return lambdas.B_hat_lambda(B=B, Disp=self.volume, b=self.beam, g=self.g, rho=self.rho)
 
     def calculate_sectional_lewis_coefficients(self):
         """
         Lewis form approximation' is obtained.
-        Given the section's area, S_s, beam B_s and draught T_s, the constants a, a a_3 are uniquely defined
+        Given the section's area, S_s, b B_s and draught T_s, the constants a, a a_3 are uniquely defined
         by von Kerczek and Tuck:
         See code in: ikeda_speed.calculate_sectional_lewis
 
@@ -727,11 +727,11 @@ class IkedaCr(Ikeda):
     Same as Ikeda class but with mandatory manual C_r
     """
 
-#    def __init__(self, V: np.ndarray, w: np.ndarray, fi_a: float, B_W0_hat: pd.Series, beam: float, lpp: float,
+#    def __init__(self, V: np.ndarray, w: np.ndarray, fi_a: float, B_W0_hat: pd.Series, b: float, lpp: float,
 #                 kg: float, volume: float, sections: pd.DataFrame, BKL, BKB, C_r,
 #                 g=9.81, rho=1000.0, visc=1.15 * 10 ** -6, scale_factor=1.0, S_f=None, **kwargs):
 #
-#        super().__init__(V=V, w=w, fi_a=fi_a, B_W0_hat=B_W0_hat, beam=beam, lpp=lpp,
+#        super().__init__(V=V, w=w, fi_a=fi_a, B_W0_hat=B_W0_hat, b=b, lpp=lpp,
 #                                    kg=kg, volume=volume, sections=sections, BKL=BKL, BKB=BKB,
 #                                    g=g, rho=rho, visc =visc, scale_factor=scale_factor, S_f=S_f, **kwargs)
 #

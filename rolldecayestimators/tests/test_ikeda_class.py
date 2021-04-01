@@ -80,8 +80,8 @@ def ikeda_faust():
 
     data_path_faust = os.path.join(rolldecayestimators.path, 'Bw0_faust.csv')
     data_faust = pd.read_csv(data_path_faust, sep=';')
-    data_faust['w_hat'] = lambdas.omega_hat(beam=B, g=g, omega0=data_faust['w_vec'])
-    data_faust['B_W0_hat'] = lambdas.B_hat_lambda(B=data_faust['b44_vec'], Disp=disp, beam=B, g=g, rho=ra)
+    data_faust['w_hat'] = lambdas.omega_hat(b=B, g=g, omega0=data_faust['w_vec'])
+    data_faust['B_W0_hat'] = lambdas.B_hat_lambda(B=data_faust['b44_vec'], Disp=disp, b=B, g=g, rho=ra)
 
     data_faust.set_index('w_hat', inplace=True)
     B_W0_hat = data_faust['B_W0_hat']

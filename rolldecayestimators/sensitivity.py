@@ -47,7 +47,7 @@ def _plot_result(ship, result, key, changes, plot_change_factor=True, ax=None):
 
 def calculate(row, catch_error=False, limit_inputs=False, verify_input=True, **kwargs):
     LPP = row.lpp
-    Beam = row.beam
+    Beam = row.b
     DRAFT = row.DRAFT
 
     PHI = row.phi_max
