@@ -22,6 +22,8 @@ J. SNAJ, Nihon zousen gakkai ronbunshu 1978, 113–125. https://doi.org/10.2534/
 import sympy as sp
 from rolldecayestimators.symbols import *
 from sympy import pi,sqrt
+from rolldecayestimators import equations
+from rolldecayestimators import symbols
 
 eq_B_E_star_hat = sp.Eq(B_E0_hat,
                         8/(3*pi)*B_E_star_hat  # (6) (part 1)
@@ -38,6 +40,11 @@ solution = sp.solve([eq_B_E0_hat, eq_volume, eq_B_E_star_hat],
                     dict=True
                     )
 eq_C_r_2 = sp.Eq(C_r, solution[0][C_r])
+
+eqs = [eq_C_r_2,
+ equations.omega_hat_equation]
+eq_C_r_omega =sp.Eq(symbols.C_r,
+      sp.solve(eqs, symbols.C_r, symbols.omega_hat, dict=True)[0][symbols.C_r])
 
 eq_C_r = sp.Eq(C_r,
                2/(rho*T_s**2)*((1 - f_1*R_b/T_s)*(1 - OG/T_s - f_1*R_b/T_s) + f_2*(H_0 - f_1*R_b/T_s)**2)*P_m/3  # (10)

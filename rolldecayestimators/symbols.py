@@ -25,6 +25,8 @@ x_s = ss.Symbol(name='x_s',description='section x-coordinate',unit='m')
 AP = ss.Symbol(name='AP',description='ship perpendiculars',unit='-')
 FP = ss.Symbol(name='FP',description='ship perpendiculars',unit='-')
 
+r2 = ss.Symbol(name='r^2',description='coefficient of determination',unit='-')
+
 C_p = ss.Symbol(name='C_p',description='Prismatic coefficient',unit='-')
 C_b = ss.Symbol(name='C_b',description='Block coefficient',unit='-')
 
@@ -43,6 +45,7 @@ C_W = ss.Symbol(name='C_W',description='Water area coefficient',unit='-')
 T_F = ss.Symbol(name='T_F',description='Draught forward',unit='m')
 T_A = ss.Symbol(name='T_A',description='Draught aft',unit='m')
 T = ss.Symbol(name='T',description='Mean draught',unit='m')
+S = ss.Symbol(name='S',description='Wetted surface',unit='m**2')
 V = ss.Symbol(name='V',description='Ship speed',unit='m/s')
 OG = ss.Symbol(name='OG',description='Distance into water from still water to centre of gravity',unit='m')
 
@@ -50,7 +53,7 @@ OG = ss.Symbol(name='OG',description='Distance into water from still water to ce
 
 B_E0s = ss.Symbol(name="B'_E0", description='Zero speed sectional eddy damping', unit='Nm*s/(m)')
 T_s = ss.Symbol(name='T_s',description='Section draught',unit='m')
-B_s = ss.Symbol(name='B_s',description='Section b',unit='m')
+B_s = ss.Symbol(name='B_s',description='Section beam',unit='m')
 sigma = ss.Symbol(name='sigma',description='Section area coefficient',unit='-')
 
 phi = me.dynamicsymbols('phi')  # Roll angle
