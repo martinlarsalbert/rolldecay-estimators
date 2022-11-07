@@ -1,3 +1,4 @@
+[![DOI](https://zenodo.org/badge/237425836.svg)](https://zenodo.org/badge/latestdoi/237425836)
 # Rolldecay-estimators Package
 - Transformers and estimators for scikit-learn
 rolldecay-estimators is a scikit-learn compatible extension.
