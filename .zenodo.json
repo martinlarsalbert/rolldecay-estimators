@@ -1,0 +1,12 @@
+{
+    "description": "Code developed for paper: Analysis of roll damping model scale data (https://doi.org/10.1080/17445302.2021.1907070)",
+    "license": "MIT",
+    "title": "rolldecay-estimators",
+    "upload_type": "software",
+    "creators": [
+        {
+            "name": "Martin Alexandersson"
+        }
+    ],
+    "access_right": "open"
+}
